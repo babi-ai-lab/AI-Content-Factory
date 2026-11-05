@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 import MonthlyContentCalendar from "@/components/monthly-content-calendar";
+import CampaignManager from "@/components/campaign-manager";
 
 type BusinessType =
   | "retail"
@@ -2512,6 +2513,8 @@ const response = await fetch("/api/generate", {
           }}
         />
       </section>
+
+      {user?.id && <CampaignManager userId={user.id} />}
 
       <div className="workspace">
 
