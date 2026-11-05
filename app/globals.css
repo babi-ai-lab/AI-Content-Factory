@@ -277,3 +277,24 @@ footer span { padding: 0 6px; }
 .schedule-control input { min-width: 0; padding: 7px 8px; font-size: 10px; }
 @media (max-width: 700px) { .planner-section { padding: 17px; } .planner-columns { grid-template-columns: 1fr; } .planner-heading { align-items: flex-start; } }
 @media (max-width: 480px) { .planner-heading { flex-direction: column; } .planner-total { flex-direction: row; width: 100%; justify-content: center; } .schedule-control { width: 100%; min-width: 0; } }
+
+/* Content version history and restore */
+.versions-panel { margin: 14px 0; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfa; }
+.versions-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; list-style: none; }
+.versions-summary::-webkit-details-marker { display: none; }
+.versions-summary > div { display: flex; flex-direction: column; gap: 4px; }
+.versions-summary b { font-size: 11px; }
+.versions-summary small, .versions-summary > span { color: var(--muted); font-size: 9px; }
+.versions-body { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); }
+.versions-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.versions-toolbar small { color: var(--muted); font-size: 9px; }
+.versions-toolbar button { padding: 6px 9px; }
+.versions-empty { padding: 14px; border: 1px dashed #dfe5dc; border-radius: 9px; color: var(--muted); font-size: 10px; text-align: center; line-height: 1.8; }
+.versions-list { display: flex; flex-direction: column; gap: 8px; }
+.version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.version-row > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.version-row b { font-size: 10px; }
+.version-row small { color: var(--muted); font-size: 9px; }
+.version-row p { margin: 0; color: #68736c; font-size: 9px; line-height: 1.7; overflow-wrap: anywhere; }
+.version-row button { flex: none; padding: 7px 10px; }
+@media (max-width: 480px) { .versions-toolbar { align-items: flex-start; flex-direction: column; } .version-row { align-items: flex-start; flex-direction: column; } .version-row button { width: 100%; } }
