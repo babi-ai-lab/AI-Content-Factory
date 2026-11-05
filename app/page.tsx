@@ -490,6 +490,7 @@ export default function Home() {
   const [instagramCaption, setInstagramCaption] = useState("");
   const [instagramPublishBusy, setInstagramPublishBusy] = useState(false);
   const [instagramRequestId, setInstagramRequestId] = useState("");
+  const [instagramPublishJobs, setInstagramPublishJobs] = useState<Array<{ id: string; media_type: string; status: string; caption: string; published_media_id: string | null; error_message: string | null; created_at: string }>>([]);
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -681,6 +682,24 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
     if (!user?.id) {
+      setInstagramPublishJobs([]);
+      return () => { cancelled = true; };
+    }
+    async function loadInstagramPublishJobs() {
+      const { data, error } = await supabase
+        .from("instagram_publish_jobs")
+        .select("id,media_type,status,caption,published_media_id,error_message,created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (!cancelled && !error) setInstagramPublishJobs(data || []);
+    }
+    void loadInstagramPublishJobs();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
       setInstagramConnection(null);
       setInstagramLoading(false);
       return () => { cancelled = true; };
@@ -794,6 +813,12 @@ export default function Home() {
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.published) throw new Error(result.error || "انتشار در اینستاگرام ناموفق بود.");
       setInstagramNotice("محتوا با موفقیت در اینستاگرام منتشر شد.");
+      const { data: latestJobs } = await supabase
+        .from("instagram_publish_jobs")
+        .select("id,media_type,status,caption,published_media_id,error_message,created_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      setInstagramPublishJobs(latestJobs || []);
       setInstagramMediaFile(null);
       setInstagramMediaUrl("");
       setInstagramCaption("");
@@ -2254,6 +2279,24 @@ const response = await fetch("/api/generate", {
             </button>
           </div>
           <p className="privacy-note">فایل‌های این بخش در فضای عمومی رسانه نگهداری می‌شوند تا سرورهای Meta بتوانند آن‌ها را دریافت کنند. فقط فایل‌هایی را بارگذاری کن که مجوز انتشارشان را داری.</p>
+          <div className="instagram-publish-history">
+            <h3>آخرین انتشارها</h3>
+            {instagramPublishJobs.length === 0 ? (
+              <p className="privacy-note">هنوز در این حساب محتوایی از طریق اینستاگرام منتشر نشده است.</p>
+            ) : (
+              <ul>
+                {instagramPublishJobs.map((job) => (
+                  <li key={job.id}>
+                    <span className={`instagram-job-status ${job.status}`}>{job.status === "published" ? "منتشر شد" : job.status === "failed" ? "ناموفق" : "در حال انتشار"}</span>
+                    <span>{job.media_type === "reel" ? "ریلز" : "تصویر"} · {new Date(job.created_at).toLocaleString("fa-IR")}</span>
+                    <small>{job.caption || "بدون کپشن"}</small>
+                    {job.error_message && <small className="instagram-job-error">{job.error_message}</small>}
+                    {job.published_media_id && <small>شناسه رسانه: {job.published_media_id}</small>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       )}
 
