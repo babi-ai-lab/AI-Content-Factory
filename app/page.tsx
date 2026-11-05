@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
+import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 
 type BusinessType =
   | "retail"
@@ -228,33 +229,16 @@ function createId() {
 
 }
 
-function toLocalDateTimeInput(value?: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-}
-
-function toIsoDateTime(value: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
-}
-
 function formatDate(value: string) {
 
-  return new Date(value).toLocaleString("fa-IR", {
-
+  return new Date(value).toLocaleString("fa-IR-u-ca-persian", {
+    calendar: "persian",
+    numberingSystem: "arab",
     year: "numeric",
-
-    month: "short",
-
+    month: "long",
     day: "numeric",
-
     hour: "2-digit",
-
     minute: "2-digit",
-
   });
 
 }
@@ -2373,15 +2357,11 @@ const response = await fetch("/api/generate", {
                     if (folder !== null && folder.trim()) updateHistoryMeta(item, { folder: folder.trim().slice(0, 40) });
                   }}>پوشه</button>
 
-                  <label className="schedule-control">
-                    <span>زمان انتشار</span>
-                    <input
-                      type="datetime-local"
-                      aria-label={`زمان انتشار ${item.product.name || "محتوا"}`}
-                      value={toLocalDateTimeInput(item.product._factoryMeta?.scheduledAt)}
-                      onChange={(e) => updateHistoryMeta(item, { scheduledAt: toIsoDateTime(e.target.value) })}
-                    />
-                  </label>
+                  <JalaliDateTimePicker
+                    value={item.product._factoryMeta?.scheduledAt || ""}
+                    onChange={(scheduledAt) => updateHistoryMeta(item, { scheduledAt })}
+                    label={`زمان انتشار — ${item.product.name || "محتوا"}`}
+                  />
 
                   <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
 
