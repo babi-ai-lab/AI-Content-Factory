@@ -490,7 +490,8 @@ export default function Home() {
   const [instagramCaption, setInstagramCaption] = useState("");
   const [instagramPublishBusy, setInstagramPublishBusy] = useState(false);
   const [instagramRequestId, setInstagramRequestId] = useState("");
-  const [instagramPublishJobs, setInstagramPublishJobs] = useState<Array<{ id: string; media_type: string; status: string; caption: string; published_media_id: string | null; error_message: string | null; created_at: string }>>([]);
+  const [instagramScheduleAt, setInstagramScheduleAt] = useState("");
+  const [instagramPublishJobs, setInstagramPublishJobs] = useState<Array<{ id: string; media_type: string; status: string; caption: string; published_media_id: string | null; error_message: string | null; created_at: string; scheduled_at: string | null }>>([]);
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -688,7 +689,7 @@ export default function Home() {
     async function loadInstagramPublishJobs() {
       const { data, error } = await supabase
         .from("instagram_publish_jobs")
-        .select("id,media_type,status,caption,published_media_id,error_message,created_at")
+        .select("id,media_type,status,caption,published_media_id,error_message,created_at,scheduled_at")
         .order("created_at", { ascending: false })
         .limit(10);
       if (!cancelled && !error) setInstagramPublishJobs(data || []);
@@ -815,7 +816,7 @@ export default function Home() {
       setInstagramNotice("محتوا با موفقیت در اینستاگرام منتشر شد.");
       const { data: latestJobs } = await supabase
         .from("instagram_publish_jobs")
-        .select("id,media_type,status,caption,published_media_id,error_message,created_at")
+        .select("id,media_type,status,caption,published_media_id,error_message,created_at,scheduled_at")
         .order("created_at", { ascending: false })
         .limit(10);
       setInstagramPublishJobs(latestJobs || []);
@@ -828,6 +829,102 @@ export default function Home() {
     } finally {
       setInstagramPublishBusy(false);
     }
+  }
+
+  async function scheduleInstagramMedia() {
+    if (!user || !instagramConnection) {
+      setInstagramNotice("ابتدا حساب حرفه‌ای اینستاگرام را متصل کن.");
+      return;
+    }
+    if (!instagramMediaFile) {
+      setInstagramNotice("ابتدا یک فایل تصویر یا ویدئو انتخاب کن.");
+      return;
+    }
+    if (!instagramScheduleAt) {
+      setInstagramNotice("تاریخ و ساعت انتشار را انتخاب کن.");
+      return;
+    }
+    const isValidFile = instagramMediaType === "image"
+      ? instagramMediaFile.type === "image/jpeg" && instagramMediaFile.size <= 8 * 1024 * 1024
+      : instagramMediaFile.type === "video/mp4" && instagramMediaFile.size <= 50 * 1024 * 1024;
+    if (!isValidFile) {
+      setInstagramNotice(instagramMediaType === "image"
+        ? "برای پست تصویری فقط JPEG تا ۸ مگابایت مجاز است."
+        : "برای ریلز فقط MP4 تا ۵۰ مگابایت مجاز است.");
+      return;
+    }
+
+    setInstagramPublishBusy(true);
+    setInstagramNotice("در حال آماده‌سازی انتشار زمان‌بندی‌شده...");
+    const requestId = instagramRequestId || crypto.randomUUID();
+    if (!instagramRequestId) setInstagramRequestId(requestId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("نشست کاربری معتبر نیست.");
+      let mediaUrl = instagramMediaUrl;
+      if (!mediaUrl) {
+        const safeName = instagramMediaFile.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+        const objectPath = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from("instagram-media").upload(objectPath, instagramMediaFile, {
+          contentType: instagramMediaFile.type,
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (uploadError) throw new Error(uploadError.message || "بارگذاری رسانه ناموفق بود.");
+        mediaUrl = supabase.storage.from("instagram-media").getPublicUrl(objectPath).data.publicUrl;
+        setInstagramMediaUrl(mediaUrl);
+      }
+
+      const response = await fetch("/api/integrations/instagram/schedule", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          mediaUrl,
+          mediaType: instagramMediaType,
+          caption: instagramCaption,
+          requestId,
+          scheduledAt: instagramScheduleAt,
+        }),
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.scheduled) throw new Error(result.error || "زمان‌بندی انتشار ناموفق بود.");
+      setInstagramNotice("انتشار محتوا با موفقیت زمان‌بندی شد.");
+      const { data: latestJobs } = await supabase
+        .from("instagram_publish_jobs")
+        .select("id,media_type,status,caption,published_media_id,error_message,created_at,scheduled_at")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      setInstagramPublishJobs(latestJobs || []);
+      setInstagramMediaFile(null);
+      setInstagramMediaUrl("");
+      setInstagramCaption("");
+      setInstagramScheduleAt("");
+      setInstagramRequestId("");
+    } catch (error) {
+      setInstagramNotice(error instanceof Error ? error.message : "زمان‌بندی انتشار ناموفق بود.");
+    } finally {
+      setInstagramPublishBusy(false);
+    }
+  }
+
+  async function cancelScheduledInstagramJob(jobId: string) {
+    const confirmed = window.confirm("این انتشار زمان‌بندی‌شده لغو شود؟");
+    if (!confirmed) return;
+    const { error } = await supabase
+      .from("instagram_publish_jobs")
+      .delete()
+      .eq("id", jobId)
+      .eq("status", "queued");
+    if (error) {
+      setInstagramNotice("لغو انتشار زمان‌بندی‌شده ناموفق بود.");
+      return;
+    }
+    setInstagramPublishJobs((jobs) => jobs.filter((job) => job.id !== jobId));
+    setInstagramNotice("انتشار زمان‌بندی‌شده لغو شد.");
   }
 
   async function disconnectInstagram() {
@@ -2269,14 +2366,24 @@ const response = await fetch("/api/generate", {
               />
             </label>
             {instagramMediaFile && <span className="instagram-file-name">{instagramMediaFile.name} · {(instagramMediaFile.size / (1024 * 1024)).toFixed(1)} MB</span>}
+            <JalaliDateTimePicker
+              value={instagramScheduleAt}
+              onChange={setInstagramScheduleAt}
+              label="زمان انتشار خودکار (اختیاری)"
+            />
             <label>
               کپشن اینستاگرام
               <textarea rows={4} maxLength={2200} value={instagramCaption} onChange={(event) => setInstagramCaption(event.target.value)} placeholder="متن کپشن، هشتگ‌ها و دعوت به اقدام..." disabled={instagramPublishBusy} />
               <small>{instagramCaption.length.toLocaleString("fa-IR")} / ۲۲۰۰ نویسه</small>
             </label>
-            <button type="button" className="primary-button" onClick={publishInstagramMedia} disabled={instagramPublishBusy || !instagramMediaFile}>
-              {instagramPublishBusy ? "در حال انتشار..." : "انتشار در اینستاگرام"}
-            </button>
+            <div className="instagram-publish-buttons">
+              <button type="button" className="primary-button" onClick={publishInstagramMedia} disabled={instagramPublishBusy || !instagramMediaFile}>
+                {instagramPublishBusy ? "در حال انجام..." : "انتشار فوری"}
+              </button>
+              <button type="button" className="secondary-button" onClick={scheduleInstagramMedia} disabled={instagramPublishBusy || !instagramMediaFile || !instagramScheduleAt}>
+                زمان‌بندی انتشار
+              </button>
+            </div>
           </div>
           <p className="privacy-note">فایل‌های این بخش در فضای عمومی رسانه نگهداری می‌شوند تا سرورهای Meta بتوانند آن‌ها را دریافت کنند. فقط فایل‌هایی را بارگذاری کن که مجوز انتشارشان را داری.</p>
           <div className="instagram-publish-history">
@@ -2287,11 +2394,12 @@ const response = await fetch("/api/generate", {
               <ul>
                 {instagramPublishJobs.map((job) => (
                   <li key={job.id}>
-                    <span className={`instagram-job-status ${job.status}`}>{job.status === "published" ? "منتشر شد" : job.status === "failed" ? "ناموفق" : "در حال انتشار"}</span>
-                    <span>{job.media_type === "reel" ? "ریلز" : "تصویر"} · {new Date(job.created_at).toLocaleString("fa-IR")}</span>
+                    <span className={`instagram-job-status ${job.status}`}>{job.status === "published" ? "منتشر شد" : job.status === "failed" ? "ناموفق" : job.status === "queued" ? "زمان‌بندی شد" : "در حال انتشار"}</span>
+                    <span>{job.media_type === "reel" ? "ریلز" : "تصویر"} · {new Date(job.scheduled_at || job.created_at).toLocaleString("fa-IR")}</span>
                     <small>{job.caption || "بدون کپشن"}</small>
                     {job.error_message && <small className="instagram-job-error">{job.error_message}</small>}
                     {job.published_media_id && <small>شناسه رسانه: {job.published_media_id}</small>}
+                    {job.status === "queued" && <button type="button" className="instagram-cancel-schedule" onClick={() => cancelScheduledInstagramJob(job.id)}>لغو زمان‌بندی</button>}
                   </li>
                 ))}
               </ul>
