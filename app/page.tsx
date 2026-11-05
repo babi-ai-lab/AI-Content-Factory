@@ -693,12 +693,13 @@ export default function Home() {
 
     const term = historySearch.trim().toLowerCase();
 
-    if (!term) return history;
-
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
       const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
-      return (!term || searchable.includes(term)) && (historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter) && (!historyFavoritesOnly || meta.favorite);
+      const matchesSearch = !term || searchable.includes(term);
+      const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
+      const matchesFavorite = !historyFavoritesOnly || meta.favorite;
+      return matchesSearch && matchesFolder && matchesFavorite;
     });
   }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
 
@@ -1440,7 +1441,7 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">مرکز آمار</span>
             <h2 id="analytics-title">عملکرد محتوای شما</h2>
-            <p>آمار بر اساس تاریخچه ذخیره‌شده همین حساب کاربری محاسبه می‌شود.</p>
+            <p>آمار بر اساس ۵۰ محتوای اخیر بارگذاری‌شده از تاریخچه همین حساب محاسبه می‌شود.</p>
           </div>
           <div className="analytics-period" role="group" aria-label="بازه آماری">
             <button type="button" className={analyticsPeriod === "7" ? "active" : ""} onClick={() => setAnalyticsPeriod("7")}>۷ روز</button>
