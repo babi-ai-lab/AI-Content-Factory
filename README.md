@@ -94,4 +94,4 @@ npm test
 npm run build
 ```
 
-The test suite covers request body size enforcement, JSON/UTF-8 parsing, business input validation, and the in-memory rate limiter.
+The test suite covers request body size enforcement, JSON/UTF-8 parsing, business input validation, and the in-memory rate limiter (including expiry and capacity limits).
