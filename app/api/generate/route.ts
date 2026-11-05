@@ -1,8 +1,47 @@
 
 import { NextRequest, NextResponse } from "next/server";
-
+import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
+type RateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
 
+const rateLimitGlobal = globalThis as typeof globalThis & {
+  __aiContentRateLimit?: Map<string, RateLimitEntry>;
+};
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+
+  const store =
+    rateLimitGlobal.__aiContentRateLimit ??
+    (rateLimitGlobal.__aiContentRateLimit = new Map());
+
+  store.forEach((value, key) => {
+  if (value.resetAt <= now) {
+    store.delete(key);
+  }
+});
+
+  const entry = store.get(userId);
+
+  if (!entry || entry.resetAt <= now) {
+    store.set(userId, {
+      count: 1,
+      resetAt: now + 10 * 60 * 1000,
+    });
+
+    return true;
+  }
+
+  if (entry.count >= 8) {
+    return false;
+  }
+
+  entry.count += 1;
+  return true;
+}
 type BusinessType =
   | "retail"
   | "services"
@@ -352,6 +391,81 @@ ${businessLabel}
 
 export async function POST(request: NextRequest) {
   try {
+    // بررسی وجود توکن ورود
+    const authorization = request.headers.get("authorization");
+
+    const token =
+      authorization?.startsWith("Bearer ")
+        ? authorization.slice(7)
+        : "";
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "برای تولید محتوا ابتدا وارد حساب کاربری شو." },
+        { status: 401 }
+      );
+    }
+
+    // بررسی تنظیمات Supabase
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error("Supabase server authentication is not configured.");
+
+      return NextResponse.json(
+        { error: "تنظیمات احراز هویت سرور کامل نیست." },
+        { status: 500 }
+      );
+    }
+
+    // اعتبارسنجی واقعی توکن در Supabase
+    const supabaseServer = createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const {
+      data: { user: authenticatedUser },
+      error: authError,
+    } = await supabaseServer.auth.getUser(token);
+
+    if (authError || !authenticatedUser) {
+      return NextResponse.json(
+        { error: "نشست کاربری معتبر نیست. دوباره وارد حساب شو." },
+        { status: 401 }
+      );
+    }
+
+    // محدودیت تعداد درخواست‌ها
+    if (!checkRateLimit(authenticatedUser.id)) {
+      return NextResponse.json(
+        {
+          error:
+            "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً ۱۰ دقیقه دیگر دوباره تلاش کن.",
+        },
+        { status: 429 }
+      );
+    }
+
+    // جلوگیری از دریافت درخواست‌های بسیار حجیم
+    const contentLength = Number(
+      request.headers.get("content-length") || 0
+    );
+
+    if (contentLength > 16 * 1024) {
+      return NextResponse.json(
+        { error: "حجم اطلاعات ارسالی بیش از حد مجاز است." },
+        { status: 413 }
+      );
+    }
+
     const p = (await request.json()) as BusinessInput;
 
     if (
