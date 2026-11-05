@@ -529,6 +529,8 @@ export default function Home() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const [product, setProduct] = useState<Product>(initialProduct);
+  const [activeCampaignForGeneration, setActiveCampaignForGeneration] = useState<{ id: string; name: string } | null>(null);
+  const [campaignRefreshKey, setCampaignRefreshKey] = useState(0);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
   const [brandProfileSaving, setBrandProfileSaving] = useState(false);
   const [brandProfileNotice, setBrandProfileNotice] = useState("");
@@ -1458,6 +1460,27 @@ const response = await fetch("/api/generate", {
 
       }
 
+      let campaignLinkMessage = "";
+      let campaignLinkFailed = false;
+      if (activeCampaignForGeneration) {
+        const { error: campaignLinkError } = await supabase
+          .from("marketing_campaign_content")
+          .insert({
+            user_id: user!.id,
+            campaign_id: activeCampaignForGeneration.id,
+            content_id: savedRow.id,
+          });
+
+        if (campaignLinkError) {
+          campaignLinkFailed = true;
+          campaignLinkMessage = ` اتصال خودکار به کمپین «${activeCampaignForGeneration.name}» انجام نشد؛ محتوا در تاریخچه ذخیره شده و می‌توانی آن را دستی متصل کنی.`;
+        } else {
+          campaignLinkMessage = ` و به کمپین «${activeCampaignForGeneration.name}» متصل شد.`;
+          setCampaignRefreshKey((value) => value + 1);
+        }
+        setActiveCampaignForGeneration(null);
+      }
+
       const newItem: HistoryItem = {
 
         id: savedRow.id,
@@ -1478,15 +1501,10 @@ const response = await fetch("/api/generate", {
       setHistory((old) => [newItem, ...old]);
 
       showNotice(
-
         data.mode === "demo"
-
-          ? "خروجی نمونه ساخته و در حساب تو ذخیره شد. برای تولید واقعی، تنظیمات Gemini را بررسی کن."
-
-          : `محتوا با موفقیت تولید و آنلاین ذخیره شد${data.model ? ` (${data.model})` : ""}.`,
-
-        data.mode === "demo" ? "info" : "success"
-
+          ? `خروجی نمونه ساخته و در حساب تو ذخیره شد. برای تولید واقعی، تنظیمات Gemini را بررسی کن.${campaignLinkMessage}`
+          : `محتوا با موفقیت تولید و آنلاین ذخیره شد${data.model ? ` (${data.model})` : ""}.${campaignLinkMessage}`,
+        campaignLinkFailed || data.mode === "demo" ? "info" : "success"
       );
 
     } catch (error) {
@@ -2408,7 +2426,9 @@ const response = await fetch("/api/generate", {
       {user?.id && (
         <CampaignManager
           userId={user.id}
+          refreshKey={campaignRefreshKey}
           onUseCampaign={(campaign) => {
+            setActiveCampaignForGeneration({ id: campaign.id, name: campaign.name });
             setProduct((current) => ({
               ...current,
               goal: campaign.goal,
@@ -2434,6 +2454,12 @@ const response = await fetch("/api/generate", {
 
           </div>
 
+          {activeCampaignForGeneration && (
+            <div className="active-campaign-note">
+              <span>این خروجی پس از ذخیره به کمپین <strong>«{activeCampaignForGeneration.name}»</strong> متصل می‌شود.</span>
+              <button type="button" onClick={() => setActiveCampaignForGeneration(null)}>لغو اتصال خودکار</button>
+            </div>
+          )}
           <div className="form-grid">
             <label className="full">
               نوع کسب‌وکار *
