@@ -73,7 +73,18 @@ export async function POST(request: NextRequest) {
   if (priorJob?.status === "published") {
     return NextResponse.json({ published: true, mediaId: priorJob.published_media_id, jobId: priorJob.id, duplicate: true });
   }
-  if (priorJob) return NextResponse.json({ error: "این درخواست قبلاً ثبت شده و در حال پردازش یا بررسی است.", jobId: priorJob.id }, { status: 409 });
+  if (priorJob?.status === "failed") {
+    const { error: removeFailedJobError } = await supabase
+      .from("instagram_publish_jobs")
+      .delete()
+      .eq("id", priorJob.id)
+      .eq("user_id", user.id);
+    if (removeFailedJobError) {
+      return NextResponse.json({ error: "پاک‌سازی تلاش ناموفق قبلی انجام نشد؛ درخواست جدیدی بساز." }, { status: 409 });
+    }
+  } else if (priorJob) {
+    return NextResponse.json({ error: "این درخواست قبلاً ثبت شده و در حال پردازش یا بررسی است.", jobId: priorJob.id }, { status: 409 });
+  }
 
   const { data: job, error: insertError } = await supabase.from("instagram_publish_jobs").insert({
     user_id: user.id,
@@ -141,7 +152,7 @@ export async function POST(request: NextRequest) {
     publishForm.set("creation_id", containerId);
     publishForm.set("access_token", token);
     const published = await graphRequest<InstagramPublishedMedia>(
-      `${graphBase}/${encodeURIComponent(credentials[0].instagram_user_id)}/media_publish`,
+      `${graphBase}/${encodeURIComponent(credentials.instagram_user_id)}/media_publish`,
       { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: publishForm }
     );
     if (!published.ok || !published.data.id) {
