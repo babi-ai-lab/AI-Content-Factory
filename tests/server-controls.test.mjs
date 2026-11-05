@@ -5,6 +5,7 @@ import {
   readBoundedJsonBody,
   validateBusinessInput,
   checkRateLimit,
+  shouldUseDemoGeneration,
 } from "../lib/server-controls.mjs";
 
 function streamOf(text) {
@@ -129,4 +130,12 @@ test("accepts supported content templates and defaults to balanced", () => {
 
 test("rejects unsupported content template identifiers", () => {
   assert.equal(validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", contentTemplate: "fake-review" }), null);
+});
+
+
+test("allows demo generation only outside production when no provider key exists", () => {
+  assert.equal(shouldUseDemoGeneration("development", ""), true);
+  assert.equal(shouldUseDemoGeneration("test", ""), true);
+  assert.equal(shouldUseDemoGeneration("production", ""), false);
+  assert.equal(shouldUseDemoGeneration("production", "configured-key"), false);
 });
