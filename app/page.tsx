@@ -34,6 +34,56 @@ type Product = {
   _factoryMeta?: { tags: string[]; folder: string; favorite: boolean };
 };
 
+type BrandProfile = {
+  brandName: string;
+  tagline: string;
+  audience: string;
+  valueProposition: string;
+  voice: string;
+  preferredTerms: string;
+  avoidTerms: string;
+  cta: string;
+};
+
+const initialBrandProfile: BrandProfile = {
+  brandName: "",
+  tagline: "",
+  audience: "",
+  valueProposition: "",
+  voice: "",
+  preferredTerms: "",
+  avoidTerms: "",
+  cta: "",
+};
+
+function normalizeBrandProfile(value: unknown): BrandProfile {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return initialBrandProfile;
+  }
+
+  const input = value as Record<string, unknown>;
+  const limits: Record<keyof BrandProfile, number> = {
+    brandName: 120,
+    tagline: 160,
+    audience: 200,
+    valueProposition: 320,
+    voice: 120,
+    preferredTerms: 300,
+    avoidTerms: 300,
+    cta: 180,
+  };
+
+  return Object.fromEntries(
+    Object.entries(limits).map(([key, maxLength]) => {
+      const fieldValue = input[key];
+      return [
+        key,
+        typeof fieldValue === "string" ? fieldValue.trim().slice(0, maxLength) : "",
+      ];
+    })
+  ) as BrandProfile;
+}
+
 const businessTypes: { value: BusinessType; label: string }[] = [
   { value: "retail", label: "فروشگاه و خرده‌فروشی" },
   { value: "services", label: "خدمات و مشاغل" },
@@ -316,6 +366,9 @@ export default function Home() {
   const [authMessage, setAuthMessage] = useState("");
 
   const [product, setProduct] = useState<Product>(initialProduct);
+  const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
+  const [brandProfileSaving, setBrandProfileSaving] = useState(false);
+  const [brandProfileNotice, setBrandProfileNotice] = useState("");
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -375,6 +428,7 @@ export default function Home() {
           : null
 
       );
+      setBrandProfile(normalizeBrandProfile(data.session?.user.user_metadata?.aiContentFactoryBrandProfile));
 
       setAuthReady(true);
 
@@ -397,6 +451,8 @@ export default function Home() {
           : null
 
       );
+      setBrandProfile(normalizeBrandProfile(session?.user.user_metadata?.aiContentFactoryBrandProfile));
+      setBrandProfileNotice("");
 
       setHistory([]);
 
@@ -425,6 +481,7 @@ export default function Home() {
       setHistory([]);
 
       setHistoryReady(false);
+      setBrandProfile(initialBrandProfile);
 
       return;
 
@@ -657,6 +714,33 @@ export default function Home() {
 
   }
 
+  function updateBrandProfile<K extends keyof BrandProfile>(key: K, value: BrandProfile[K]) {
+    setBrandProfile((current) => ({ ...current, [key]: value }));
+    setBrandProfileNotice("");
+  }
+
+  async function saveBrandProfile() {
+    setBrandProfileSaving(true);
+    setBrandProfileNotice("");
+
+    try {
+      const normalized = normalizeBrandProfile(brandProfile);
+      const { error } = await supabase.auth.updateUser({
+        data: { aiContentFactoryBrandProfile: normalized },
+      });
+
+      if (error) throw error;
+      setBrandProfile(normalized);
+      setBrandProfileNotice("پروفایل برند در حساب کاربری ذخیره شد و در تولیدهای بعدی استفاده می‌شود.");
+    } catch (error) {
+      setBrandProfileNotice(
+        error instanceof Error ? error.message : "ذخیره پروفایل برند انجام نشد."
+      );
+    } finally {
+      setBrandProfileSaving(false);
+    }
+  }
+
   async function logout() {
 
     const { error } = await supabase.auth.signOut();
@@ -672,6 +756,8 @@ export default function Home() {
     setContent(null);
 
     setProduct(initialProduct);
+    setBrandProfile(initialBrandProfile);
+    setBrandProfileNotice("");
 
     setHistory([]);
 
@@ -808,7 +894,7 @@ const response = await fetch("/api/generate", {
     "Content-Type": "application/json",
     Authorization: `Bearer ${session.access_token}`,
   },
-  body: JSON.stringify(product),
+  body: JSON.stringify({ ...product, brandProfile }),
 });
 
       const data = await response.json().catch(() => ({}));
@@ -1435,6 +1521,60 @@ const response = await fetch("/api/generate", {
         </div>
 
       </section>
+
+      <details className="brand-profile-section">
+        <summary className="brand-profile-summary">
+          <div>
+            <span className="step">پروفایل برند</span>
+            <h2>هویت ثابت کسب‌وکار</h2>
+            <p>یک‌بار مشخصات برند را ثبت کن تا در تولیدهای بعدی به‌صورت خودکار رعایت شود.</p>
+          </div>
+          <span className="brand-profile-toggle">ویرایش پروفایل <span>⌄</span></span>
+        </summary>
+
+        <div className="brand-profile-grid">
+          <label>
+            نام برند
+            <input value={brandProfile.brandName} onChange={(e) => updateBrandProfile("brandName", e.target.value)} placeholder="مثلاً آکادمی آفتاب" maxLength={120} />
+          </label>
+          <label>
+            شعار یا پیام اصلی برند
+            <input value={brandProfile.tagline} onChange={(e) => updateBrandProfile("tagline", e.target.value)} placeholder="یک جمله کوتاه که برند را معرفی می‌کند" maxLength={160} />
+          </label>
+          <label>
+            مخاطب اصلی برند
+            <input value={brandProfile.audience} onChange={(e) => updateBrandProfile("audience", e.target.value)} placeholder="مثلاً مدیران و صاحبان کسب‌وکارهای کوچک" maxLength={200} />
+          </label>
+          <label>
+            لحن و شخصیت برند
+            <input value={brandProfile.voice} onChange={(e) => updateBrandProfile("voice", e.target.value)} placeholder="مثلاً تخصصی، مطمئن، صمیمی و لوکس" maxLength={120} />
+          </label>
+          <label className="full">
+            ارزش پیشنهادی و تمایز برند
+            <textarea rows={2} value={brandProfile.valueProposition} onChange={(e) => updateBrandProfile("valueProposition", e.target.value)} placeholder="چرا مشتری باید این برند را انتخاب کند؟ چه ارزشی ارائه می‌دهد؟" maxLength={320} />
+          </label>
+          <label>
+            واژگان و عبارت‌های ترجیحی
+            <textarea rows={2} value={brandProfile.preferredTerms} onChange={(e) => updateBrandProfile("preferredTerms", e.target.value)} placeholder="عبارت‌هایی که بهتر است در محتوا استفاده شوند" maxLength={300} />
+          </label>
+          <label>
+            واژگان و ادعاهای ممنوع
+            <textarea rows={2} value={brandProfile.avoidTerms} onChange={(e) => updateBrandProfile("avoidTerms", e.target.value)} placeholder="عبارت‌ها یا ادعاهایی که نباید استفاده شوند" maxLength={300} />
+          </label>
+          <label className="full">
+            دعوت به اقدام پیش‌فرض (CTA)
+            <input value={brandProfile.cta} onChange={(e) => updateBrandProfile("cta", e.target.value)} placeholder="مثلاً برای مشاوره با ما تماس بگیرید." maxLength={180} />
+          </label>
+        </div>
+
+        <div className="brand-profile-actions">
+          <button className="secondary-button" onClick={saveBrandProfile} disabled={brandProfileSaving}>
+            {brandProfileSaving ? "در حال ذخیره..." : "ذخیره پروفایل برند"}
+          </button>
+          <span className="privacy-note">اطلاعات در پروفایل حساب کاربری Supabase ذخیره می‌شود؛ برای هر حساب جداگانه است.</span>
+        </div>
+        {brandProfileNotice && <div className="notice info" role="status">{brandProfileNotice}</div>}
+      </details>
 
       <section className="analytics-section" aria-labelledby="analytics-title">
         <div className="analytics-heading">
