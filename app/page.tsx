@@ -167,6 +167,20 @@ type DbHistoryRow = {
 
 };
 
+type ContentVersion = {
+  id: string;
+  historyId: string;
+  createdAt: string;
+  content: Content;
+};
+
+type DbContentVersionRow = {
+  id: string;
+  history_id: string;
+  content: Content;
+  created_at: string;
+};
+
 const STORAGE_KEY = "ai-content-factory-history-v1";
 
 const MAX_HISTORY = 50;
@@ -425,6 +439,9 @@ export default function Home() {
   const [noticeType, setNoticeType] = useState<"success" | "error" | "info">("info");
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [versionsError, setVersionsError] = useState("");
 
   const [historyReady, setHistoryReady] = useState(false);
 
