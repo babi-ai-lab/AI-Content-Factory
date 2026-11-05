@@ -584,7 +584,6 @@ export async function POST(request: NextRequest) {
                 businessType,
                 businessTypeLabel: getBusinessLabel(businessType),
                 channel: p.channel,
-                channelLabel: p.channel,
               }),
             },
           ],
