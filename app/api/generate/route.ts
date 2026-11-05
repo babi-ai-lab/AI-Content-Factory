@@ -4,25 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 import type { BrandProfileInput } from "@/lib/server-controls.mjs";
 export const runtime = "nodejs";
 import {
-  checkRateLimit,
   shouldFallbackGeminiStatus,
   shouldRetryGeminiStatus,
   MAX_BODY_BYTES,
   readBoundedJsonBody,
   validateBusinessInput,
 } from "@/lib/server-controls.mjs";
-
-const rateLimitGlobal = globalThis as typeof globalThis & {
-  __aiContentRateLimit?: Map<string, { count: number; resetAt: number }>;
-  __aiContentRateLimitChecks?: number;
-};
-
-function isWithinRateLimit(userId: string): boolean {
-  const store = rateLimitGlobal.__aiContentRateLimit ?? (rateLimitGlobal.__aiContentRateLimit = new Map());
-  const checks = (rateLimitGlobal.__aiContentRateLimitChecks ?? 0) + 1;
-  rateLimitGlobal.__aiContentRateLimitChecks = checks;
-  return checkRateLimit(store, userId, Date.now(), checks);
-}
 
 type BusinessType =
   | "retail"
@@ -425,6 +412,9 @@ export async function POST(request: NextRequest) {
       supabaseUrl,
       supabaseAnonKey,
       {
+        global: {
+          headers: { Authorization: `Bearer ${token}` },
+        },
         auth: {
           autoRefreshToken: false,
           persistSession: false,
@@ -444,14 +434,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // محدودیت تعداد درخواست‌ها
-    if (!isWithinRateLimit(authenticatedUser.id)) {
+    // محدودیت پایدار و اتمیک درخواست‌ها در PostgreSQL؛ در خطای سرویس fail closed می‌کنیم.
+    const { data: rateLimitData, error: rateLimitError } = await supabaseServer.rpc(
+      "consume_generation_request"
+    );
+
+    if (rateLimitError || !rateLimitData || typeof rateLimitData.allowed !== "boolean") {
+      console.error("Persistent generation rate limit check failed:", rateLimitError);
       return NextResponse.json(
-        {
-          error:
-            "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً ۱۰ دقیقه دیگر دوباره تلاش کن.",
-        },
-        { status: 429 }
+        { error: "بررسی سهمیه درخواست‌ها موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کن." },
+        { status: 503 }
+      );
+    }
+
+    if (!rateLimitData.allowed) {
+      const retryAfter = Math.max(1, Number(rateLimitData.retry_after_seconds) || 600);
+      return NextResponse.json(
+        { error: "تعداد درخواست‌ها بیش از حد مجاز است. پس از پایان زمان محدودیت دوباره تلاش کن." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
       );
     }
 
