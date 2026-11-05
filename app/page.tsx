@@ -748,15 +748,25 @@ export default function Home() {
 
     try {
 
-      const response = await fetch("/api/generate", {
+      // دریافت نشست و توکن معتبر کاربر از Supabase
+const {
+  data: { session },
+  error: sessionError,
+} = await supabase.auth.getSession();
 
-        method: "POST",
+if (sessionError || !session?.access_token) {
+  throw new Error("نشست کاربری معتبر نیست. لطفاً دوباره وارد حساب شو.");
+}
 
-        headers: { "Content-Type": "application/json" },
-
-        body: JSON.stringify(product),
-
-      });
+// ارسال درخواست همراه با توکن احراز هویت
+const response = await fetch("/api/generate", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session.access_token}`,
+  },
+  body: JSON.stringify(product),
+});
 
       const data = await response.json().catch(() => ({}));
 
