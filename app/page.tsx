@@ -476,6 +476,9 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [authMessage, setAuthMessage] = useState("");
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   const [product, setProduct] = useState<Product>(initialProduct);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
@@ -727,6 +730,11 @@ export default function Home() {
       });
 
       setBrandProfile(normalizeBrandProfile(session?.user.user_metadata?.aiContentFactoryBrandProfile));
+
+      if (event === "PASSWORD_RECOVERY") {
+        setIsPasswordRecovery(true);
+        setAuthMessage("لینک بازیابی معتبر است. رمز عبور جدیدت را وارد کن.");
+      }
 
       if (event !== "USER_UPDATED") {
         setBrandProfileNotice("");
@@ -1042,6 +1050,55 @@ export default function Home() {
 
     }
 
+  }
+
+  async function handleForgotPassword() {
+    if (!authEmail.trim()) {
+      setAuthMessage("ابتدا ایمیل حساب کاربری را وارد کن.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthMessage("");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(authEmail.trim(), {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setAuthMessage("اگر حسابی با این ایمیل وجود داشته باشد، لینک بازیابی رمز عبور برایت ارسال می‌شود. صندوق ورودی و پوشه هرزنامه را بررسی کن.");
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : "ارسال لینک بازیابی ناموفق بود.");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handlePasswordRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (newPassword.length < 6) {
+      setAuthMessage("رمز عبور جدید باید حداقل ۶ کاراکتر باشد.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setAuthMessage("تکرار رمز عبور با رمز جدید یکسان نیست.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthMessage("");
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setIsPasswordRecovery(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setAuthMessage("");
+      showNotice("رمز عبور با موفقیت تغییر کرد.", "success");
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : "تغییر رمز عبور ناموفق بود. لینک بازیابی ممکن است منقضی شده باشد.");
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
   function updateBrandProfile<K extends keyof BrandProfile>(key: K, value: BrandProfile[K]) {
@@ -1748,6 +1805,37 @@ const response = await fetch("/api/generate", {
 
   }
 
+  if (isPasswordRecovery) {
+    return (
+      <main className="shell" style={{ minHeight: "100vh", display: "grid", placeItems: "center", paddingTop: 35, paddingBottom: 35 }}>
+        <section className="panel" style={{ width: "100%", maxWidth: 460, padding: 30 }}>
+          <div style={{ textAlign: "center", marginBottom: 25 }}>
+            <div className="brand-mark" style={{ margin: "0 auto 12px", width: 48, height: 48, fontSize: 28 }}>✳</div>
+            <h1 style={{ fontSize: 25, letterSpacing: 0 }}>تنظیم رمز عبور جدید</h1>
+            <p style={{ color: "var(--muted)", fontSize: 12, lineHeight: 2 }}>یک رمز عبور جدید برای حساب خود انتخاب کن.</p>
+          </div>
+          <form onSubmit={handlePasswordRecovery} style={{ display: "grid", gap: 14 }}>
+            <label>
+              رمز عبور جدید
+              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+            </label>
+            <label>
+              تکرار رمز عبور جدید
+              <input type="password" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+            </label>
+            <button className="generate" type="submit" disabled={authLoading}>
+              {authLoading ? "در حال ذخیره..." : "ذخیره رمز عبور جدید"}
+            </button>
+            <button type="button" className="secondary-button" onClick={() => { setIsPasswordRecovery(false); setAuthMessage(""); }}>
+              بازگشت
+            </button>
+          </form>
+          {authMessage && <div className="notice info" role="status" style={{ marginTop: 15 }}>{authMessage}</div>}
+        </section>
+      </main>
+    );
+  }
+
   if (!user) {
 
     return (
@@ -1899,6 +1987,18 @@ const response = await fetch("/api/generate", {
             </button>
 
           </form>
+
+          {authMode === "login" && (
+            <button
+              type="button"
+              className="secondary-button"
+              style={{ width: "100%", justifyContent: "center" }}
+              disabled={authLoading}
+              onClick={() => void handleForgotPassword()}
+            >
+              {authLoading ? "لطفاً صبر کن..." : "فراموشی رمز عبور؟ ارسال لینک بازیابی"}
+            </button>
+          )}
 
           {authMessage && (
 
