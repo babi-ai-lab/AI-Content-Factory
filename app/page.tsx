@@ -31,6 +31,17 @@ type ContentTemplateId =
   | "before_after"
   | "problem_solution";
 
+type ContentChannel =
+  | "general"
+  | "telegram"
+  | "bale"
+  | "sms"
+  | "website"
+  | "email"
+  | "instagram"
+  | "linkedin"
+  | "youtube";
+
 const contentTemplates: { value: ContentTemplateId; label: string; description: string }[] = [
   { value: "balanced", label: "متعادل و عمومی", description: "بسته کامل و متوازن برای معرفی و بازاریابی" },
   { value: "educational", label: "آموزشی و ارزش‌آفرین", description: "آموزش نکته کاربردی و انتقال تخصص" },
@@ -44,9 +55,22 @@ const contentTemplates: { value: ContentTemplateId; label: string; description: 
   { value: "problem_solution", label: "مسئله و راه‌حل", description: "توضیح مسئله مخاطب و راه‌حل کسب‌وکار" },
 ];
 
+const contentChannels: { value: ContentChannel; label: string }[] = [
+  { value: "general", label: "عمومی و چندمنظوره" },
+  { value: "telegram", label: "کانال تلگرام" },
+  { value: "bale", label: "کانال بله" },
+  { value: "sms", label: "پیامک تبلیغاتی" },
+  { value: "website", label: "وب‌سایت و سئو" },
+  { value: "email", label: "ایمیل" },
+  { value: "instagram", label: "متن اینستاگرام" },
+  { value: "linkedin", label: "لینکدین" },
+  { value: "youtube", label: "یوتیوب" },
+];
+
 type Product = {
   businessType: BusinessType;
   contentTemplate: ContentTemplateId;
+  channel: ContentChannel;
   businessName: string;
   name: string;
   price: string;
@@ -130,8 +154,25 @@ function businessTypeLabel(value?: string) {
   return businessTypes.find((item) => item.value === value)?.label || "فروشگاه و خرده‌فروشی";
 }
 
+function contentChannelLabel(value?: string) {
+  return contentChannels.find((item) => item.value === value)?.label || "عمومی و چندمنظوره";
+}
+
+function resolveContentChannel(value?: string): ContentChannel {
+  const normalized = (value || "").toLowerCase();
+  if (normalized.includes("تلگرام") || normalized.includes("telegram")) return "telegram";
+  if (normalized.includes("بله") || normalized.includes("bale")) return "bale";
+  if (normalized.includes("پیامک") || normalized.includes("sms")) return "sms";
+  if (normalized.includes("وب‌سایت") || normalized.includes("وب سایت") || normalized.includes("سئو") || normalized.includes("website") || normalized.includes("seo")) return "website";
+  if (normalized.includes("ایمیل") || normalized.includes("email")) return "email";
+  if (normalized.includes("اینستاگرام") || normalized.includes("instagram")) return "instagram";
+  if (normalized.includes("لینکدین") || normalized.includes("linkedin")) return "linkedin";
+  if (normalized.includes("یوتیوب") || normalized.includes("youtube")) return "youtube";
+  return "general";
+}
+
 function normalizeProduct(value: Partial<Product> | null | undefined): Product {
-  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", contentTemplate: value?.contentTemplate || "balanced", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", ...(value?._factoryMeta || {}) } };
+  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", contentTemplate: value?.contentTemplate || "balanced", channel: value?.channel || "general", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", ...(value?._factoryMeta || {}) } };
 }
 
 type Content = {
@@ -261,6 +302,7 @@ const HISTORY_PAGE_SIZE = 50;
 const initialProduct: Product = {
   businessType: "retail",
   contentTemplate: "balanced",
+  channel: "general",
   businessName: "",
   name: "",
   price: "",
@@ -416,6 +458,7 @@ function buildTextExport(product: Product, content: Content) {
 
     `هدف محتوا: ${product.goal}`,
     `قالب تولید: ${contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"}`,
+    `کانال اصلی: ${contentChannelLabel(product.channel)}`,
 
     `لحن برند: ${product.tone}`,
 
@@ -1259,7 +1302,7 @@ export default function Home() {
 
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
-      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.channel, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
       const matchesFavorite = !historyFavoritesOnly || meta.favorite;
@@ -2370,6 +2413,7 @@ const response = await fetch("/api/generate", {
               ...current,
               goal: campaign.goal,
               audience: campaign.audience || current.audience,
+              channel: resolveContentChannel(campaign.channels?.[0]),
               businessName: current.businessName || brandProfile.brandName,
             }));
             showNotice(`هدف و مخاطب کمپین «${campaign.name}» به فرم تولید محتوا منتقل شد.`, "success");
@@ -2477,6 +2521,16 @@ const response = await fetch("/api/generate", {
                 <option>اعتمادسازی</option>
                 <option>دریافت تماس و مشاوره</option>
               </select>
+            </label>
+
+            <label className="full">
+              کانال اصلی تولید محتوا
+              <select value={product.channel} onChange={(e) => update("channel", e.target.value as ContentChannel)}>
+                {contentChannels.map((channel) => (
+                  <option key={channel.value} value={channel.value}>{channel.label}</option>
+                ))}
+              </select>
+              <small>متن اصلی و تبلیغ بر اساس این کانال تنظیم می‌شوند. سناریو و استوری خروجی‌های اختیاری‌اند و انتشار خودکار انجام نمی‌شود.</small>
             </label>
 
             <label className="full">
