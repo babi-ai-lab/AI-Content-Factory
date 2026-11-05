@@ -170,3 +170,41 @@ footer span { padding: 0 6px; }
   .history-item-actions { width: 100%; }
   .history-item-actions button { flex: 1; }
 }
+
+
+/* Account analytics dashboard */
+.analytics-section { margin: 22px 0; padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 8px 28px rgba(25,34,31,.035); }
+.analytics-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+.analytics-heading h2 { margin: 6px 0 5px; font-size: 19px; }
+.analytics-heading p, .analytics-card-head span { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.8; }
+.analytics-period { display: flex; gap: 4px; padding: 4px; background: #f3f6f0; border-radius: 10px; flex-shrink: 0; }
+.analytics-period button { border: 0; background: transparent; color: #6e796f; padding: 8px 10px; border-radius: 7px; font-size: 10px; }
+.analytics-period button.active { background: #fff; color: var(--green); box-shadow: 0 1px 4px #18291b12; font-weight: 800; }
+.analytics-kpis { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+.analytics-kpi { min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 13px; background: #fbfcfa; }
+.analytics-kpi span, .analytics-kpi small { display: block; color: var(--muted); font-size: 10px; }
+.analytics-kpi strong { display: block; margin: 7px 0 3px; color: var(--green); font-size: 25px; font-weight: 850; }
+.analytics-kpi small { font-size: 9px; line-height: 1.7; }
+.analytics-grid { display: grid; grid-template-columns: 1.15fr 1fr .85fr; gap: 12px; }
+.analytics-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: #fff; }
+.analytics-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 15px; }
+.analytics-card-head h3 { margin: 0; font-size: 12px; }
+.analytics-chart { height: 150px; display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 8px; align-items: end; }
+.analytics-bar-column { min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
+.analytics-bar-column strong { font-size: 9px; color: var(--ink); }
+.analytics-bar-track { height: 100px; width: 100%; max-width: 24px; display: flex; align-items: flex-end; overflow: hidden; border-radius: 6px; background: #f1f4ef; }
+.analytics-bar-track span { display: block; width: 100%; min-height: 3px; border-radius: 6px; background: linear-gradient(180deg,#9ab68b,#557d5c); }
+.analytics-bar-column small { color: var(--muted); font-size: 9px; }
+.analytics-breakdown { display: flex; flex-direction: column; gap: 15px; }
+.analytics-breakdown-row > div:first-child, .analytics-business-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; }
+.analytics-breakdown-row b, .analytics-business-row b { color: var(--green); }
+.analytics-progress { height: 7px; margin-top: 7px; overflow: hidden; border-radius: 8px; background: #f0f3ed; }
+.analytics-progress span { display: block; height: 100%; border-radius: inherit; background: #78936f; }
+.analytics-business-card { display: flex; flex-direction: column; gap: 13px; }
+.analytics-business-card .analytics-card-head { margin-bottom: 2px; }
+.analytics-business-row { padding-bottom: 9px; border-bottom: 1px solid #eef1eb; }
+.analytics-business-row:last-child { border-bottom: 0; }
+.analytics-empty { min-height: 85px; display: grid; place-items: center; padding: 14px; color: var(--muted); font-size: 10px; text-align: center; line-height: 1.9; }
+@media (max-width: 900px) { .analytics-grid { grid-template-columns: 1fr 1fr; } .analytics-business-card { grid-column: 1 / -1; } }
+@media (max-width: 650px) { .analytics-section { padding: 17px; } .analytics-heading { flex-direction: column; } .analytics-kpis { grid-template-columns: 1fr 1fr; } .analytics-grid { grid-template-columns: 1fr; } .analytics-business-card { grid-column: auto; } }
+@media (max-width: 390px) { .analytics-period { width: 100%; } .analytics-period button { flex: 1; padding: 8px 4px; } .analytics-kpi { padding: 12px; } .analytics-kpi strong { font-size: 22px; } }
