@@ -100,6 +100,118 @@ function getBusinessLabel(type?: string) {
   return businessLabels[type || "retail"] || businessLabels.other;
 }
 
+const MAX_BODY_BYTES = 16 * 1024;
+const allowedBusinessTypes = new Set(Object.keys(businessLabels));
+const fieldLimits: Record<string, number> = {
+  businessName: 120,
+  name: 120,
+  price: 100,
+  category: 120,
+  fabric: 100,
+  colors: 120,
+  features: 1800,
+  audience: 160,
+  goal: 100,
+  tone: 100,
+  serviceArea: 160,
+  offer: 180,
+  differentiators: 220,
+  additionalInfo: 1000,
+};
+
+async function readJsonBody(
+  request: NextRequest
+): Promise<{ value: unknown } | { error: "too_large" | "invalid" }> {
+  const reader = request.body?.getReader();
+  if (!reader) return { error: "invalid" };
+
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BODY_BYTES) {
+        await reader.cancel();
+        return { error: "too_large" };
+      }
+
+      chunks.push(value);
+    }
+  } catch {
+    return { error: "invalid" };
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    return { value: JSON.parse(new TextDecoder().decode(body)) };
+  } catch {
+    return { error: "invalid" };
+  }
+}
+
+function validateBusinessInput(value: unknown): BusinessInput | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const input = value as Record<string, unknown>;
+  if (
+    typeof input.name !== "string" ||
+    typeof input.features !== "string" ||
+    !input.name.trim() ||
+    !input.features.trim()
+  ) {
+    return null;
+  }
+
+  const businessType =
+    typeof input.businessType === "string" ? input.businessType : "retail";
+  if (!allowedBusinessTypes.has(businessType)) return null;
+
+  const sanitized: Record<string, string> = {};
+  for (const [field, maxLength] of Object.entries(fieldLimits)) {
+    const fieldValue = input[field];
+    if (fieldValue === undefined || fieldValue === null) {
+      sanitized[field] = "";
+      continue;
+    }
+    if (typeof fieldValue !== "string") return null;
+
+    const trimmed = fieldValue.trim();
+    if (trimmed.length > maxLength) return null;
+    sanitized[field] = trimmed;
+  }
+
+  if (sanitized.name.length < 2 || sanitized.features.length < 3) return null;
+
+  return {
+    businessType: businessType as BusinessType,
+    businessName: sanitized.businessName,
+    name: sanitized.name,
+    price: sanitized.price,
+    category: sanitized.category,
+    fabric: sanitized.fabric,
+    colors: sanitized.colors,
+    features: sanitized.features,
+    audience: sanitized.audience,
+    goal: sanitized.goal,
+    tone: sanitized.tone,
+    serviceArea: sanitized.serviceArea,
+    offer: sanitized.offer,
+    differentiators: sanitized.differentiators,
+    additionalInfo: sanitized.additionalInfo,
+  };
+}
+
 function demoContent(p: BusinessInput): GeneratedContent {
   const businessType = p.businessType || "retail";
   const businessName = p.businessName?.trim() || p.name.trim();
@@ -454,30 +566,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // جلوگیری از دریافت درخواست‌های بسیار حجیم
-    const contentLength = Number(
-      request.headers.get("content-length") || 0
-    );
+    // محدودیت اندازه هدر برای رد سریع درخواست‌های بزرگ
+    const contentLengthHeader = request.headers.get("content-length");
+    const contentLength = contentLengthHeader ? Number(contentLengthHeader) : 0;
 
-    if (contentLength > 16 * 1024) {
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
       return NextResponse.json(
         { error: "حجم اطلاعات ارسالی بیش از حد مجاز است." },
         { status: 413 }
       );
     }
 
-    const p = (await request.json()) as BusinessInput;
-
-    if (
-      !p ||
-      typeof p.name !== "string" ||
-      typeof p.features !== "string" ||
-      !p.name.trim() ||
-      !p.features.trim()
-    ) {
+    // محدودسازی واقعی اندازه بدنه؛ حتی اگر Content-Length ارسال نشده باشد
+    const parsedBody = await readJsonBody(request);
+    if ("error" in parsedBody) {
       return NextResponse.json(
         {
-          error: "نام محصول یا خدمت و توضیحات آن الزامی است.",
+          error:
+            parsedBody.error === "too_large"
+              ? "حجم اطلاعات ارسالی بیش از حد مجاز است."
+              : "ساختار درخواست معتبر نیست. اطلاعات را بررسی و دوباره ارسال کن.",
+        },
+        { status: parsedBody.error === "too_large" ? 413 : 400 }
+      );
+    }
+
+    const p = validateBusinessInput(parsedBody.value);
+    if (!p) {
+      return NextResponse.json(
+        {
+          error:
+            "اطلاعات ورودی معتبر نیست. نام و توضیحات الزامی‌اند و طول فیلدها باید در محدوده مجاز باشد.",
         },
         { status: 400 }
       );
