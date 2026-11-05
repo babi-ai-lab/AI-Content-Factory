@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { decryptInstagramToken } from "@/lib/instagram-security.mjs";
 import { validateInstagramMediaUrl, validateInstagramPublishInput } from "@/lib/instagram-publishing.mjs";
+import { readBoundedJsonBody } from "@/lib/server-controls.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,15 +36,14 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
 
-  const bodyText = await request.text();
-  if (new TextEncoder().encode(bodyText).byteLength > 12 * 1024) {
+  const parsedBody = await readBoundedJsonBody(request.body, 12 * 1024);
+  if (parsedBody.error === "too_large") {
     return NextResponse.json({ error: "حجم درخواست بیش از حد مجاز است." }, { status: 413 });
   }
-  let body: unknown;
-  try { body = JSON.parse(bodyText); } catch {
+  if (parsedBody.error || !parsedBody.value) {
     return NextResponse.json({ error: "ساختار درخواست معتبر نیست." }, { status: 400 });
   }
-  const validation = validateInstagramPublishInput(body);
+  const validation = validateInstagramPublishInput(parsedBody.value);
   if (!validation.valid || !validation.value) return NextResponse.json({ error: validation.error || "درخواست انتشار معتبر نیست." }, { status: 400 });
   const input = validation.value!;
   if (!validateInstagramMediaUrl(input.mediaUrl, supabaseUrl, user.id)) {
