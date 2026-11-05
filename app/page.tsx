@@ -695,7 +695,7 @@ export default function Home() {
 
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
-      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder].join(" ").toLowerCase();
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       return (!term || searchable.includes(term)) && (historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter) && (!historyFavoritesOnly || meta.favorite);
     });
   }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
@@ -1665,7 +1665,7 @@ const response = await fetch("/api/generate", {
         </div>
 
         {history.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(150px, 220px) auto auto", gap: 9, marginBottom: 12, alignItems: "center" }}>
+          <div className="history-toolbar">
             <input className="history-search" style={{ margin: 0 }} value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در نام، موضوع، برچسب یا پوشه..." />
             <select value={historyFolderFilter} onChange={(e) => setHistoryFolderFilter(e.target.value)} aria-label="فیلتر پوشه">
               <option>همه پوشه‌ها</option>
@@ -1673,6 +1673,7 @@ const response = await fetch("/api/generate", {
             </select>
             <button className={historyFavoritesOnly ? "history-open" : "history-backup"} onClick={() => setHistoryFavoritesOnly((value) => !value)}>★ منتخب‌ها</button>
             <button className="history-backup" onClick={() => setSelectedBulkIds(filteredHistory.map((item) => item.id))} disabled={!filteredHistory.length}>انتخاب نتایج</button>
+            <button className="history-backup" onClick={() => setSelectedBulkIds([])} disabled={!selectedBulkIds.length}>لغو انتخاب</button>
           </div>
         )}
 
