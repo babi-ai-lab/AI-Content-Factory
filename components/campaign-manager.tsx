@@ -59,7 +59,7 @@ function getContentTitle(option: ContentOption) {
   return "محتوای ذخیره‌شده";
 }
 
-export default function CampaignManager({ userId, onUseCampaign }: { userId: string; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience">) => void }) {
+export default function CampaignManager({ userId, onUseCampaign }: { userId: string; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience" | "channels">) => void }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contentOptions, setContentOptions] = useState<ContentOption[]>([]);
   const [contentLinks, setContentLinks] = useState<CampaignContentLink[]>([]);
@@ -308,7 +308,7 @@ export default function CampaignManager({ userId, onUseCampaign }: { userId: str
                   <div className="campaign-card-actions">
                     <span>ایجاد: {formatCampaignDate(campaign.created_at)} · {linked.length.toLocaleString("fa-IR")} محتوای مرتبط</span>
                     {onUseCampaign && (
-                      <button type="button" className="history-open" onClick={() => onUseCampaign({ id: campaign.id, name: campaign.name, goal: campaign.goal, audience: campaign.audience })}>
+                      <button type="button" className="history-open" onClick={() => onUseCampaign({ id: campaign.id, name: campaign.name, goal: campaign.goal, audience: campaign.audience, channels: campaign.channels })}>
                         تولید محتوا برای این کمپین
                       </button>
                     )}
