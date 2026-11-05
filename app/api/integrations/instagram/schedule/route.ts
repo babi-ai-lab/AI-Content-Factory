@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
   });
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
+  if (process.env.INSTAGRAM_SCHEDULER_ENABLED !== "true") {
+    return NextResponse.json({ error: "زمان‌بندی خودکار هنوز فعال نشده است؛ تنظیمات امن worker باید تکمیل شود." }, { status: 503 });
+  }
 
   const parsed = await readBoundedJsonBody(request.body, 12 * 1024);
   if ("error" in parsed) {
