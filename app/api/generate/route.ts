@@ -671,6 +671,25 @@ export async function POST(request: NextRequest) {
 
     const resultData = await aiResponse.json();
 
+    const usageMetadata = resultData.usageMetadata || {};
+    const usage = {
+      promptTokens: Math.max(0, Number(usageMetadata.promptTokenCount) || 0),
+      candidateTokens: Math.max(0, Number(usageMetadata.candidatesTokenCount) || 0),
+      totalTokens: Math.max(0, Number(usageMetadata.totalTokenCount) || 0),
+    };
+
+    const { error: usageLogError } = await supabaseServer.rpc("record_ai_usage", {
+      p_request_id: requestId,
+      p_model: result.model,
+      p_prompt_tokens: usage.promptTokens,
+      p_candidate_tokens: usage.candidateTokens,
+      p_total_tokens: usage.totalTokens,
+    });
+    if (usageLogError) {
+      // Generation must remain available if telemetry storage is temporarily unavailable.
+      console.error("AI usage telemetry could not be saved:", usageLogError);
+    }
+
     const raw = resultData.candidates?.[0]?.content?.parts
       ?.map((part: { text?: string }) => part.text || "")
       .join("")
@@ -691,25 +710,6 @@ export async function POST(request: NextRequest) {
     }
 
     const content = extractJson(raw);
-    const usageMetadata = resultData.usageMetadata || {};
-    const usage = {
-      promptTokens: Math.max(0, Number(usageMetadata.promptTokenCount) || 0),
-      candidateTokens: Math.max(0, Number(usageMetadata.candidatesTokenCount) || 0),
-      totalTokens: Math.max(0, Number(usageMetadata.totalTokenCount) || 0),
-    };
-
-    const { error: usageLogError } = await supabaseServer.rpc("record_ai_usage", {
-      p_request_id: requestId,
-      p_model: result.model,
-      p_prompt_tokens: usage.promptTokens,
-      p_candidate_tokens: usage.candidateTokens,
-      p_total_tokens: usage.totalTokens,
-    });
-    if (usageLogError) {
-      // Generation must remain available if telemetry storage is temporarily unavailable.
-      console.error("AI usage telemetry could not be saved:", usageLogError);
-    }
-
     console.log(
       `Content successfully generated using ${result.model}`
     );
