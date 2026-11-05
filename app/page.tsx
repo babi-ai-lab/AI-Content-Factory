@@ -484,6 +484,11 @@ export default function Home() {
   const [instagramLoading, setInstagramLoading] = useState(false);
   const [instagramBusy, setInstagramBusy] = useState(false);
   const [instagramNotice, setInstagramNotice] = useState("");
+  const [instagramMediaType, setInstagramMediaType] = useState<"image" | "reel">("image");
+  const [instagramMediaFile, setInstagramMediaFile] = useState<File | null>(null);
+  const [instagramMediaUrl, setInstagramMediaUrl] = useState("");
+  const [instagramCaption, setInstagramCaption] = useState("");
+  const [instagramPublishBusy, setInstagramPublishBusy] = useState(false);
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -727,6 +732,72 @@ export default function Home() {
     } catch (error) {
       setInstagramNotice(error instanceof Error ? error.message : "شروع اتصال اینستاگرام ناموفق بود.");
       setInstagramBusy(false);
+    }
+  }
+
+  async function publishInstagramMedia() {
+    if (!user || !instagramConnection) {
+      setInstagramNotice("ابتدا حساب حرفه‌ای اینستاگرام را متصل کن.");
+      return;
+    }
+    if (!instagramMediaFile) {
+      setInstagramNotice("ابتدا یک فایل تصویر یا ویدئو انتخاب کن.");
+      return;
+    }
+    const isValidFile = instagramMediaType === "image"
+      ? instagramMediaFile.type === "image/jpeg" && instagramMediaFile.size <= 8 * 1024 * 1024
+      : instagramMediaFile.type === "video/mp4" && instagramMediaFile.size <= 300 * 1024 * 1024;
+    if (!isValidFile) {
+      setInstagramNotice(instagramMediaType === "image"
+        ? "برای پست تصویری فقط JPEG تا ۸ مگابایت مجاز است."
+        : "برای ریلز فقط MP4 تا ۳۰۰ مگابایت مجاز است.");
+      return;
+    }
+
+    setInstagramPublishBusy(true);
+    setInstagramNotice("در حال بارگذاری رسانه...");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("نشست کاربری معتبر نیست.");
+      let mediaUrl = instagramMediaUrl;
+      if (!mediaUrl) {
+        const safeName = instagramMediaFile.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+        const objectPath = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage.from("instagram-media").upload(objectPath, instagramMediaFile, {
+          contentType: instagramMediaFile.type,
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (uploadError) throw new Error(uploadError.message || "بارگذاری رسانه ناموفق بود.");
+        mediaUrl = supabase.storage.from("instagram-media").getPublicUrl(objectPath).data.publicUrl;
+        setInstagramMediaUrl(mediaUrl);
+      }
+
+      setInstagramNotice("رسانه بارگذاری شد؛ در حال ارسال به اینستاگرام...");
+      const response = await fetch("/api/integrations/instagram/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          mediaUrl,
+          mediaType: instagramMediaType,
+          caption: instagramCaption,
+          requestId: crypto.randomUUID(),
+        }),
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.published) throw new Error(result.error || "انتشار در اینستاگرام ناموفق بود.");
+      setInstagramNotice("محتوا با موفقیت در اینستاگرام منتشر شد.");
+      setInstagramMediaFile(null);
+      setInstagramMediaUrl("");
+      setInstagramCaption("");
+    } catch (error) {
+      setInstagramNotice(error instanceof Error ? error.message : "انتشار در اینستاگرام ناموفق بود.");
+    } finally {
+      setInstagramPublishBusy(false);
     }
   }
 
@@ -2146,6 +2217,41 @@ const response = await fetch("/api/generate", {
         </div>
         {instagramNotice && <p className="instagram-integration-notice" role="status">{instagramNotice}</p>}
       </section>
+
+      {instagramConnection && (
+        <section className="instagram-publish-panel" aria-labelledby="instagram-publish-title">
+          <div className="instagram-publish-heading">
+            <span className="step">انتشار مستقیم</span>
+            <h2 id="instagram-publish-title">انتشار پست یا ریلز</h2>
+            <p>رسانه را بارگذاری کن، کپشن را بازبینی کن و انتشار را تأیید کن. انتشار در حال حاضر به‌صورت دستی انجام می‌شود.</p>
+          </div>
+          <div className="instagram-publish-form">
+            <div className="instagram-publish-type" role="group" aria-label="نوع محتوا">
+              <button type="button" className={instagramMediaType === "image" ? "active" : ""} onClick={() => { setInstagramMediaType("image"); setInstagramMediaFile(null); setInstagramMediaUrl(""); }}>پست تصویر</button>
+              <button type="button" className={instagramMediaType === "reel" ? "active" : ""} onClick={() => { setInstagramMediaType("reel"); setInstagramMediaFile(null); setInstagramMediaUrl(""); }}>ریلز</button>
+            </div>
+            <label className="instagram-upload-label">
+              {instagramMediaType === "image" ? "انتخاب تصویر JPEG (حداکثر ۸ مگابایت)" : "انتخاب ویدئوی MP4 (حداکثر ۳۰۰ مگابایت)"}
+              <input
+                type="file"
+                accept={instagramMediaType === "image" ? "image/jpeg" : "video/mp4"}
+                onChange={(event) => { setInstagramMediaFile(event.target.files?.[0] || null); setInstagramMediaUrl(""); }}
+                disabled={instagramPublishBusy}
+              />
+            </label>
+            {instagramMediaFile && <span className="instagram-file-name">{instagramMediaFile.name} · {(instagramMediaFile.size / (1024 * 1024)).toFixed(1)} MB</span>}
+            <label>
+              کپشن اینستاگرام
+              <textarea rows={4} maxLength={2200} value={instagramCaption} onChange={(event) => setInstagramCaption(event.target.value)} placeholder="متن کپشن، هشتگ‌ها و دعوت به اقدام..." disabled={instagramPublishBusy} />
+              <small>{instagramCaption.length.toLocaleString("fa-IR")} / ۲۲۰۰ نویسه</small>
+            </label>
+            <button type="button" className="primary-button" onClick={publishInstagramMedia} disabled={instagramPublishBusy || !instagramMediaFile}>
+              {instagramPublishBusy ? "در حال انتشار..." : "انتشار در اینستاگرام"}
+            </button>
+          </div>
+          <p className="privacy-note">فایل‌های این بخش در فضای عمومی رسانه نگهداری می‌شوند تا سرورهای Meta بتوانند آن‌ها را دریافت کنند. فقط فایل‌هایی را بارگذاری کن که مجوز انتشارشان را داری.</p>
+        </section>
+      )}
 
       <section className="analytics-section" aria-labelledby="analytics-title">
         <div className="analytics-heading">
