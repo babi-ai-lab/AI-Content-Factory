@@ -1017,6 +1017,7 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
+    setCalendarHistory([]);
     setHistoryHasMore(false);
     setHistoryCursor(null);
     versionsRequestRef.current += 1;
@@ -1283,6 +1284,13 @@ const response = await fetch("/api/generate", {
           : item
       )
     );
+    setCalendarHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId
+          ? { ...item, product: { ...product }, content: updatedContent }
+          : item
+      )
+    );
     setDraftText(getTabText(updatedContent, activeTab));
 
     if (hasContentChanges && previousItem) {
@@ -1374,6 +1382,11 @@ const response = await fetch("/api/generate", {
     setContent(version.content);
     setDraftText(getTabText(version.content, activeTab));
     setHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId ? { ...item, content: version.content } : item
+      )
+    );
+    setCalendarHistory((old) =>
       old.map((item) =>
         item.id === selectedHistoryId ? { ...item, content: version.content } : item
       )
@@ -1560,6 +1573,7 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    setCalendarHistory([]);
     setHistoryHasMore(false);
     setHistoryCursor(null);
     versionsRequestRef.current += 1;
@@ -2023,7 +2037,7 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">برنامه‌ریزی</span>
             <h2>تقویم محتوایی</h2>
-            <p>نمای ماهانه هجری شمسی، مشاهده برنامه‌های هر روز و تغییر سریع زمان انتشار. این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
+            <p>نمای ماهانه هجری شمسی با بارگذاری تمام برنامه‌های همان ماه از کل تاریخچه حساب، مشاهده برنامه‌های هر روز و تغییر سریع زمان انتشار. انتشار خودکار هنوز فعال نیست.</p>
           </div>
           <div className="planner-total"><strong>{calendarHistory.length.toLocaleString("fa-IR")}</strong><span>برنامه در ماه جاری</span></div>
         </div>
