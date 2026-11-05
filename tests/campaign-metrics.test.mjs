@@ -22,13 +22,14 @@ test("calculates campaign KPIs without dividing by zero", () => {
       clicks: 500,
       leads: 50,
       conversions: 20,
+      budget: 2000,
       spend: 1000,
       revenue: 3500,
     }),
-    { ctr: 5, cpl: 20, cpa: 50, conversionRate: 4, roas: 3.5 }
+    { ctr: 5, cpl: 20, cpa: 50, conversionRate: 4, budgetUtilization: 50, roas: 3.5 }
   );
   assert.deepEqual(
     calculateCampaignMetrics(),
-    { ctr: null, cpl: null, cpa: null, conversionRate: null, roas: null }
+    { ctr: null, cpl: null, cpa: null, conversionRate: null, budgetUtilization: null, roas: null }
   );
 });
