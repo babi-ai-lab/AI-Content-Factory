@@ -115,6 +115,10 @@ function extractJson(text: string): GeneratedContent {
   };
 }
 
+function wait(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const p = (await request.json()) as Product;
@@ -134,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // If no Gemini key is configured, use the local demo generator.
+    // Demo mode when no API key is configured.
     if (!apiKey) {
       return NextResponse.json({
         mode: "demo",
@@ -148,7 +152,9 @@ export async function POST(request: NextRequest) {
 
 فقط از اطلاعاتی که فروشنده داده استفاده کن.
 هیچ ویژگی، تخفیف، موجودی، ضمانت یا ادعای تأییدنشده‌ای نساز.
+
 خروجی را فقط به صورت JSON معتبر با کلیدهای زیر برگردان:
+
 caption: متن کپشن
 reel: سناریوی ریلز
 stories: آرایه‌ای شامل دقیقاً پنج اسلاید استوری
@@ -162,57 +168,126 @@ ad: متن تبلیغاتی
     const endpoint =
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
 
-    const aiResponse = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey
+    const requestBody = {
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
       },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: JSON.stringify(p)
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          responseMimeType: "application/json"
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: JSON.stringify(p) }]
         }
-      })
-    });
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: "application/json"
+      }
+    };
 
+    let aiResponse: Response | null = null;
+
+    const maxAttempts = 3;
+
+    // Retry temporary server errors with exponential backoff.
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        aiResponse = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(45000)
+        });
+
+        const retryableStatuses = [500, 502, 503, 504];
+
+        if (
+          aiResponse.ok ||
+          !retryableStatuses.includes(aiResponse.status) ||
+          attempt === maxAttempts
+        ) {
+          break;
+        }
+
+        console.warn(
+          `Gemini returned ${aiResponse.status}. Retry ${attempt}/${maxAttempts}.`
+        );
+
+        await wait(1500 * Math.pow(2, attempt - 1));
+
+      } catch (error) {
+        console.error(
+          `Gemini connection attempt ${attempt} failed:`,
+          error
+        );
+
+        if (attempt === maxAttempts) {
+          throw error;
+        }
+
+        await wait(1500 * Math.pow(2, attempt - 1));
+      }
+    }
+
+    if (!aiResponse) {
+      return NextResponse.json(
+        { error: "ارتباط با Gemini برقرار نشد. دوباره تلاش کن." },
+        { status: 502 }
+      );
+    }
+
+    // Handle Gemini API errors.
     if (!aiResponse.ok) {
       const detail = await aiResponse.text();
 
-      console.error("Gemini API error:", aiResponse.status, detail);
+      console.error(
+        "Gemini API error:",
+        aiResponse.status,
+        detail
+      );
 
       if (aiResponse.status === 429) {
         return NextResponse.json(
           {
-            error: "سهمیه رایگان Gemini فعلاً تمام شده یا تعداد درخواست‌ها بیش از حد مجاز است. کمی بعد دوباره امتحان کن."
+            error: "سهمیه رایگان Gemini تمام شده یا تعداد درخواست‌ها بیش از حد مجاز است. بعداً دوباره تلاش کن."
           },
           { status: 429 }
+        );
+      }
+
+      if (aiResponse.status === 503) {
+        return NextResponse.json(
+          {
+            error: "سرور Gemini پس از سه بار تلاش هنوز شلوغ است. چند دقیقه دیگر دوباره امتحان کن."
+          },
+          { status: 503 }
+        );
+      }
+
+      if ([500, 502, 504].includes(aiResponse.status)) {
+        return NextResponse.json(
+          {
+            error: "سرور Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن."
+          },
+          { status: 502 }
         );
       }
 
       if (aiResponse.status === 400 || aiResponse.status === 404) {
         return NextResponse.json(
           {
-            error: "مدل یا تنظیمات درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن."
+            error: "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن."
           },
           { status: 502 }
         );
       }
 
-      if (aiResponse.status === 401 || aiResponse.status === 403) {
+      if (
+        aiResponse.status === 401 ||
+        aiResponse.status === 403
+      ) {
         return NextResponse.json(
           {
             error: "کلید Gemini معتبر نیست یا دسترسی API برای آن فعال نشده است."
@@ -229,6 +304,7 @@ ad: متن تبلیغاتی
       );
     }
 
+    // Read Gemini response.
     const result = await aiResponse.json();
 
     const raw = result.candidates?.[0]?.content?.parts
@@ -237,7 +313,10 @@ ad: متن تبلیغاتی
       .trim();
 
     if (!raw) {
-      console.error("Gemini returned an empty response:", result);
+      console.error(
+        "Gemini returned an empty response:",
+        JSON.stringify(result)
+      );
 
       return NextResponse.json(
         { error: "پاسخ مدل خالی بود. دوباره تلاش کن." },
@@ -245,6 +324,7 @@ ad: متن تبلیغاتی
       );
     }
 
+    // Validate generated content.
     const content = extractJson(raw);
 
     return NextResponse.json({
@@ -256,7 +336,9 @@ ad: متن تبلیغاتی
     console.error("Generate API error:", error);
 
     return NextResponse.json(
-      { error: "در پردازش درخواست خطایی رخ داد." },
+      {
+        error: "در پردازش درخواست خطایی رخ داد. دوباره تلاش کن."
+      },
       { status: 500 }
     );
   }
