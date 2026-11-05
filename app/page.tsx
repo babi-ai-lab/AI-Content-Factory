@@ -438,27 +438,29 @@ export default function Home() {
 
       data: { subscription },
 
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
 
       if (!mounted) return;
 
-      setUser(
+      const nextUser = session?.user
+        ? { id: session.user.id, email: session.user.email }
+        : null;
 
-        session?.user
+      setUser((current) => {
+        if (current?.id === nextUser?.id && current?.email === nextUser?.email) {
+          return current;
+        }
+        return nextUser;
+      });
 
-          ? { id: session.user.id, email: session.user.email }
-
-          : null
-
-      );
       setBrandProfile(normalizeBrandProfile(session?.user.user_metadata?.aiContentFactoryBrandProfile));
-      setBrandProfileNotice("");
 
-      setHistory([]);
-
-      setHistoryReady(false);
-
-      setSelectedHistoryId("");
+      if (event !== "USER_UPDATED") {
+        setBrandProfileNotice("");
+        setHistory([]);
+        setHistoryReady(false);
+        setSelectedHistoryId("");
+      }
 
     });
 
