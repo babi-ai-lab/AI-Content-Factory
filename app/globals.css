@@ -371,3 +371,10 @@ footer span { padding: 0 6px; }
   .monthly-calendar-day-events small { display: none; }
   .monthly-calendar-blank { min-height: 54px; }
 }
+
+
+/* AI usage telemetry */
+.analytics-usage-note { margin: 8px 0 12px; color: var(--muted); font-size: 10px; line-height: 1.8; }
+@media (min-width: 1100px) {
+  .analytics-kpis { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
