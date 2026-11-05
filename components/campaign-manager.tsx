@@ -59,7 +59,7 @@ function getContentTitle(option: ContentOption) {
   return "محتوای ذخیره‌شده";
 }
 
-export default function CampaignManager({ userId, onUseCampaign }: { userId: string; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience" | "channels">) => void }) {
+export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 }: { userId: string; refreshKey?: number; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience" | "channels">) => void }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [contentOptions, setContentOptions] = useState<ContentOption[]>([]);
   const [contentLinks, setContentLinks] = useState<CampaignContentLink[]>([]);
@@ -79,6 +79,9 @@ export default function CampaignManager({ userId, onUseCampaign }: { userId: str
   const loadCampaigns = useCallback(async () => {
     setLoading(true);
     setError("");
+    setCampaigns([]);
+    setContentLinks([]);
+    setContentOptions([]);
     const [campaignResult, linkResult, contentResult] = await Promise.all([
       supabase
         .from("marketing_campaigns")
@@ -130,7 +133,7 @@ export default function CampaignManager({ userId, onUseCampaign }: { userId: str
     setContentLinks(links);
     setContentOptions(allContent);
     setLoading(false);
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   useEffect(() => { void loadCampaigns(); }, [loadCampaigns]);
 
