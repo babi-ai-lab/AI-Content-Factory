@@ -2053,6 +2053,45 @@ const response = await fetch("/api/generate", {
 
               </div>
 
+              {selectedHistoryId && (
+                <details className="versions-panel">
+                  <summary className="versions-summary">
+                    <div>
+                      <b>تاریخچه نسخه‌های محتوا</b>
+                      <small>نسخه‌های قبلی را مشاهده یا بازگردانی کن.</small>
+                    </div>
+                    <span>{contentVersions.length.toLocaleString("fa-IR")} نسخه</span>
+                  </summary>
+                  <div className="versions-body">
+                    <div className="versions-toolbar">
+                      <small>حداکثر ۱۰ نسخه اخیر نگهداری و نمایش داده می‌شود.</small>
+                      <button className="history-backup" onClick={() => loadContentVersions(selectedHistoryId)} disabled={versionsLoading}>
+                        {versionsLoading ? "در حال بارگذاری..." : "به‌روزرسانی"}
+                      </button>
+                    </div>
+                    {versionsError && <div className="notice error">{versionsError}</div>}
+                    {versionsLoading ? (
+                      <div className="versions-empty">در حال بارگذاری نسخه‌ها...</div>
+                    ) : contentVersions.length === 0 ? (
+                      <div className="versions-empty">هنوز نسخه قبلی ثبت نشده است. با اولین ذخیره تغییرات، نسخه فعلی اینجا نگهداری می‌شود.</div>
+                    ) : (
+                      <div className="versions-list">
+                        {contentVersions.map((version, index) => (
+                          <div className="version-row" key={version.id}>
+                            <div>
+                              <b>نسخه قبلی {contentVersions.length - index}</b>
+                              <small>{formatDate(version.createdAt)}</small>
+                              <p>{(version.content.caption || "").slice(0, 110)}{(version.content.caption || "").length > 110 ? "…" : ""}</p>
+                            </div>
+                            <button className="history-open" onClick={() => restoreContentVersion(version)}>بازگردانی</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
+              )}
+
               {qualityAnalysis && (
                 <details className="quality-panel">
                   <summary className="quality-summary">
