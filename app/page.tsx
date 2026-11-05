@@ -531,6 +531,7 @@ export default function Home() {
   const [product, setProduct] = useState<Product>(initialProduct);
   const [activeCampaignForGeneration, setActiveCampaignForGeneration] = useState<{ id: string; name: string } | null>(null);
   const [campaignRefreshKey, setCampaignRefreshKey] = useState(0);
+  const activeCampaignUserIdRef = useRef<string | null>(null);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
   const [brandProfileSaving, setBrandProfileSaving] = useState(false);
   const [brandProfileNotice, setBrandProfileNotice] = useState("");
@@ -811,6 +812,14 @@ export default function Home() {
     };
 
   }, []);
+
+  useEffect(() => {
+    const currentUserId = user?.id ?? null;
+    if (activeCampaignUserIdRef.current !== currentUserId) {
+      setActiveCampaignForGeneration(null);
+      activeCampaignUserIdRef.current = currentUserId;
+    }
+  }, [user?.id]);
 
   // بارگذاری تاریخچه کاربر و انتقال تاریخچه قدیمی مرورگر در صورت نیاز
 
