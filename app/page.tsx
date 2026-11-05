@@ -2271,11 +2271,25 @@ const response = await fetch("/api/generate", {
         />
       </section>
 
-      {user?.id && <CampaignManager userId={user.id} />}
+      {user?.id && (
+        <CampaignManager
+          userId={user.id}
+          onUseCampaign={(campaign) => {
+            setProduct((current) => ({
+              ...current,
+              goal: campaign.goal,
+              audience: campaign.audience || current.audience,
+              businessName: current.businessName || brandProfile.brandName,
+            }));
+            showNotice(`هدف و مخاطب کمپین «${campaign.name}» به فرم تولید محتوا منتقل شد.`, "success");
+            document.getElementById("content-generator")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+      )}
 
       <div className="workspace">
 
-        <section className="panel form-panel">
+        <section id="content-generator" className="panel form-panel">
 
           <div className="section-head">
 
