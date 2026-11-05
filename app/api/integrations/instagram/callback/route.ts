@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import {
-  createHash,
-} from "node:crypto";
 import { encryptInstagramToken, hashInstagramOAuthState, verifyInstagramOAuthState } from "@/lib/instagram-security.mjs";
 
 export const runtime = "nodejs";
