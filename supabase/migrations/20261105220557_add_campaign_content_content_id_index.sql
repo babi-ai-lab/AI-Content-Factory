@@ -1,0 +1,1 @@
+CREATE INDEX marketing_campaign_content_content_id_idx ON public.marketing_campaign_content (content_id);

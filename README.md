@@ -107,6 +107,7 @@ GitHub Actions همین کنترل‌ها را برای Pull Request به `main`
 
 - جدول‌های داده کاربر با RLS و سیاست‌های مالکیت‌محور محافظت می‌شوند.
 - کلید Gemini فقط باید در محیط سرور نگهداری شود.
+- هدرهای پایه امنیتی HTTP شامل HSTS، nosniff، منع iframe، Referrer Policy و Permissions Policy فعال‌اند.
 - پروفایل برند در user metadata همان حساب Supabase ذخیره می‌شود؛ این داده مبنای مجوز دسترسی نیست.
 - rate limit تولید در PostgreSQL ذخیره می‌شود و بین restart و چند instance مشترک است.
 - خروجی AI باید پیش از انتشار توسط کاربر بازبینی شود.
