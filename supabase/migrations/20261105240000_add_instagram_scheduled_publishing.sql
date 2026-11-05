@@ -93,32 +93,34 @@ BEGIN
   FROM cron.job
   WHERE jobname = 'instagram-publish-every-minute';
 
-  SELECT cron.schedule(
+  v_job_id := cron.schedule(
     'instagram-publish-every-minute',
     '* * * * *',
-    format(
-      $cron$
+    $cron$
       SELECT net.http_post(
-        url := %L,
+        url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'supabase_project_url')
+          || '/functions/v1/instagram-publish-scheduler',
         headers := jsonb_build_object('Content-Type', 'application/json'),
-        body := jsonb_build_object(
-          'timestamp', extract(epoch from clock_timestamp())::bigint::text,
-          'signature', encode(
-            hmac(
-              convert_to(extract(epoch from clock_timestamp())::bigint::text, 'UTF8'),
-              convert_to(%L, 'UTF8'),
-              'sha256'
-            ),
-            'hex'
+        body := (
+          SELECT jsonb_build_object(
+            'timestamp', ts,
+            'signature', encode(
+              extensions.hmac(
+                convert_to(ts, 'UTF8'),
+                convert_to(decrypted_secret, 'UTF8'),
+                'sha256'
+              ),
+              'hex'
+            )
           )
+          FROM vault.decrypted_secrets,
+               LATERAL (SELECT extract(epoch FROM clock_timestamp())::bigint::text AS ts) AS clock_value
+          WHERE name = 'instagram_publish_cron_secret'
         ),
         timeout_milliseconds := 10000
       );
-      $cron$,
-      rtrim(v_project_url, '/') || '/functions/v1/instagram-publish-scheduler',
-      v_cron_secret
-    )
-  ) INTO v_job_id;
+    $cron$
+  );
 
   RETURN v_job_id;
 END;
