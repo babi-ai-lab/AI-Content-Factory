@@ -1092,7 +1092,8 @@ export default function Home() {
       setIsPasswordRecovery(false);
       setNewPassword("");
       setConfirmNewPassword("");
-      setAuthMessage("رمز عبور با موفقیت تغییر کرد.");
+      setAuthMessage("");
+      showNotice("رمز عبور با موفقیت تغییر کرد.", "success");
     } catch (error) {
       setAuthMessage(error instanceof Error ? error.message : "تغییر رمز عبور ناموفق بود. لینک بازیابی ممکن است منقضی شده باشد.");
     } finally {
