@@ -1713,7 +1713,7 @@ const response = await fetch("/api/generate", {
                   <button className="history-backup" title="علاقه‌مندی" onClick={() => updateHistoryMeta(item, { favorite: !(item.product._factoryMeta?.favorite || false) })}>{item.product._factoryMeta?.favorite ? "★" : "☆"}</button>
                   <button className="history-backup" onClick={() => {
                     const raw = window.prompt("برچسب‌ها را با ویرگول جدا کن:", (item.product._factoryMeta?.tags || []).join(", "));
-                    if (raw !== null) updateHistoryMeta(item, { tags: [...new Set(raw.split(",").map((tag) => tag.trim()).filter(Boolean))].slice(0, 12) });
+                    if (raw !== null) updateHistoryMeta(item, { tags: Array.from(new Set(raw.split(",").map((tag) => tag.trim()).filter(Boolean))).slice(0, 12) });
                   }}>برچسب</button>
                   <button className="history-backup" onClick={() => {
                     const folder = window.prompt("نام پوشه:", item.product._factoryMeta?.folder || "عمومی");
