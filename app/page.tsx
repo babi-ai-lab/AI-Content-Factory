@@ -16,8 +16,34 @@ type BusinessType =
   | "personal_brand"
   | "other";
 
+type ContentTemplateId =
+  | "balanced"
+  | "educational"
+  | "product_launch"
+  | "customer_story"
+  | "faq"
+  | "limited_offer"
+  | "lead_generation"
+  | "brand_awareness"
+  | "before_after"
+  | "problem_solution";
+
+const contentTemplates: { value: ContentTemplateId; label: string; description: string }[] = [
+  { value: "balanced", label: "متعادل و عمومی", description: "بسته کامل و متوازن برای معرفی و بازاریابی" },
+  { value: "educational", label: "آموزشی و ارزش‌آفرین", description: "آموزش نکته کاربردی و انتقال تخصص" },
+  { value: "product_launch", label: "معرفی محصول یا خدمت", description: "معرفی ویژگی‌ها و مزیت‌های واقعی" },
+  { value: "customer_story", label: "داستان و تجربه مشتری", description: "اعتمادسازی فقط با تجربه واقعی ارائه‌شده" },
+  { value: "faq", label: "پرسش و پاسخ", description: "پاسخ به پرسش‌های متداول مخاطب" },
+  { value: "limited_offer", label: "پیشنهاد ویژه و فروش", description: "تمرکز بر پیشنهاد واقعی بدون ساخت تخفیف" },
+  { value: "lead_generation", label: "جذب سرنخ و مشاوره", description: "ترغیب مخاطب به تماس یا درخواست مشاوره" },
+  { value: "brand_awareness", label: "آگاهی از برند", description: "معرفی هویت، ارزش و تمایز برند" },
+  { value: "before_after", label: "قبل و بعد", description: "نمایش تغییر فقط بر اساس اطلاعات واقعی" },
+  { value: "problem_solution", label: "مسئله و راه‌حل", description: "توضیح مسئله مخاطب و راه‌حل کسب‌وکار" },
+];
+
 type Product = {
   businessType: BusinessType;
+  contentTemplate: ContentTemplateId;
   businessName: string;
   name: string;
   price: string;
@@ -102,7 +128,7 @@ function businessTypeLabel(value?: string) {
 }
 
 function normalizeProduct(value: Partial<Product> | null | undefined): Product {
-  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", ...(value?._factoryMeta || {}) } };
+  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", contentTemplate: value?.contentTemplate || "balanced", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", ...(value?._factoryMeta || {}) } };
 }
 
 type Content = {
@@ -147,6 +173,7 @@ const MAX_HISTORY = 50;
 
 const initialProduct: Product = {
   businessType: "retail",
+  contentTemplate: "balanced",
   businessName: "",
   name: "",
   price: "",
@@ -318,6 +345,7 @@ function buildTextExport(product: Product, content: Content) {
     `مخاطب هدف: ${product.audience || "ثبت نشده"}`,
 
     `هدف محتوا: ${product.goal}`,
+    `قالب تولید: ${contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"}`,
 
     `لحن برند: ${product.tone}`,
 
@@ -797,7 +825,7 @@ export default function Home() {
 
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
-      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
       const matchesFavorite = !historyFavoritesOnly || meta.favorite;
@@ -1815,6 +1843,24 @@ const response = await fetch("/api/generate", {
                 <option>آگاهی از برند</option>
                 <option>اعتمادسازی</option>
                 <option>دریافت تماس و مشاوره</option>
+              </select>
+            </label>
+
+            <label className="full">
+              قالب تخصصی تولید محتوا
+              <select value={product.contentTemplate} onChange={(e) => update("contentTemplate", e.target.value as ContentTemplateId)}>
+                {contentTemplates.map((template) => (
+                  <option key={template.value} value={template.value}>{template.label} — {template.description}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="full">
+              قالب تخصصی تولید محتوا
+              <select value={product.contentTemplate} onChange={(e) => update("contentTemplate", e.target.value as ContentTemplateId)}>
+                {contentTemplates.map((template) => (
+                  <option key={template.value} value={template.value}>{template.label} — {template.description}</option>
+                ))}
               </select>
             </label>
 

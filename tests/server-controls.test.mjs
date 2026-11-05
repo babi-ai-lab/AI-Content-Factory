@@ -118,3 +118,15 @@ test("defaults missing brand profile and rejects invalid profile fields", () => 
   assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: "invalid" }), null);
   assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: { tagline: "x".repeat(161) } }), null);
 });
+
+
+test("accepts supported content templates and defaults to balanced", () => {
+  const value = validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", contentTemplate: "educational" });
+  assert.equal(value.contentTemplate, "educational");
+  const defaultValue = validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر" });
+  assert.equal(defaultValue.contentTemplate, "balanced");
+});
+
+test("rejects unsupported content template identifiers", () => {
+  assert.equal(validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", contentTemplate: "fake-review" }), null);
+});
