@@ -31,6 +31,7 @@ type Product = {
   offer: string;
   differentiators: string;
   additionalInfo: string;
+  _factoryMeta?: { tags: string[]; folder: string; favorite: boolean };
 };
 
 const businessTypes: { value: BusinessType; label: string }[] = [
@@ -50,7 +51,7 @@ function businessTypeLabel(value?: string) {
 }
 
 function normalizeProduct(value: Partial<Product> | null | undefined): Product {
-  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail" };
+  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, ...(value?._factoryMeta || {}) } };
 }
 
 type Content = {
@@ -335,6 +336,9 @@ export default function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState("");
 
   const [historySearch, setHistorySearch] = useState("");
+  const [historyFolderFilter, setHistoryFolderFilter] = useState("همه پوشه‌ها");
+  const [historyFavoritesOnly, setHistoryFavoritesOnly] = useState(false);
+  const [selectedBulkIds, setSelectedBulkIds] = useState<string[]>([]);
 
   function showNotice(message: string, type: "success" | "error" | "info" = "info") {
 
@@ -447,7 +451,6 @@ export default function Home() {
         let rows = (data || []) as DbHistoryRow[];
 
         const migrationKey = `ai-content-factory-migrated-${user!.id}`;
-
         const alreadyMigrated = localStorage.getItem(migrationKey);
 
         if (rows.length === 0 && !alreadyMigrated) {
@@ -690,17 +693,12 @@ export default function Home() {
 
     if (!term) return history;
 
-    return history.filter((item) =>
-
-      `${item.product.name} ${item.product.category} ${item.product.goal} ${item.product.businessName} ${item.product.businessType} ${item.product.serviceArea}`
-
-        .toLowerCase()
-
-        .includes(term)
-
-    );
-
-  }, [history, historySearch]);
+    return history.filter((item) => {
+      const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
+      return (!term || searchable.includes(term)) && (historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter) && (!historyFavoritesOnly || meta.favorite);
+    });
+  }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
 
@@ -812,7 +810,7 @@ const response = await fetch("/api/generate", {
 
           user_id: user!.id,
 
-          product: { ...product },
+          product: { ...product, _factoryMeta: product._factoryMeta || { tags: [], folder: "عمومی", favorite: false } },
 
           content: generated,
 
@@ -897,7 +895,6 @@ const response = await fetch("/api/generate", {
     const updatedContent = currentWorkingContent();
 
     if (!updatedContent) return;
-
     const { error } = await supabase
 
       .from("content_history")
@@ -1018,6 +1015,27 @@ const response = await fetch("/api/generate", {
 
     showNotice("فایل JSON دانلود شد.", "success");
 
+  }
+
+  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean }>) {
+    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
+    const nextProduct = { ...item.product, _factoryMeta: { ...current, ...patch } };
+    const { error } = await supabase.from("content_history").update({ product: nextProduct }).eq("id", item.id);
+    if (error) return showNotice("ذخیره مشخصات کتابخانه ناموفق بود: " + error.message, "error");
+    setHistory((old) => old.map((entry) => entry.id === item.id ? { ...entry, product: nextProduct } : entry));
+    if (selectedHistoryId === item.id) setProduct(nextProduct);
+    showNotice("مشخصات کتابخانه ذخیره شد.", "success");
+  }
+
+  function toggleBulkSelection(id: string) {
+    setSelectedBulkIds((old) => old.includes(id) ? old.filter((value) => value !== id) : [...old, id]);
+  }
+
+  function exportSelectedHistory() {
+    const selected = history.filter((item) => selectedBulkIds.includes(item.id));
+    if (!selected.length) return showNotice("ابتدا حداقل یک محتوا را انتخاب کن.", "error");
+    downloadFile("AI-Content-Factory-Selected.json", JSON.stringify(selected, null, 2), "application/json");
+    showNotice(selected.length + " محتوا خروجی گرفته شد.", "success");
   }
 
   function openHistory(item: HistoryItem) {
@@ -1347,7 +1365,6 @@ const response = await fetch("/api/generate", {
           <h1>
 
             از اطلاعات کسب‌وکارت،
-
             <br />
 
             <em>محتوای آماده انتشار</em> بساز.
@@ -1637,6 +1654,7 @@ const response = await fetch("/api/generate", {
           <div className="history-actions">
 
             <span className="history-count">{history.length.toLocaleString("fa-IR")} از {MAX_HISTORY}</span>
+            <button className="history-backup" onClick={exportSelectedHistory} disabled={!selectedBulkIds.length}>خروجی انتخاب‌شده ({selectedBulkIds.length})</button>
 
             <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه</button>
 
@@ -1647,9 +1665,16 @@ const response = await fetch("/api/generate", {
         </div>
 
         {history.length > 0 && (
-
-          <input className="history-search" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در تاریخچه بر اساس نام کسب‌وکار، موضوع یا دسته‌بندی..." />
-
+          <div className="history-toolbar">
+            <input className="history-search" style={{ margin: 0 }} value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در نام، موضوع، برچسب یا پوشه..." />
+            <select value={historyFolderFilter} onChange={(e) => setHistoryFolderFilter(e.target.value)} aria-label="فیلتر پوشه">
+              <option>همه پوشه‌ها</option>
+              {Array.from(new Set(history.map((item) => item.product._factoryMeta?.folder || "عمومی"))).sort().map((folder) => <option key={folder}>{folder}</option>)}
+            </select>
+            <button className={historyFavoritesOnly ? "history-open" : "history-backup"} onClick={() => setHistoryFavoritesOnly((value) => !value)}>★ منتخب‌ها</button>
+            <button className="history-backup" onClick={() => setSelectedBulkIds(filteredHistory.map((item) => item.id))} disabled={!filteredHistory.length}>انتخاب نتایج</button>
+            <button className="history-backup" onClick={() => setSelectedBulkIds([])} disabled={!selectedBulkIds.length}>لغو انتخاب</button>
+          </div>
         )}
 
         {!historyReady ? (
@@ -1671,18 +1696,29 @@ const response = await fetch("/api/generate", {
             {filteredHistory.map((item) => (
 
               <article className="history-item" key={item.id}>
-
-                <div className="history-info">
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10, minWidth: 0, flex: 1 }}>
+                  <input type="checkbox" aria-label="انتخاب محتوا برای خروجی گروهی" checked={selectedBulkIds.includes(item.id)} onChange={() => toggleBulkSelection(item.id)} style={{ width: 17, marginTop: 4 }} />
+                  <div className="history-info">
 
                   <b>{item.product.name || "محتوا بدون نام"}</b>
 
                   <span>{businessTypeLabel(item.product.businessType)} · {item.product.category || item.product.goal}</span>
 
                   <small>{formatDate(item.createdAt)}</small>
-
+                  <small>پوشه: {item.product._factoryMeta?.folder || "عمومی"} · برچسب‌ها: {(item.product._factoryMeta?.tags || []).join("، ") || "ندارد"}</small>
+                  </div>
                 </div>
 
                 <div className="history-item-actions">
+                  <button className="history-backup" title="علاقه‌مندی" onClick={() => updateHistoryMeta(item, { favorite: !(item.product._factoryMeta?.favorite || false) })}>{item.product._factoryMeta?.favorite ? "★" : "☆"}</button>
+                  <button className="history-backup" onClick={() => {
+                    const raw = window.prompt("برچسب‌ها را با ویرگول جدا کن:", (item.product._factoryMeta?.tags || []).join(", "));
+                    if (raw !== null) updateHistoryMeta(item, { tags: Array.from(new Set(raw.split(",").map((tag) => tag.trim()).filter(Boolean))).slice(0, 12) });
+                  }}>برچسب</button>
+                  <button className="history-backup" onClick={() => {
+                    const folder = window.prompt("نام پوشه:", item.product._factoryMeta?.folder || "عمومی");
+                    if (folder !== null && folder.trim()) updateHistoryMeta(item, { folder: folder.trim().slice(0, 40) });
+                  }}>پوشه</button>
 
                   <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
 
