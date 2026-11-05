@@ -124,14 +124,25 @@ export default function JalaliDateTimePicker({
             ) : <span key={`empty-${index}`} />)}
           </div>
           <div className="jalali-calendar-footer">
-            <button type="button" onClick={() => { const now = getJalaliParts(new Date()); setVisibleYear(now.year); setVisibleMonth(now.month); selectDay(now.day); }}>امروز</button>
+            <button type="button" onClick={() => {
+              const now = new Date();
+              const parts = getJalaliParts(now);
+              setVisibleYear(parts.year);
+              setVisibleMonth(parts.month);
+              const date = fromJalali(parts.year, parts.month, parts.day);
+              if (date) {
+                date.setHours(now.getHours(), now.getMinutes(), 0, 0);
+                onChange(date.toISOString());
+              }
+              setOpen(false);
+            }}>امروز</button>
             <button type="button" onClick={() => setOpen(false)}>بستن</button>
           </div>
         </div>
       )}
       <label className="jalali-time-label">
         <span>ساعت انتشار</span>
-        <input type="time" dir="ltr" value={timeValue} onChange={(event) => changeTime(event.target.value)} />
+        <input type="time" dir="ltr" value={timeValue} disabled={!selected} onChange={(event) => changeTime(event.target.value)} />
       </label>
       {value && <button type="button" className="jalali-clear" onClick={() => onChange("")}>پاک‌کردن زمان‌بندی</button>}
     </div>
