@@ -28,6 +28,7 @@ type BusinessType =
 type BusinessInput = {
   brandProfile?: BrandProfileInput;
   contentTemplate?: string;
+  channel?: string;
   businessType?: BusinessType | string;
   businessName?: string;
   name: string;
@@ -294,8 +295,32 @@ async function callGeminiModel(
   };
 }
 
-function buildSystemPrompt(businessType: string, contentTemplate = "balanced") {
+function buildSystemPrompt(businessType: string, contentTemplate = "balanced", channel = "general") {
   const businessLabel = getBusinessLabel(businessType);
+  const channelLabels: Record<string, string> = {
+    general: "عمومی و چندمنظوره",
+    telegram: "کانال تلگرام",
+    bale: "کانال بله",
+    sms: "پیامک تبلیغاتی",
+    website: "وب‌سایت و سئو",
+    email: "ایمیل",
+    instagram: "متن اینستاگرام",
+    linkedin: "لینکدین",
+    youtube: "یوتیوب",
+  };
+  const channelGuidance: Record<string, string> = {
+    general: "متن اصلی را با ساختاری عمومی و قابل استفاده در چند کانال بنویس.",
+    telegram: "برای تلگرام، متن پست کانال با شروع قوی، پاراگراف‌های کوتاه، فاصله‌گذاری مناسب، جزئیات کافی و دعوت به اقدام روشن بنویس. از هشتگ‌های زیاد پرهیز کن.",
+    bale: "برای کانال بله، متن فارسی روان و جمع‌وجور با شروع روشن، پاراگراف‌های کوتاه و دعوت به اقدام مستقیم بنویس؛ از قالب‌بندی ساده و خوانا استفاده کن.",
+    sms: "برای پیامک، متن اصلی را بسیار کوتاه، مستقیم و قابل فهم بنویس؛ بدون هشتگ و ایموجی غیرضروری، با یک دعوت به اقدام مشخص. تا حد ممکن در یک پیامک استاندارد جا شود و از ادعا یا فوریت ساختگی پرهیز کن.",
+    website: "برای وب‌سایت و سئو، متن اصلی را به شکل عنوان پیشنهادی، توضیح متا و مقدمه مفید با واژگان طبیعی و مرتبط تنظیم کن؛ از تکرار مصنوعی کلمات کلیدی پرهیز کن.",
+    email: "برای ایمیل، متن اصلی را با موضوع ایمیل، پیش‌نمایش کوتاه، بدنه خوش‌خوان و یک دعوت به اقدام مشخص بنویس.",
+    instagram: "برای متن اینستاگرام، شروع جلب‌توجه‌کننده، پاراگراف‌های کوتاه، لحن طبیعی و چند هشتگ مرتبط و محدود استفاده کن. هیچ ادعایی درباره انتشار یا اتصال حساب نکن.",
+    linkedin: "برای لینکدین، لحن حرفه‌ای و بینش‌محور داشته باش؛ مسئله و تجربه را روشن بیان کن و از لحن تبلیغاتی اغراق‌آمیز و هشتگ‌گذاری زیاد پرهیز کن.",
+    youtube: "برای یوتیوب، متن اصلی را به شکل توضیحات ویدیوی قابل جست‌وجو با خلاصه ارزش، جزئیات واقعی و دعوت به اقدام تنظیم کن؛ عنوان پیشنهادی را نیز درج کن.",
+  };
+  const selectedChannelGuidance = channelGuidance[channel] || channelGuidance.general;
+  const channelLabel = channelLabels[channel] || channelLabels.general;
   const templateGuidance: Record<string, string> = {
     balanced: "یک ترکیب متعادل از معرفی، ارزش‌آفرینی، اعتمادسازی و دعوت به اقدام ارائه کن.",
     educational: "روی آموزش یک نکته کاربردی، توضیح ساده و انتقال تخصص تمرکز کن؛ از ادعای نتیجه تضمینی پرهیز کن.",
@@ -319,6 +344,12 @@ ${businessLabel}
 
 الگوی تولید انتخاب‌شده:
 ${selectedTemplate}
+
+کانال اصلی تولید:
+${channelLabel}
+
+راهنمای اختصاصی کانال:
+${selectedChannelGuidance}
 
 قوانین مهم:
 
@@ -350,16 +381,16 @@ ${selectedTemplate}
 چهار خروجی زیر را تولید کن:
 
 ۱. caption:
-یک کپشن کامل، جذاب و متناسب با کسب‌وکار، همراه با دعوت به اقدام مناسب.
+متن اصلی را دقیقاً با قالب، طول، لحن و ساختار مناسب کانال انتخاب‌شده تولید کن؛ برای SMS کوتاه، برای ایمیل دارای موضوع، برای وب‌سایت دارای ساختار سئو و برای کانال‌های پیام‌رسان خوانا و بخش‌بندی‌شده باشد.
 
 ۲. reel:
-سناریوی ویدیوی کوتاه با زمان‌بندی، صحنه‌ها، متن روی تصویر و پیشنهاد گفتار.
+سناریوی ویدیوی کوتاه اختیاری با زمان‌بندی، صحنه‌ها، متن روی تصویر و پیشنهاد گفتار؛ فقط در کانال‌های مناسب ویدیو استفاده شود.
 
 ۳. stories:
-دقیقاً پنج استوری متوالی و مرتبط، با هدف معرفی، ایجاد علاقه، اعتمادسازی و دعوت به اقدام.
+دقیقاً پنج استوری متوالی و مرتبط، با هدف معرفی، ایجاد علاقه، اعتمادسازی و دعوت به اقدام؛ این خروجی اختیاری است و فقط در کانال‌های دارای قالب استوری استفاده شود.
 
 ۴. ad:
-یک متن تبلیغاتی حرفه‌ای و متقاعدکننده برای معرفی کسب‌وکار یا پیشنهاد آن.
+یک متن تبلیغاتی حرفه‌ای و متقاعدکننده که از نظر قالب و طول با کانال انتخاب‌شده هماهنگ باشد.
 
 فقط JSON معتبر برگردان.
 هیچ توضیحی خارج از JSON ننویس.
@@ -537,7 +568,7 @@ export async function POST(request: NextRequest) {
       process.env.GEMINI_FALLBACK_MODEL ||
       "gemini-3.5-flash-lite";
 
-    const systemPrompt = buildSystemPrompt(businessType, p.contentTemplate);
+    const systemPrompt = buildSystemPrompt(businessType, p.contentTemplate, p.channel);
 
     const requestBody = {
       systemInstruction: {
@@ -552,6 +583,7 @@ export async function POST(request: NextRequest) {
                 ...p,
                 businessType,
                 businessTypeLabel: getBusinessLabel(businessType),
+                channel: p.channel,
               }),
             },
           ],
