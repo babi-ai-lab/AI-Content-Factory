@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 import {
   shouldFallbackGeminiStatus,
   shouldUseDemoGeneration,
+  hasAcceptedAiDataProcessingNotice,
   shouldRetryGeminiStatus,
   MAX_BODY_BYTES,
   readBoundedJsonBody,
@@ -434,6 +435,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "نشست کاربری معتبر نیست. دوباره وارد حساب شو." },
         { status: 401 }
+      );
+    }
+
+    if (!hasAcceptedAiDataProcessingNotice(authenticatedUser.user_metadata)) {
+      return NextResponse.json(
+        {
+          code: "AI_DATA_PROCESSING_NOTICE_REQUIRED",
+          error: "برای تولید محتوا، ابتدا اطلاعیه پردازش داده‌های هوش مصنوعی را مطالعه و تأیید کن.",
+        },
+        { status: 428 }
       );
     }
 
