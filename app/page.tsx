@@ -340,6 +340,8 @@ export default function Home() {
   const [historyFavoritesOnly, setHistoryFavoritesOnly] = useState(false);
   const [selectedBulkIds, setSelectedBulkIds] = useState<string[]>([]);
 
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<"7" | "30" | "all">("30");
+
   function showNotice(message: string, type: "success" | "error" | "info" = "info") {
 
     setNotice(message);
@@ -699,6 +701,48 @@ export default function Home() {
       return (!term || searchable.includes(term)) && (historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter) && (!historyFavoritesOnly || meta.favorite);
     });
   }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
+
+  const analytics = useMemo(() => {
+    const now = new Date();
+    const cutoff = analyticsPeriod === "all"
+      ? null
+      : new Date(now.getTime() - Number(analyticsPeriod) * 24 * 60 * 60 * 1000);
+    const entries = history.filter((item) => {
+      const date = new Date(item.createdAt);
+      return !Number.isNaN(date.getTime()) && (!cutoff || date >= cutoff);
+    });
+    const countByDay = new Map<string, number>();
+    const dayLabels = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(now);
+      date.setDate(now.getDate() - (6 - index));
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      return { key, label: date.toLocaleDateString("fa-IR", { weekday: "short" }) };
+    });
+    entries.forEach((item) => {
+      const date = new Date(item.createdAt);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      countByDay.set(key, (countByDay.get(key) || 0) + 1);
+    });
+    const trend = dayLabels.map((day) => ({ ...day, count: countByDay.get(day.key) || 0 }));
+    const maxDaily = Math.max(1, ...trend.map((day) => day.count));
+    const byBusiness = businessTypes
+      .map((type) => ({
+        label: type.label,
+        count: entries.filter((item) => item.product.businessType === type.value).length,
+      }))
+      .filter((item) => item.count > 0)
+      .sort((a, b) => b.count - a.count);
+    const formats = [
+      { label: "کپشن", count: entries.filter((item) => Boolean(item.content.caption?.trim())).length },
+      { label: "سناریوی ریلز", count: entries.filter((item) => Boolean(item.content.reel?.trim())).length },
+      { label: "استوری", count: entries.reduce((sum, item) => sum + (item.content.stories?.length || 0), 0) },
+      { label: "تبلیغ", count: entries.filter((item) => Boolean(item.content.ad?.trim())).length },
+    ];
+    const totalPieces = formats.reduce((sum, item) => sum + item.count, 0);
+    const favorites = entries.filter((item) => item.product._factoryMeta?.favorite).length;
+    const folders = new Set(entries.map((item) => item.product._factoryMeta?.folder || "عمومی")).size;
+    return { entries, trend, maxDaily, byBusiness, formats, totalPieces, favorites, folders };
+  }, [history, analyticsPeriod]);
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
 
@@ -1389,6 +1433,70 @@ const response = await fetch("/api/generate", {
 
         </div>
 
+      </section>
+
+      <section className="analytics-section" aria-labelledby="analytics-title">
+        <div className="analytics-heading">
+          <div>
+            <span className="step">مرکز آمار</span>
+            <h2 id="analytics-title">عملکرد محتوای شما</h2>
+            <p>آمار بر اساس تاریخچه ذخیره‌شده همین حساب کاربری محاسبه می‌شود.</p>
+          </div>
+          <div className="analytics-period" role="group" aria-label="بازه آماری">
+            <button type="button" className={analyticsPeriod === "7" ? "active" : ""} onClick={() => setAnalyticsPeriod("7")}>۷ روز</button>
+            <button type="button" className={analyticsPeriod === "30" ? "active" : ""} onClick={() => setAnalyticsPeriod("30")}>۳۰ روز</button>
+            <button type="button" className={analyticsPeriod === "all" ? "active" : ""} onClick={() => setAnalyticsPeriod("all")}>همه زمان‌ها</button>
+          </div>
+        </div>
+
+        {!historyReady ? (
+          <div className="analytics-empty">در حال محاسبه آمار...</div>
+        ) : (
+          <>
+            <div className="analytics-kpis">
+              <article className="analytics-kpi"><span>محتوای ذخیره‌شده</span><strong>{analytics.entries.length.toLocaleString("fa-IR")}</strong><small>در بازه انتخاب‌شده</small></article>
+              <article className="analytics-kpi"><span>خروجی متنی</span><strong>{analytics.totalPieces.toLocaleString("fa-IR")}</strong><small>کپشن، ریلز، استوری و تبلیغ</small></article>
+              <article className="analytics-kpi"><span>محتوای منتخب</span><strong>{analytics.favorites.toLocaleString("fa-IR")}</strong><small>ذخیره‌شده در علاقه‌مندی‌ها</small></article>
+              <article className="analytics-kpi"><span>پوشه‌های فعال</span><strong>{analytics.folders.toLocaleString("fa-IR")}</strong><small>در بازه انتخاب‌شده</small></article>
+            </div>
+
+            <div className="analytics-grid">
+              <article className="analytics-card">
+                <div className="analytics-card-head"><h3>روند تولید در ۷ روز اخیر</h3><span>تعداد محتوا</span></div>
+                {analytics.entries.length === 0 ? <div className="analytics-empty">برای نمایش نمودار، ابتدا محتوا تولید و ذخیره کن.</div> : (
+                  <div className="analytics-chart" role="img" aria-label="نمودار تعداد محتوای ذخیره‌شده در هفت روز اخیر">
+                    {analytics.trend.map((day) => (
+                      <div className="analytics-bar-column" key={day.key}>
+                        <strong>{day.count.toLocaleString("fa-IR")}</strong>
+                        <div className="analytics-bar-track"><span style={{ height: `${Math.max(day.count ? 10 : 3, (day.count / analytics.maxDaily) * 100)}%` }} /></div>
+                        <small>{day.label}</small>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+
+              <article className="analytics-card">
+                <div className="analytics-card-head"><h3>ترکیب قالب‌های محتوا</h3><span>تعداد خروجی</span></div>
+                <div className="analytics-breakdown">
+                  {analytics.formats.map((item) => (
+                    <div className="analytics-breakdown-row" key={item.label}>
+                      <div><span>{item.label}</span><b>{item.count.toLocaleString("fa-IR")}</b></div>
+                      <div className="analytics-progress"><span style={{ width: `${analytics.totalPieces ? (item.count / analytics.totalPieces) * 100 : 0}%` }} /></div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="analytics-card analytics-business-card">
+                <div className="analytics-card-head"><h3>حوزه‌های پرتکرار</h3><span>بر اساس کسب‌وکار</span></div>
+                {analytics.byBusiness.length ? analytics.byBusiness.slice(0, 5).map((item) => (
+                  <div className="analytics-business-row" key={item.label}><span>{item.label}</span><b>{item.count.toLocaleString("fa-IR")}</b></div>
+                )) : <div className="analytics-empty">هنوز داده‌ای برای تحلیل وجود ندارد.</div>}
+              </article>
+            </div>
+          </>
+        )}
       </section>
 
       <div className="workspace">
