@@ -470,3 +470,7 @@ footer span { padding: 0 6px; }
  .account-delete-actions { display:grid; grid-template-columns:1fr; }
  .topbar .campaign-delete { padding:7px 8px; font-size:9px; }
 }
+
+.provider-disclosure-accepted-row { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.provider-disclosure-revoke { padding:5px 8px; border:1px solid #e7c8a2; border-radius:7px; background:#fff; color:#79552c; font:inherit; font-size:9px; }
+.provider-disclosure-revoke:disabled { opacity:.6; cursor:wait; }
