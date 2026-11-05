@@ -252,3 +252,28 @@ footer span { padding: 0 6px; }
 .quality-check small { color: var(--muted); font-size: 9px; line-height: 1.7; }
 .quality-disclaimer { margin: 12px 0 0; color: var(--muted); font-size: 9px; line-height: 1.8; }
 @media (max-width: 600px) { .quality-checks { grid-template-columns: 1fr; } .quality-summary { align-items: flex-start; } }
+
+/* Lightweight content planning calendar */
+.planner-section { margin: 22px 0; padding: 22px 24px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 8px 28px rgba(25,34,31,.035); }
+.planner-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.planner-heading h2 { margin: 7px 0 4px; font-size: 17px; }
+.planner-heading p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.8; }
+.planner-total { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 15px; border: 1px solid var(--line); border-radius: 11px; background: #fbfcfa; }
+.planner-total strong { color: var(--green); font-size: 22px; }
+.planner-total span { color: var(--muted); font-size: 9px; }
+.planner-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.planner-column { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 12px; background: #fcfdfa; }
+.planner-column h3 { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; font-size: 11px; }
+.planner-column h3 span { color: var(--muted); font-size: 10px; }
+.planner-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0eb; }
+.planner-item > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.planner-item b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.planner-item small { color: var(--muted); font-size: 9px; }
+.planner-item.overdue small { color: #a14c4c; }
+.planner-item button { flex: none; padding: 6px 9px; }
+.planner-empty, .planner-empty-inline { padding: 17px; border: 1px dashed #dfe5dc; border-radius: 10px; color: var(--muted); font-size: 10px; text-align: center; line-height: 1.8; }
+.planner-empty-inline { padding: 10px 4px; border: 0; }
+.schedule-control { min-width: 190px; display: flex; flex-direction: column; gap: 4px; color: var(--muted); font-size: 9px; font-weight: 600; }
+.schedule-control input { min-width: 0; padding: 7px 8px; font-size: 10px; }
+@media (max-width: 700px) { .planner-section { padding: 17px; } .planner-columns { grid-template-columns: 1fr; } .planner-heading { align-items: flex-start; } }
+@media (max-width: 480px) { .planner-heading { flex-direction: column; } .planner-total { flex-direction: row; width: 100%; justify-content: center; } .schedule-control { width: 100%; min-width: 0; } }
