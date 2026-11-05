@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
@@ -165,6 +165,20 @@ type DbHistoryRow = {
 
   created_at: string;
 
+};
+
+type ContentVersion = {
+  id: string;
+  historyId: string;
+  createdAt: string;
+  content: Content;
+};
+
+type DbContentVersionRow = {
+  id: string;
+  history_id: string;
+  content: Content;
+  created_at: string;
 };
 
 const STORAGE_KEY = "ai-content-factory-history-v1";
@@ -425,6 +439,10 @@ export default function Home() {
   const [noticeType, setNoticeType] = useState<"success" | "error" | "info">("info");
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [versionsError, setVersionsError] = useState("");
+  const versionsRequestRef = useRef(0);
 
   const [historyReady, setHistoryReady] = useState(false);
 
@@ -500,6 +518,9 @@ export default function Home() {
       if (event !== "USER_UPDATED") {
         setBrandProfileNotice("");
         setHistory([]);
+        versionsRequestRef.current += 1;
+        setContentVersions([]);
+        setVersionsError("");
         setHistoryReady(false);
         setSelectedHistoryId("");
       }
@@ -523,6 +544,9 @@ export default function Home() {
     if (!user) {
 
       setHistory([]);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
+      setVersionsError("");
 
       setHistoryReady(false);
       setBrandProfile(initialBrandProfile);
@@ -804,6 +828,9 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
+    setVersionsError("");
 
     setSelectedHistoryId("");
 
@@ -1047,6 +1074,9 @@ const response = await fetch("/api/generate", {
       };
 
       setSelectedHistoryId(newItem.id);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
+      setVersionsError("");
 
       setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
 
@@ -1081,62 +1111,140 @@ const response = await fetch("/api/generate", {
   }
 
   async function saveEdits() {
-
     if (!content || !selectedHistoryId) {
-
       showNotice("ابتدا یک بسته ذخیره‌شده را انتخاب کن.", "error");
-
       return;
-
+    }
+    if (!user?.id) {
+      showNotice("نشست کاربری معتبر نیست. دوباره وارد حساب شو.", "error");
+      return;
     }
 
     const updatedContent = currentWorkingContent();
-
     if (!updatedContent) return;
+
+    const previousItem = history.find((item) => item.id === selectedHistoryId);
+    const hasContentChanges =
+      previousItem && JSON.stringify(previousItem.content) !== JSON.stringify(updatedContent);
+
     const { error } = await supabase
-
       .from("content_history")
-
       .update({
-
         product: { ...product },
-
         content: updatedContent,
-
         updated_at: new Date().toISOString(),
-
       })
-
       .eq("id", selectedHistoryId);
 
     if (error) {
-
       showNotice(`ذخیره تغییرات ناموفق بود: ${error.message}`, "error");
-
       return;
-
     }
 
     setContent(updatedContent);
-
     setHistory((old) =>
-
       old.map((item) =>
-
         item.id === selectedHistoryId
-
           ? { ...item, product: { ...product }, content: updatedContent }
-
           : item
-
       )
-
     );
-
     setDraftText(getTabText(updatedContent, activeTab));
 
-    showNotice("تغییرات در دیتابیس آنلاین ذخیره شد.", "success");
+    if (hasContentChanges && previousItem) {
+      const { error: versionError } = await supabase.from("content_versions").insert({
+        history_id: selectedHistoryId,
+        user_id: user.id,
+        content: previousItem.content,
+      });
 
+      if (versionError) {
+        showNotice("محتوا ذخیره شد، اما ثبت نسخه قبلی ناموفق بود: " + versionError.message, "error");
+        return;
+      }
+
+      await loadContentVersions(selectedHistoryId);
+      showNotice("تغییرات ذخیره شد و نسخه قبلی در تاریخچه نسخه‌ها نگهداری شد.", "success");
+      return;
+    }
+
+    showNotice("تغییرات در دیتابیس آنلاین ذخیره شد.", "success");
+  }
+
+  async function loadContentVersions(historyId: string) {
+    const requestId = ++versionsRequestRef.current;
+    setVersionsLoading(true);
+    setVersionsError("");
+
+    const { data, error } = await supabase
+      .from("content_versions")
+      .select("id, history_id, content, created_at")
+      .eq("history_id", historyId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (requestId !== versionsRequestRef.current) return;
+
+    if (error) {
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
+      setVersionsError("بارگذاری نسخه‌های قبلی انجام نشد: " + error.message);
+      setVersionsLoading(false);
+      return;
+    }
+
+    setContentVersions(
+      ((data || []) as DbContentVersionRow[]).map((row) => ({
+        id: row.id,
+        historyId: row.history_id,
+        createdAt: row.created_at,
+        content: row.content,
+      }))
+    );
+    setVersionsLoading(false);
+  }
+
+  async function restoreContentVersion(version: ContentVersion) {
+    if (!selectedHistoryId || !user?.id) return;
+
+    const currentItem = history.find((item) => item.id === selectedHistoryId);
+    if (!currentItem) return;
+
+    if (JSON.stringify(currentItem.content) === JSON.stringify(version.content)) {
+      showNotice("این نسخه هم‌اکنون نسخه فعال محتواست.", "info");
+      return;
+    }
+
+    const { error: snapshotError } = await supabase.from("content_versions").insert({
+      history_id: selectedHistoryId,
+      user_id: user.id,
+      content: currentItem.content,
+    });
+
+    if (snapshotError) {
+      showNotice("پیش از بازگردانی، ذخیره نسخه فعلی ناموفق بود: " + snapshotError.message, "error");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("content_history")
+      .update({ content: version.content, updated_at: new Date().toISOString() })
+      .eq("id", selectedHistoryId);
+
+    if (error) {
+      showNotice("بازگردانی نسخه ناموفق بود: " + error.message, "error");
+      return;
+    }
+
+    setContent(version.content);
+    setDraftText(getTabText(version.content, activeTab));
+    setHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId ? { ...item, content: version.content } : item
+      )
+    );
+    await loadContentVersions(selectedHistoryId);
+    showNotice("نسخه انتخاب‌شده با موفقیت بازگردانی شد.", "success");
   }
 
   async function copyText(text: string) {
@@ -1247,6 +1355,10 @@ const response = await fetch("/api/generate", {
     setDraftText(item.content.caption);
 
     setSelectedHistoryId(item.id);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
+    setVersionsError("");
+    void loadContentVersions(item.id);
 
     showNotice("بسته ذخیره‌شده بارگذاری شد.", "success");
 
@@ -1279,6 +1391,9 @@ const response = await fetch("/api/generate", {
     if (selectedHistoryId === id) {
 
       setSelectedHistoryId("");
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
+      setVersionsError("");
 
       setContent(null);
 
@@ -1313,6 +1428,9 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
+    setVersionsError("");
 
     setSelectedHistoryId("");
 
@@ -1934,6 +2052,45 @@ const response = await fetch("/api/generate", {
                 {selectedHistoryId ? "این بسته در حساب کاربری ذخیره شده است." : "این محتوا هنوز در تاریخچه ثبت نشده است."}
 
               </div>
+
+              {selectedHistoryId && (
+                <details className="versions-panel">
+                  <summary className="versions-summary">
+                    <div>
+                      <b>تاریخچه نسخه‌های محتوا</b>
+                      <small>نسخه‌های قبلی را مشاهده یا بازگردانی کن.</small>
+                    </div>
+                    <span>{contentVersions.length.toLocaleString("fa-IR")} نسخه</span>
+                  </summary>
+                  <div className="versions-body">
+                    <div className="versions-toolbar">
+                      <small>حداکثر ۱۰ نسخه اخیر نگهداری و نمایش داده می‌شود.</small>
+                      <button className="history-backup" onClick={() => loadContentVersions(selectedHistoryId)} disabled={versionsLoading}>
+                        {versionsLoading ? "در حال بارگذاری..." : "به‌روزرسانی"}
+                      </button>
+                    </div>
+                    {versionsError && <div className="notice error">{versionsError}</div>}
+                    {versionsLoading ? (
+                      <div className="versions-empty">در حال بارگذاری نسخه‌ها...</div>
+                    ) : contentVersions.length === 0 ? (
+                      <div className="versions-empty">هنوز نسخه قبلی ثبت نشده است. با اولین ذخیره تغییرات، نسخه فعلی اینجا نگهداری می‌شود.</div>
+                    ) : (
+                      <div className="versions-list">
+                        {contentVersions.map((version, index) => (
+                          <div className="version-row" key={version.id}>
+                            <div>
+                              <b>نسخه قبلی {contentVersions.length - index}</b>
+                              <small>{formatDate(version.createdAt)}</small>
+                              <p>{(version.content.caption || "").slice(0, 110)}{(version.content.caption || "").length > 110 ? "…" : ""}</p>
+                            </div>
+                            <button className="history-open" onClick={() => restoreContentVersion(version)}>بازگردانی</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
+              )}
 
               {qualityAnalysis && (
                 <details className="quality-panel">
