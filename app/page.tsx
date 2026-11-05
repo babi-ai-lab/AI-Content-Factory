@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
+import MonthlyContentCalendar from "@/components/monthly-content-calendar";
 
 type BusinessType =
   | "retail"
@@ -1923,35 +1924,26 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">برنامه‌ریزی</span>
             <h2>تقویم محتوایی</h2>
-            <p>برای ۵۰ محتوای اخیر زمان انتشار تعیین کن؛ این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
+            <p>نمای ماهانه هجری شمسی، مشاهده برنامه‌های هر روز و تغییر سریع زمان انتشار. این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
           </div>
           <div className="planner-total"><strong>{scheduledItems.length.toLocaleString("fa-IR")}</strong><span>محتوای زمان‌بندی‌شده</span></div>
         </div>
 
-        {scheduledItems.length === 0 ? (
-          <div className="planner-empty">هنوز محتوایی زمان‌بندی نشده است. از قسمت تاریخچه برای هر بسته زمان انتشار تعیین کن.</div>
-        ) : (
-          <div className="planner-columns">
-            <div className="planner-column">
-              <h3>انتشارهای پیش‌رو <span>{upcomingItems.length.toLocaleString("fa-IR")}</span></h3>
-              {upcomingItems.length ? upcomingItems.slice(0, 5).map((item) => (
-                <div className="planner-item" key={item.id}>
-                  <div><b>{item.product.name || "محتوا بدون نام"}</b><small>{formatDate(item.product._factoryMeta!.scheduledAt!)}</small></div>
-                  <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
-                </div>
-              )) : <p className="planner-empty-inline">برنامه‌ای برای آینده ثبت نشده است.</p>}
-            </div>
-            <div className="planner-column">
-              <h3>موعدهای گذشته <span>{overdueItems.length.toLocaleString("fa-IR")}</span></h3>
-              {overdueItems.length ? overdueItems.slice(-3).reverse().map((item) => (
-                <div className="planner-item overdue" key={item.id}>
-                  <div><b>{item.product.name || "محتوا بدون نام"}</b><small>{formatDate(item.product._factoryMeta!.scheduledAt!)}</small></div>
-                  <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
-                </div>
-              )) : <p className="planner-empty-inline">موردی با موعد گذشته وجود ندارد.</p>}
-            </div>
-          </div>
-        )}
+        <MonthlyContentCalendar
+          items={scheduledItems.map((item) => ({
+            id: item.id,
+            name: item.product.name || item.product.businessName || "محتوای بدون نام",
+            scheduledAt: item.product._factoryMeta!.scheduledAt!,
+          }))}
+          onOpen={(id) => {
+            const item = history.find((entry) => entry.id === id);
+            if (item) openHistory(item);
+          }}
+          onReschedule={(id, scheduledAt) => {
+            const item = history.find((entry) => entry.id === id);
+            if (item) void updateHistoryMeta(item, { scheduledAt });
+          }}
+        />
       </section>
 
       <div className="workspace">
