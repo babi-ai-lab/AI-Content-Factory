@@ -48,3 +48,5 @@ export function checkRateLimit(
 
 export function shouldRetryGeminiStatus(status: number): boolean;
 export function shouldFallbackGeminiStatus(status: number): boolean;
+
+export function shouldUseDemoGeneration(nodeEnv: string | undefined, apiKey: string | undefined): boolean;
