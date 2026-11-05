@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+:root{--ink:#19221f;--muted:#78827d;--line:#e6e9e5;--paper:#f6f7f3;--green:#244c3c;--lime:#d9f078;--white:#fff}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:"Vazirmatn",Tahoma,Arial,sans-serif}
+body{min-height:100vh}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1180px;margin:0 auto;padding:0 28px}
+.topbar{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:800;letter-spacing:-.3px}
+.brand-mark{display:grid;place-items:center;background:var(--green);color:var(--lime);width:34px;height:34px;border-radius:11px;font-size:22px}
+.top-tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:7px 12px;border-radius:30px;background:#fff}
+.hero{display:flex;align-items:center;justify-content:space-between;padding:56px 4px 42px;gap:30px}
+.eyebrow{font-size:12px;font-weight:700;color:#587363;margin-bottom:13px}
+h1{font-size:clamp(32px,5vw,52px);line-height:1.45;letter-spacing:-1.7px;margin:0;font-weight:800}
+h1 em{font-style:normal;color:#47745c}
+.hero p{max-width:590px;color:var(--muted);line-height:2;margin:12px 0 0;font-size:14px}
+.hero-orb{width:138px;height:138px;flex:none;border-radius:42% 58% 54% 46%;background:var(--lime);display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-8deg);color:var(--green)}
+.hero-orb span{font-size:43px;line-height:1}.hero-orb small{font-size:9px;letter-spacing:2px;text-align:center;font-weight:800;line-height:1.5}
+.workspace{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
+.panel{background:var(--white);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 8px 28px rgba(25,34,31,.035)}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.section-head>div{display:flex;align-items:center;gap:10px}
+.step{font-size:11px;color:#6b876f;background:#eef3e9;padding:5px 8px;border-radius:7px;font-weight:800}
+h2{font-size:17px;margin:0;font-weight:800}
+.muted{font-size:11px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;color:#48534d}
+label.full{grid-column:1/-1}
+input,textarea,select{width:100%;border:1px solid #e3e7e2;background:#fbfcfa;border-radius:10px;padding:11px 12px;color:var(--ink);outline:none;font-size:12px;transition:.2s}
+input:focus,textarea:focus,select:focus{border-color:#71937c;box-shadow:0 0 0 3px rgba(113,147,124,.12)}
+textarea{resize:vertical;line-height:1.9}
+.generate{width:100%;margin-top:19px;border:0;background:var(--green);color:white;border-radius:12px;padding:14px 16px;font-weight:800;display:flex;justify-content:space-between;align-items:center;transition:.2s}
+.generate:hover{background:#183b2c;transform:translateY(-1px)}
+.generate:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.generate span{color:var(--lime);font-size:20px}
+.privacy-note{font-size:10px;color:#929b95;line-height:1.8;margin:10px 2px 0}
+.live-dot{font-size:11px;color:#558062}.live-dot:first-letter{color:#70a47c}
+.empty-state{min-height:390px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+.empty-icon{width:62px;height:62px;border-radius:20px;background:#f0f4e9;color:#6d8b5d;display:grid;place-items:center;font-size:32px;margin-bottom:17px}
+.empty-state h3{font-size:14px;margin:0 0 8px}.empty-state p{font-size:11px;color:var(--muted);line-height:1.9;max-width:260px}
+.preview-chips{display:flex;gap:7px;margin-top:13px}.preview-chips span{font-size:10px;border:1px solid var(--line);border-radius:20px;padding:6px 10px;color:#66736b}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
+.tab{border:0;background:transparent;color:var(--muted);padding:8px 11px;border-radius:8px;font-size:11px}
+.tab.active{background:#edf3e9;color:var(--green);font-weight:800}
+.content-card{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:16px;background:#fcfdfa}
+.content-label{font-size:11px;color:#718775;font-weight:800;margin-bottom:12px}
+.content-card pre{font-family:inherit;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:2.15;color:#34413a;margin:0;min-height:190px}
+.copy-button,.secondary-button{border:1px solid #dce4da;background:#f2f6ef;color:var(--green);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;margin-top:12px}
+.secondary-button{background:white}
+.notice{margin-top:13px;padding:10px 12px;background:#f3f6e9;color:#536b3d;border-radius:9px;font-size:11px;line-height:1.8}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:18px 0 34px}
+.mini-card{display:flex;align-items:center;gap:12px;padding:15px 17px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.mini-icon{width:35px;height:35px;display:grid;place-items:center;background:#f0f3eb;border-radius:10px;color:#67836b;font-size:18px}
+.mini-card b,.mini-card small{display:block}.mini-card b{font-size:11px}.mini-card small{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.8}
+footer{text-align:center;border-top:1px solid var(--line);padding:20px;color:#99a19b;font-size:10px}footer span{padding:0 6px}
+.spinner{width:15px;height:15px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:800px){.workspace{grid-template-columns:1fr}.hero{padding:38px 2px 28px}.hero-orb{width:100px;height:100px}.panel{padding:19px}.empty-state{min-height:260px}}
+@media(max-width:480px){.shell{padding:0 14px}.topbar{height:64px}.brand{font-size:13px}.top-tag{font-size:10px}.hero-orb{width:76px;height:76px}.hero-orb span{font-size:30px}h1{font-size:31px}.form-grid{grid-template-columns:1fr}.form-grid label.full{grid-column:auto}.bottom-row{grid-template-columns:1fr}.panel{border-radius:16px}}
