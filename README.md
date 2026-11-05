@@ -85,6 +85,10 @@ GitHub Actions همین build را برای Pull Request به `main` و push ب�
 برای مراحل، معیارهای تحویل و اصول تصمیم‌گیری به [نقشه راه محصول](docs/ROADMAP.md) مراجعه کن.
 
 
+## Runtime and framework
+
+The application targets Node.js 24 LTS, Next.js 16, and React 19.
+
 ## Automated tests
 
 Run the built-in Node.js test suite before building:
