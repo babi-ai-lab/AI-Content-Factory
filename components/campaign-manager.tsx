@@ -504,7 +504,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
                           <h4>ثبت و تحلیل عملکرد کمپین</h4>
                           <span>ورود دستی داده‌ها</span>
                         </div>
-                        <p className="campaign-performance-note">آمار را پس از اجرای کمپین وارد کن؛ این بخش به شبکه‌های اجتماعی متصل نیست و داده‌ای را خودکار دریافت نمی‌کند.</p>
+                        <p className="campaign-performance-note">آمار را پس از اجرای کمپین وارد کن؛ شاخص‌ها بعد از ذخیره به‌روزرسانی می‌شوند. این بخش به شبکه‌های اجتماعی متصل نیست و داده‌ای را خودکار دریافت نمی‌کند.</p>
                         {(() => {
                           const draft = metricsDrafts[campaign.id] || toMetricsDraft(campaign);
                           const kpis = calculateCampaignMetrics({
