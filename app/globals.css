@@ -474,3 +474,7 @@ footer span { padding: 0 6px; }
 .provider-disclosure-accepted-row { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 .provider-disclosure-revoke { padding:5px 8px; border:1px solid #e7c8a2; border-radius:7px; background:#fff; color:#79552c; font:inherit; font-size:9px; }
 .provider-disclosure-revoke:disabled { opacity:.6; cursor:wait; }
+
+.active-campaign-note { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin:0 0 15px; padding:11px 13px; border:1px solid #cbd8f1; border-radius:10px; background:#f5f8ff; color:#304a83; font-size:10px; line-height:1.8; }
+.active-campaign-note strong { color:#1c2b5e; }
+.active-campaign-note button { border:0; background:transparent; color:#6b7280; font:inherit; font-size:9px; text-decoration:underline; cursor:pointer; }
