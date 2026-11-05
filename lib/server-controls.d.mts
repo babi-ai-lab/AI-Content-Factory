@@ -32,3 +32,6 @@ export function checkRateLimit(
   checks: number,
   options?: { windowMs?: number; limit?: number; maxEntries?: number; cleanupEvery?: number }
 ): boolean;
+
+export function shouldRetryGeminiStatus(status: number): boolean;
+export function shouldFallbackGeminiStatus(status: number): boolean;
