@@ -72,6 +72,7 @@ npm run dev
 ```text
 app/
   api/generate/route.ts   # API سمت سرور، احراز هویت، اعتبارسنجی و تولید
+  api/health/route.ts     # health check ساده برای میزبان
   globals.css             # طراحی و واکنش‌گرایی
   layout.tsx              # metadata، زبان فارسی و RTL
   page.tsx                # رابط اصلی
