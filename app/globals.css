@@ -512,3 +512,70 @@ footer span { padding: 0 6px; }
  .campaign-metrics-form { grid-template-columns:1fr 1fr; gap:8px; }
  .campaign-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+.public-shell { display:block; min-height:100vh; padding-top:32px; padding-bottom:48px; }
+.public-hero { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr); align-items:center; gap:34px; padding:44px; border:1px solid #dce4f4; border-radius:24px; background:radial-gradient(circle at 85% 10%,#e9efff 0,transparent 42%),linear-gradient(135deg,#fbfcff,#f3f6fd); }
+.public-hero-copy h1 { max-width:680px; margin:13px 0 12px; color:#1c2b5e; font-size:clamp(28px,4vw,44px); line-height:1.55; letter-spacing:-.8px; }
+.public-hero-copy>p { max-width:650px; margin:0; color:#58647d; font-size:13px; line-height:2.2; }
+.public-eyebrow { color:#5069a2; font-size:10px; font-weight:800; letter-spacing:.3px; }
+.public-hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:23px; }
+.public-primary-link,.public-secondary-link { display:inline-flex; align-items:center; justify-content:center; min-height:43px; padding:0 18px; border-radius:10px; font-size:11px; font-weight:800; text-decoration:none; transition:transform .18s,box-shadow .18s; }
+.public-primary-link { background:#1c2b5e; color:#fff; box-shadow:0 8px 18px #1c2b5e22; }
+.public-secondary-link { border:1px solid #cbd5e8; background:#fff; color:#304a83; }
+.public-primary-link:hover,.public-secondary-link:hover { transform:translateY(-2px); }
+.public-hero-points { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
+.public-hero-points span { padding:6px 10px; border:1px solid #dce4f4; border-radius:30px; background:#fff; color:#566484; font-size:9px; }
+.public-hero-panel { padding:18px; border:1px solid #dce4f4; border-radius:17px; background:#fff; box-shadow:0 18px 45px #1c2b5e12; }
+.public-panel-top { display:flex; align-items:center; gap:5px; padding-bottom:14px; border-bottom:1px solid #edf0f6; }
+.public-panel-top b { margin-right:auto; color:#52607c; font-size:10px; }
+.public-dot { width:7px; height:7px; border-radius:50%; background:#c8d3e9; }
+.public-workflow-step { display:flex; align-items:center; gap:12px; margin-top:12px; padding:13px; border:1px solid #edf0f6; border-radius:11px; }
+.public-workflow-step>span { display:grid; place-items:center; width:27px; height:27px; border-radius:9px; background:#edf2ff; color:#304a83; font-size:10px; font-weight:800; }
+.public-workflow-step>div { display:grid; gap:3px; flex:1; }
+.public-workflow-step strong { color:#1c2b5e; font-size:11px; }
+.public-workflow-step small { color:#7b8498; font-size:9px; }
+.public-workflow-step>b { color:#4e8a70; font-size:12px; }
+.public-workflow-footer { margin-top:13px; color:#7b8498; font-size:9px; text-align:center; }
+.public-features { padding:58px 0 28px; }
+.public-section-heading { margin-bottom:20px; text-align:center; }
+.public-section-heading h2,.public-workflow h2,.public-bottom-cta h2 { margin:7px 0; color:var(--ink); font-size:23px; }
+.public-section-heading p { margin:0; color:var(--muted); font-size:11px; line-height:1.9; }
+.public-feature-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.public-feature-grid article { min-height:150px; padding:20px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.public-feature-grid article>span { display:grid; place-items:center; width:30px; height:30px; border-radius:9px; background:#edf2ff; color:#304a83; font-size:16px; }
+.public-feature-grid h3 { margin:12px 0 5px; color:var(--ink); font-size:12px; }
+.public-feature-grid p { margin:0; color:var(--muted); font-size:10px; line-height:2; }
+.public-workflow { display:grid; grid-template-columns:.8fr 1.2fr; gap:24px; align-items:start; margin:25px 0; padding:25px; border:1px solid var(--line); border-radius:16px; background:#f8faff; }
+.public-workflow ol { display:grid; gap:12px; margin:0; padding:0; list-style:none; counter-reset:workflow; }
+.public-workflow li { display:grid; gap:3px; padding-right:35px; position:relative; counter-increment:workflow; }
+.public-workflow li:before { content:counter(workflow); position:absolute; right:0; top:0; display:grid; place-items:center; width:24px; height:24px; border-radius:8px; background:#e9efff; color:#304a83; font-size:10px; font-weight:800; }
+.public-workflow li b { color:var(--ink); font-size:11px; }
+.public-workflow li span { color:var(--muted); font-size:10px; line-height:1.8; }
+.public-faq { max-width:850px; margin:55px auto; }
+.public-faq .public-section-heading { margin-bottom:16px; }
+.public-faq details { margin-top:8px; padding:14px 16px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+.public-faq summary { color:var(--ink); font-size:11px; font-weight:700; cursor:pointer; }
+.public-faq details p { margin:10px 0 0; color:var(--muted); font-size:10px; line-height:2; }
+.public-bottom-cta { display:grid; justify-items:center; gap:8px; padding:35px 20px; border-radius:18px; background:#1c2b5e; color:#fff; text-align:center; }
+.public-bottom-cta h2 { color:#fff; }
+.public-bottom-cta p { margin:0 0 8px; color:#d6def2; font-size:11px; line-height:1.9; }
+.public-bottom-cta .public-primary-link { background:#ffd54f; color:#1c2b5e; }
+.public-auth-panel { margin:34px auto 0; scroll-margin-top:24px; }
+@media (max-width:900px) {
+ .public-hero { grid-template-columns:1fr; gap:22px; padding:30px; }
+ .public-hero-panel { max-width:620px; width:100%; }
+ .public-feature-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .public-workflow { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+ .public-shell { padding-top:14px; padding-bottom:24px; }
+ .public-hero { padding:22px 17px; border-radius:17px; }
+ .public-hero-copy h1 { font-size:26px; }
+ .public-hero-copy>p { font-size:11px; }
+ .public-hero-actions { display:grid; grid-template-columns:1fr; }
+ .public-feature-grid { grid-template-columns:1fr; }
+ .public-feature-grid article { min-height:0; }
+ .public-section-heading h2,.public-workflow h2,.public-bottom-cta h2 { font-size:19px; }
+ .public-workflow { padding:18px; }
+ .public-auth-panel { padding:22px !important; }
+}

@@ -7,6 +7,7 @@ import { analyzeContent } from "@/lib/content-quality.mjs";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 import MonthlyContentCalendar from "@/components/monthly-content-calendar";
 import CampaignManager from "@/components/campaign-manager";
+import PublicLanding from "@/components/public-landing";
 
 type BusinessType =
   | "retail"
@@ -2000,27 +2001,9 @@ const response = await fetch("/api/generate", {
 
     return (
 
-      <main
-
-        className="shell"
-
-        style={{
-
-          minHeight: "100vh",
-
-          display: "grid",
-
-          placeItems: "center",
-
-          paddingTop: 35,
-
-          paddingBottom: 35,
-
-        }}
-
-      >
-
-        <section className="panel" style={{ width: "100%", maxWidth: 460, padding: 30 }}>
+      <main className="shell public-shell">
+        <PublicLanding />
+        <section id="auth-form" className="panel public-auth-panel" style={{ width: "100%", maxWidth: 460, padding: 30 }}>
 
           <div style={{ textAlign: "center", marginBottom: 25 }}>
 
