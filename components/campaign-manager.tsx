@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { calculateCampaignMetrics, parseCampaignMetric } from "@/lib/campaign-metrics.mjs";
 
@@ -121,8 +121,15 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   const [audience, setAudience] = useState("");
   const [channels, setChannels] = useState("تلگرام، وب‌سایت، پیامک");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   const loadCampaigns = useCallback(async () => {
+    if (loadedUserIdRef.current !== userId) {
+      loadedUserIdRef.current = userId;
+      setMetricsDrafts({});
+      setSelectedContentByCampaign({});
+      setExpandedId(null);
+    }
     setLoading(true);
     setError("");
     setCampaigns([]);
