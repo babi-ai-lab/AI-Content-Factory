@@ -94,3 +94,27 @@ test("retries and falls back for temporary Gemini service errors", async () => {
   assert.equal(shouldRetryGeminiStatus(400), false);
   assert.equal(shouldFallbackGeminiStatus(401), false);
 });
+
+
+test("normalizes an optional brand profile and preserves its fields", () => {
+  const value = validateBusinessInput({
+    name: "دوره زبان",
+    features: "آموزش تخصصی",
+    brandProfile: {
+      brandName: "  آکادمی زبان  ",
+      voice: "  حرفه‌ای  ",
+      cta: "ثبت‌نام",
+    },
+  });
+  assert.equal(value.brandProfile.brandName, "آکادمی زبان");
+  assert.equal(value.brandProfile.voice, "حرفه‌ای");
+  assert.equal(value.brandProfile.cta, "ثبت‌نام");
+  assert.equal(value.brandProfile.tagline, "");
+});
+
+test("defaults missing brand profile and rejects invalid profile fields", () => {
+  const value = validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی" });
+  assert.equal(value.brandProfile.brandName, "");
+  assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: "invalid" }), null);
+  assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: { tagline: "x".repeat(161) } }), null);
+});
