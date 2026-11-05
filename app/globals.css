@@ -298,3 +298,6 @@ footer span { padding: 0 6px; }
 .version-row p { margin: 0; color: #68736c; font-size: 9px; line-height: 1.7; overflow-wrap: anywhere; }
 .version-row button { flex: none; padding: 7px 10px; }
 @media (max-width: 480px) { .versions-toolbar { align-items: flex-start; flex-direction: column; } .version-row { align-items: flex-start; flex-direction: column; } .version-row button { width: 100%; } }
+
+.history-load-more { display: flex; justify-content: center; margin: 15px 0 4px; }
+.history-load-more button { min-width: 230px; padding: 10px 16px; }

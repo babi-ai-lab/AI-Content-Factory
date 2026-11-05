@@ -183,7 +183,7 @@ type DbContentVersionRow = {
 
 const STORAGE_KEY = "ai-content-factory-history-v1";
 
-const MAX_HISTORY = 50;
+const HISTORY_PAGE_SIZE = 50;
 
 const initialProduct: Product = {
   businessType: "retail",
@@ -439,6 +439,9 @@ export default function Home() {
   const [noticeType, setNoticeType] = useState<"success" | "error" | "info">("info");
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [historyCursor, setHistoryCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
@@ -518,6 +521,8 @@ export default function Home() {
       if (event !== "USER_UPDATED") {
         setBrandProfileNotice("");
         setHistory([]);
+        setHistoryHasMore(false);
+        setHistoryCursor(null);
         versionsRequestRef.current += 1;
         setContentVersions([]);
         setVersionsError("");
@@ -544,6 +549,8 @@ export default function Home() {
     if (!user) {
 
       setHistory([]);
+      setHistoryHasMore(false);
+      setHistoryCursor(null);
       versionsRequestRef.current += 1;
         setContentVersions([]);
       setVersionsError("");
@@ -570,8 +577,8 @@ export default function Home() {
           .select("id, product, content, created_at")
 
           .order("created_at", { ascending: false })
-
-          .limit(MAX_HISTORY);
+          .order("id", { ascending: false })
+          .limit(HISTORY_PAGE_SIZE);
 
         if (error) throw error;
 
@@ -592,7 +599,7 @@ export default function Home() {
 
               if (Array.isArray(oldItems) && oldItems.length > 0) {
 
-                const records = oldItems.slice(0, MAX_HISTORY).map((item) => ({
+                const records = oldItems.slice(0, HISTORY_PAGE_SIZE).map((item) => ({
 
                   user_id: user!.id,
 
@@ -633,8 +640,8 @@ export default function Home() {
             .select("id, product, content, created_at")
 
             .order("created_at", { ascending: false })
-
-            .limit(MAX_HISTORY);
+            .order("id", { ascending: false })
+            .limit(HISTORY_PAGE_SIZE);
 
           if (refreshError) throw refreshError;
 
@@ -659,6 +666,9 @@ export default function Home() {
             }))
 
           );
+          const lastRow = rows[rows.length - 1];
+          setHistoryCursor(lastRow ? { createdAt: lastRow.created_at, id: lastRow.id } : null);
+          setHistoryHasMore(rows.length === HISTORY_PAGE_SIZE);
 
         }
 
@@ -695,6 +705,48 @@ export default function Home() {
     };
 
   }, [user]);
+
+  async function loadMoreHistory() {
+    if (!user || !historyHasMore || historyLoadingMore || !historyCursor) return;
+
+    setHistoryLoadingMore(true);
+    try {
+      const cursor = historyCursor;
+      const { data, error } = await supabase
+        .from("content_history")
+        .select("id, product, content, created_at")
+        .or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(HISTORY_PAGE_SIZE);
+
+      if (error) throw error;
+
+      const rows = (data || []) as DbHistoryRow[];
+      const existingIds = new Set(history.map((item) => item.id));
+      const nextItems = rows
+        .filter((row) => !existingIds.has(row.id))
+        .map((row) => ({
+          id: row.id,
+          createdAt: row.created_at,
+          product: normalizeProduct(row.product),
+          content: row.content,
+        }));
+
+      setHistory((old) => [...old, ...nextItems]);
+
+      const lastRow = rows[rows.length - 1];
+      if (lastRow) setHistoryCursor({ createdAt: lastRow.created_at, id: lastRow.id });
+      setHistoryHasMore(rows.length === HISTORY_PAGE_SIZE);
+    } catch (error) {
+      showNotice(
+        error instanceof Error ? `بارگذاری موارد قدیمی‌تر ناموفق بود: ${error.message}` : "بارگذاری موارد قدیمی‌تر ناموفق بود.",
+        "error"
+      );
+    } finally {
+      setHistoryLoadingMore(false);
+    }
+  }
 
   async function handleAuth(event: FormEvent<HTMLFormElement>) {
 
@@ -828,6 +880,8 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
+    setHistoryHasMore(false);
+    setHistoryCursor(null);
     versionsRequestRef.current += 1;
         setContentVersions([]);
     setVersionsError("");
@@ -1078,7 +1132,7 @@ const response = await fetch("/api/generate", {
         setContentVersions([]);
       setVersionsError("");
 
-      setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
+      setHistory((old) => [newItem, ...old]);
 
       showNotice(
 
@@ -1409,15 +1463,10 @@ const response = await fetch("/api/generate", {
 
     if (!window.confirm("تمام تاریخچه حساب کاربری حذف شود؟ این کار قابل بازگشت نیست.")) return;
 
-    const ids = history.map((item) => item.id);
-
     const { error } = await supabase
-
       .from("content_history")
-
       .delete()
-
-      .in("id", ids);
+      .eq("user_id", user!.id);
 
     if (error) {
 
@@ -1428,6 +1477,8 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    setHistoryHasMore(false);
+    setHistoryCursor(null);
     versionsRequestRef.current += 1;
         setContentVersions([]);
     setVersionsError("");
@@ -1454,7 +1505,7 @@ const response = await fetch("/api/generate", {
 
     );
 
-    showNotice("نسخه پشتیبان تاریخچه دانلود شد.", "success");
+    showNotice("نسخه پشتیبان از موارد بارگذاری‌شده دانلود شد.", "success");
 
   }
 
@@ -2208,10 +2259,10 @@ const response = await fetch("/api/generate", {
 
           <div className="history-actions">
 
-            <span className="history-count">{history.length.toLocaleString("fa-IR")} از {MAX_HISTORY}</span>
+            <span className="history-count">{history.length.toLocaleString("fa-IR")} مورد بارگذاری‌شده</span>
             <button className="history-backup" onClick={exportSelectedHistory} disabled={!selectedBulkIds.length}>خروجی انتخاب‌شده ({selectedBulkIds.length})</button>
 
-            <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه</button>
+            <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه بارگذاری‌شده</button>
 
             <button className="clear-history" onClick={clearHistory} disabled={!history.length}>پاک کردن همه</button>
 
@@ -2221,7 +2272,7 @@ const response = await fetch("/api/generate", {
 
         {history.length > 0 && (
           <div className="history-toolbar">
-            <input className="history-search" style={{ margin: 0 }} value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در نام، موضوع، برچسب یا پوشه..." />
+            <input className="history-search" style={{ margin: 0 }} value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در محتواهای بارگذاری‌شده..." />
             <select value={historyFolderFilter} onChange={(e) => setHistoryFolderFilter(e.target.value)} aria-label="فیلتر پوشه">
               <option>همه پوشه‌ها</option>
               {Array.from(new Set(history.map((item) => item.product._factoryMeta?.folder || "عمومی"))).sort().map((folder) => <option key={folder}>{folder}</option>)}
@@ -2299,7 +2350,15 @@ const response = await fetch("/api/generate", {
 
         )}
 
-        <p className="privacy-note">تاریخچه به حساب کاربری تو متصل است و پس از ورود از دستگاه‌های دیگر نیز قابل دسترسی خواهد بود.</p>
+        {historyHasMore && historyReady && (
+          <div className="history-load-more">
+            <button className="history-backup" onClick={loadMoreHistory} disabled={historyLoadingMore}>
+              {historyLoadingMore ? "در حال بارگذاری..." : "بارگذاری ۵۰ محتوای قدیمی‌تر"}
+            </button>
+          </div>
+        )}
+
+        <p className="privacy-note">تاریخچه به‌صورت صفحه‌ای بارگذاری می‌شود؛ جست‌وجو، آمار و تقویم بر اساس موارد بارگذاری‌شده محاسبه می‌شوند.</p>
 
       </section>
 
