@@ -503,6 +503,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
                           const kpis = calculateCampaignMetrics({
                             impressions: campaign.impressions,
                             clicks: campaign.clicks,
+                            budget: campaign.budget_amount,
                             leads: campaign.leads,
                             conversions: campaign.conversions,
                             spend: campaign.spend_amount,
@@ -528,6 +529,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
                                 <div><small>هزینه هر سرنخ (CPL)</small><strong>{formatMetricAmount(kpis.cpl, campaign.currency_label)}</strong></div>
                                 <div><small>هزینه هر تبدیل (CPA)</small><strong>{formatMetricAmount(kpis.cpa, campaign.currency_label)}</strong></div>
                                 <div><small>نرخ تبدیل کلیک</small><strong>{formatMetricValue(kpis.conversionRate, "٪")}</strong></div>
+                                <div><small>مصرف بودجه</small><strong>{formatMetricValue(kpis.budgetUtilization, "٪")}</strong></div>
                                 <div><small>بازده هزینه تبلیغ (ROAS)</small><strong>{formatMetricValue(kpis.roas, "×")}</strong></div>
                               </div>
                             </>
