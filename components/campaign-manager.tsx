@@ -47,7 +47,7 @@ export default function CampaignManager({ userId }: { userId: string }) {
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [audience, setAudience] = useState("");
-  const [channels, setChannels] = useState("اینستاگرام، تلگرام، وب‌سایت");
+  const [channels, setChannels] = useState("تلگرام، وب‌سایت، پیامک");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const loadCampaigns = useCallback(async () => {
@@ -158,7 +158,7 @@ export default function CampaignManager({ userId }: { userId: string }) {
           <label>نام کمپین<input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} placeholder="مثلاً کمپین معرفی خدمات پاییز" required /></label>
           <label>هدف اصلی<input value={goal} onChange={(event) => setGoal(event.target.value)} maxLength={500} placeholder="مثلاً دریافت درخواست مشاوره یا افزایش فروش" required /></label>
           <label>مخاطب هدف<input value={audience} onChange={(event) => setAudience(event.target.value)} maxLength={500} placeholder="مثلاً صاحبان کسب‌وکارهای کوچک در تهران" /></label>
-          <label>کانال‌های بازاریابی<input value={channels} onChange={(event) => setChannels(event.target.value)} maxLength={300} placeholder="اینستاگرام، تلگرام، وب‌سایت" /><small>نام کانال‌ها را با ویرگول جدا کن.</small></label>
+          <label>کانال‌های بازاریابی<input value={channels} onChange={(event) => setChannels(event.target.value)} maxLength={300} placeholder="تلگرام، وب‌سایت، پیامک" /><small>نام کانال‌ها را با ویرگول جدا کن.</small></label>
         </div>
         <button className="primary-button" type="submit" disabled={saving}>{saving ? "در حال ذخیره..." : "ساخت کمپین"}</button>
       </form>
