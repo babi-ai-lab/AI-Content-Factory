@@ -15,6 +15,7 @@ export interface BusinessInput {
   brandProfile: BrandProfileInput;
   businessType: "retail" | "services" | "restaurant" | "real_estate" | "construction" | "education" | "fitness" | "personal_brand" | "other";
   contentTemplate: "balanced" | "educational" | "product_launch" | "customer_story" | "faq" | "limited_offer" | "lead_generation" | "brand_awareness" | "before_after" | "problem_solution";
+  channel: "general" | "telegram" | "bale" | "sms" | "website" | "email" | "instagram" | "linkedin" | "youtube";
   businessName: string;
   name: string;
   price: string;
