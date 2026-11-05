@@ -3,6 +3,7 @@ export type CampaignMetricInput = {
   clicks?: number;
   leads?: number;
   conversions?: number;
+  budget?: number;
   spend?: number;
   revenue?: number;
 };
@@ -11,6 +12,7 @@ export type CampaignMetricResults = {
   cpl: number | null;
   cpa: number | null;
   conversionRate: number | null;
+  budgetUtilization: number | null;
   roas: number | null;
 };
 export function parseCampaignMetric(value: string | number | null | undefined, options?: { integer?: boolean }): number | null;
