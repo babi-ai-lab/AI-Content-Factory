@@ -1,29 +1,36 @@
 # AI Content Factory
 
-وب‌اپلیکیشن فارسی برای تولید و مدیریت محتوای بازاریابی کسب‌وکارها.
+وب‌اپلیکیشن فارسی برای تولید، مدیریت و ارزیابی محتوای بازاریابی کسب‌وکارها.
 
 ## قابلیت‌های فعلی
 
 - ورود و ثبت‌نام با Supabase Auth
 - تولید کپشن، سناریوی ریلز، پنج استوری و متن تبلیغاتی با Gemini
 - پشتیبانی از ۹ نوع کسب‌وکار
-- مدل جایگزین در صورت در دسترس نبودن مدل اصلی
+- انتخاب مدل جایگزین برای خطاهای موقت ارائه‌دهنده
+- احراز هویت API با توکن Supabase
+- اعتبارسنجی ورودی و محدودیت واقعی ۱۶ کیلوبایتی بدنه درخواست
+- محدودیت اولیه نرخ درخواست در API
 - ذخیره تاریخچه در Supabase با جداسازی داده کاربران از طریق RLS
 - ویرایش محتوا، کپی و خروجی TXT/JSON
 - جست‌وجوی پیشرفته، پوشه، برچسب، علاقه‌مندی و خروجی گروهی JSON
+- داشبورد تحلیلی حساب با بازه‌های ۷ روز، ۳۰ روز و کل تاریخچه بارگذاری‌شده
+- پروفایل برند قابل استفاده مجدد برای هر حساب: مخاطب، ارزش پیشنهادی، لحن، واژگان ترجیحی/ممنوع و CTA
+- چک‌لیست و امتیاز ساختاری زنده برای کیفیت محتوا و انطباق واژگان برند
 - رابط فارسی، راست‌چین و واکنش‌گرا
-- احراز هویت درخواست تولید و محدودیت اولیه نرخ درخواست
 
 ## فناوری‌ها
 
-- Next.js 14 و React 18
+- Next.js 16.4.5
+- React 19.3.1
 - TypeScript
+- Node.js 24 LTS
 - Supabase Auth و PostgreSQL
 - Gemini API
 
 ## اجرای محلی
 
-نیازمندی‌ها: Node.js 20 و npm.
+نیازمندی‌ها: Node.js 24 و npm.
 
 ```bash
 npm ci
@@ -45,57 +52,55 @@ npm run dev
 | `GEMINI_MODEL` | مدل اصلی؛ پیش‌فرض در کد: `gemini-3.8-flash` |
 | `GEMINI_FALLBACK_MODEL` | مدل جایگزین؛ پیش‌فرض در کد: `gemini-3.5-flash-lite` |
 
-اگر کلید Gemini تنظیم نشده باشد، API محتوای نمونه (demo) برمی‌گرداند؛ این خروجی تولید واقعی مدل نیست.
+اگر کلید Gemini تنظیم نشده باشد، API محتوای نمونه (demo) برمی‌گرداند؛ این خروجی تولید واقعی مدل نیست. سهمیه Gemini به طرح ارائه‌دهنده وابسته است و در صورت اتمام سهمیه، API پاسخ 429 با پیام مشخص برمی‌گرداند.
 
 ## ساختار اصلی
 
 ```text
 app/
-  api/generate/route.ts   # API سمت سرور، احراز هویت و تولید
+  api/generate/route.ts   # API سمت سرور، احراز هویت، اعتبارسنجی و تولید
   globals.css             # طراحی و واکنش‌گرایی
   layout.tsx              # metadata، زبان فارسی و RTL
   page.tsx                # رابط اصلی فعلی
 lib/
   supabase.ts             # کلاینت Supabase
+  server-controls.mjs     # اعتبارسنجی، محدودیت بدنه و rate limit
+  content-quality.mjs    # تحلیل ساختاری و چک‌لیست کیفیت محتوا
+tests/
+  server-controls.test.mjs
+  content-quality.test.mjs
+supabase/
+  migrations/             # migrationهای نسخه‌دار دیتابیس
 docs/
   ROADMAP.md              # نقشه راه توسعه محصول
 .github/
-  workflows/ci.yml        # کنترل build در Pull Request و main
+  workflows/ci.yml        # کنترل کیفیت در Pull Request و main
 ```
 
 ## ساخت و کنترل کیفیت
 
 ```bash
 npm ci
+npm audit --omit=dev
+npm test
+npm run typecheck
 npm run build
 ```
 
-GitHub Actions همین build را برای Pull Request به `main` و push به `main` اجرا می‌کند. مقادیر Supabase در CI صرفاً placeholder هستند و هیچ داده یا سرویس واقعی را لمس نمی‌کنند.
+GitHub Actions همین کنترل‌ها را برای Pull Request به `main` و push به `main` اجرا می‌کند. مقادیر Supabase در CI صرفاً placeholder هستند و هیچ داده یا سرویس واقعی را لمس نمی‌کنند.
 
 ## نکات امنیتی و عملیاتی
 
-- سیاست‌های RLS جدول `content_history` باید برای تمام عملیات SELECT/INSERT/UPDATE/DELETE بر اساس `auth.uid() = user_id` اعمال شوند.
+- چهار policy جدول `content_history` مالکیت داده را با `(select auth.uid()) = user_id` کنترل می‌کنند.
 - کلید Gemini فقط باید در محیط سرور نگهداری شود.
+- پروفایل برند در user metadata همان حساب Supabase ذخیره می‌شود؛ این داده فقط زمینه تولید است و مبنای مجوز دسترسی نیست.
 - rate limit فعلی در حافظه فرایند است؛ با restart پاک می‌شود و بین چند instance مشترک نیست. پیش از مقیاس‌پذیری باید به ذخیره‌ساز توزیع‌شده منتقل شود.
+- رابط فعلی حداکثر ۵۰ محتوای اخیر را بارگذاری می‌کند؛ آمار داشبورد نیز بر اساس همین مجموعه محاسبه می‌شود، نه تمام رکوردهای دیتابیس.
+- Supabase Auth leaked-password protection هنوز در تنظیمات پروژه غیرفعال است و باید از بخش Password Security فعال شود.
+- سرویس فعلی Render روی پلن Free قرار دارد؛ برای دسترس‌پذیری همیشگی و مقیاس تجاری باید پلن و هزینه زیرساخت بازبینی شود.
 - پیش از انتشار قابلیت‌های پرداخت، همکاری تیمی یا انتشار خودکار شبکه‌های اجتماعی، نیازمند اتصال، تنظیمات و تأیید جداگانه هستیم.
-- خروجی AI باید پیش از انتشار توسط کاربر بازبینی شود.
+- خروجی AI باید پیش از انتشار توسط کاربر بازبینی شود. امتیاز کیفیت فعلی ساختاری است و صحت ادعاها را تضمین نمی‌کند.
 
 ## نقشه راه
 
-برای مراحل، معیارهای تحویل و اصول تصمیم‌گیری به [نقشه راه محصول](docs/ROADMAP.md) مراجعه کن.
-
-
-## Runtime and framework
-
-The application targets Node.js 24 LTS, Next.js 16, and React 19.
-
-## Automated tests
-
-Run the built-in Node.js test suite before building:
-
-```bash
-npm test
-npm run build
-```
-
-The test suite covers request body size enforcement, JSON/UTF-8 parsing, business input validation, and the in-memory rate limiter (including expiry and capacity limits).
+برای وضعیت فازها، معیارهای تحویل و موارد باقی‌مانده به [نقشه راه محصول](docs/ROADMAP.md) مراجعه کن.
