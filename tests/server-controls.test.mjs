@@ -72,7 +72,7 @@ test("rate limits each user and resets after the window", () => {
 
 test("rate limit isolates users and caps in-memory entries", () => {
   const store = new Map();
-  const options = { limit: 1, maxEntries: 1, cleanupEvery: 100 };
+  const options = { windowMs: 1000, limit: 1, maxEntries: 1, cleanupEvery: 100 };
   assert.equal(checkRateLimit(store, "user-a", 100, 1, options), true);
   assert.equal(checkRateLimit(store, "user-b", 100, 2, options), false);
   assert.equal(checkRateLimit(store, "user-b", 1200, 3, options), true);
