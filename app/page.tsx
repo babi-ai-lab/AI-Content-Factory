@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
@@ -442,6 +442,7 @@ export default function Home() {
   const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
+  const versionsRequestRef = useRef(0);
 
   const [historyReady, setHistoryReady] = useState(false);
 
@@ -1167,6 +1168,7 @@ const response = await fetch("/api/generate", {
   }
 
   async function loadContentVersions(historyId: string) {
+    const requestId = ++versionsRequestRef.current;
     setVersionsLoading(true);
     setVersionsError("");
 
@@ -1176,6 +1178,8 @@ const response = await fetch("/api/generate", {
       .eq("history_id", historyId)
       .order("created_at", { ascending: false })
       .limit(10);
+
+    if (requestId !== versionsRequestRef.current) return;
 
     if (error) {
       setContentVersions([]);
@@ -1346,6 +1350,9 @@ const response = await fetch("/api/generate", {
     setDraftText(item.content.caption);
 
     setSelectedHistoryId(item.id);
+    setContentVersions([]);
+    setVersionsError("");
+    void loadContentVersions(item.id);
 
     showNotice("بسته ذخیره‌شده بارگذاری شد.", "success");
 
