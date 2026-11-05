@@ -50,11 +50,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "فقط فایل‌های بارگذاری‌شده در فضای رسانه همین حساب قابل انتشار هستند." }, { status: 400 });
   }
 
-  const { data: credentials, error: credentialError } = await supabase.rpc("get_own_instagram_publish_credentials");
-  if (credentialError || !credentials?.[0]?.encrypted_access_token || !credentials?.[0]?.instagram_user_id) {
+  const { data: credentials, error: credentialError } = await supabase
+    .from("instagram_connections")
+    .select("instagram_user_id,encrypted_access_token,token_expires_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (credentialError || !credentials?.encrypted_access_token || !credentials?.instagram_user_id) {
     return NextResponse.json({ error: "حساب اینستاگرام متصل نیست یا دسترسی آن منقضی شده است." }, { status: 409 });
   }
-  if (new Date(credentials[0].token_expires_at).getTime() <= Date.now() + 60_000) {
+  if (new Date(credentials.token_expires_at).getTime() <= Date.now() + 60_000) {
     return NextResponse.json({ error: "مجوز اینستاگرام منقضی شده است؛ حساب را دوباره متصل کن." }, { status: 409 });
   }
 
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const token = decryptInstagramToken(credentials[0].encrypted_access_token, encryptionKey);
+    const token = decryptInstagramToken(credentials.encrypted_access_token, encryptionKey);
     const version = process.env.INSTAGRAM_GRAPH_API_VERSION || "v26.0";
     const graphBase = `https://graph.instagram.com/${version}`;
     const createForm = new URLSearchParams();
@@ -109,7 +113,7 @@ export async function POST(request: NextRequest) {
     createForm.set("access_token", token);
 
     const created = await graphRequest<InstagramContainer>(
-      `${graphBase}/${encodeURIComponent(credentials[0].instagram_user_id)}/media`,
+      `${graphBase}/${encodeURIComponent(credentials.instagram_user_id)}/media`,
       { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: createForm }
     );
     if (!created.ok || !created.data.id) {
