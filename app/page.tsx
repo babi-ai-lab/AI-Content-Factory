@@ -1855,6 +1855,15 @@ const response = await fetch("/api/generate", {
               </select>
             </label>
 
+            <label className="full">
+              قالب تخصصی تولید محتوا
+              <select value={product.contentTemplate} onChange={(e) => update("contentTemplate", e.target.value as ContentTemplateId)}>
+                {contentTemplates.map((template) => (
+                  <option key={template.value} value={template.value}>{template.label} — {template.description}</option>
+                ))}
+              </select>
+            </label>
+
             <label>
               پیشنهاد ویژه
               <input value={product.offer} onChange={(e) => update("offer", e.target.value)} placeholder="مثلاً مشاوره اولیه رایگان، تخفیف افتتاحیه" maxLength={180} />
