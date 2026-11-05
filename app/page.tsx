@@ -1449,7 +1449,9 @@ const response = await fetch("/api/generate", {
           </div>
         </div>
 
-        {!historyReady ? (
+        {!user ? (
+          <div className="analytics-empty">برای مشاهده آمار اختصاصی، ابتدا وارد حساب کاربری شو.</div>
+        ) : !historyReady ? (
           <div className="analytics-empty">در حال محاسبه آمار...</div>
         ) : (
           <>
