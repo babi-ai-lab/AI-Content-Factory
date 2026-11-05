@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 type Product = {
   name: string;
@@ -26,6 +27,13 @@ type HistoryItem = {
   createdAt: string;
   product: Product;
   content: Content;
+};
+
+type DbHistoryRow = {
+  id: string;
+  product: Product;
+  content: Content;
+  created_at: string;
 };
 
 const STORAGE_KEY = "ai-content-factory-history-v1";
@@ -149,6 +157,14 @@ function buildTextExport(product: Product, content: Content) {
 }
 
 export default function Home() {
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+
   const [product, setProduct] = useState<Product>(initialProduct);
   const [content, setContent] = useState<Content | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("caption");
@@ -161,32 +177,212 @@ export default function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState("");
   const [historySearch, setHistorySearch] = useState("");
 
+  function showNotice(message: string, type: "success" | "error" | "info" = "info") {
+    setNotice(message);
+    setNoticeType(type);
+  }
+
+  // بررسی نشست کاربر و گوش دادن به تغییر وضعیت ورود
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setHistory(parsed.slice(0, MAX_HISTORY));
-        }
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!mounted) return;
+
+      if (error) {
+        setAuthMessage(error.message);
       }
-    } catch (error) {
-      console.error("History read error:", error);
-    } finally {
-      setHistoryReady(true);
-    }
+
+      setUser(
+        data.session?.user
+          ? { id: data.session.user.id, email: data.session.user.email }
+          : null
+      );
+      setAuthReady(true);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      setUser(
+        session?.user
+          ? { id: session.user.id, email: session.user.email }
+          : null
+      );
+      setHistory([]);
+      setHistoryReady(false);
+      setSelectedHistoryId("");
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
+  // بارگذاری تاریخچه کاربر و انتقال تاریخچه قدیمی مرورگر در صورت نیاز
   useEffect(() => {
-    if (!historyReady) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-    } catch (error) {
-      console.error("History save error:", error);
-      showNotice("فضای ذخیره مرورگر کافی نیست؛ چند مورد از تاریخچه را حذف کن.", "error");
+    if (!user) {
+      setHistory([]);
+      setHistoryReady(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, historyReady]);
+
+    let cancelled = false;
+
+    async function loadHistory() {
+      setHistoryReady(false);
+
+      try {
+        const { data, error } = await supabase
+          .from("content_history")
+          .select("id, product, content, created_at")
+          .order("created_at", { ascending: false })
+          .limit(MAX_HISTORY);
+
+        if (error) throw error;
+
+        let rows = (data || []) as DbHistoryRow[];
+
+        const migrationKey = `ai-content-factory-migrated-${user!.id}`;
+        const alreadyMigrated = localStorage.getItem(migrationKey);
+
+        if (rows.length === 0 && !alreadyMigrated) {
+          const saved = localStorage.getItem(STORAGE_KEY);
+
+          if (saved) {
+            try {
+              const oldItems = JSON.parse(saved) as HistoryItem[];
+
+              if (Array.isArray(oldItems) && oldItems.length > 0) {
+                const records = oldItems.slice(0, MAX_HISTORY).map((item) => ({
+                  user_id: user!.id,
+                  product: item.product,
+                  content: item.content,
+                  created_at: item.createdAt || new Date().toISOString(),
+                }));
+
+                const { error: migrationError } = await supabase
+                  .from("content_history")
+                  .insert(records);
+
+                if (migrationError) throw migrationError;
+              }
+            } catch (migrationError) {
+              console.error("History migration error:", migrationError);
+              throw migrationError;
+            }
+          }
+
+          localStorage.setItem(migrationKey, "true");
+
+          const { data: refreshed, error: refreshError } = await supabase
+            .from("content_history")
+            .select("id, product, content, created_at")
+            .order("created_at", { ascending: false })
+            .limit(MAX_HISTORY);
+
+          if (refreshError) throw refreshError;
+          rows = (refreshed || []) as DbHistoryRow[];
+        }
+
+        if (!cancelled) {
+          setHistory(
+            rows.map((row) => ({
+              id: row.id,
+              createdAt: row.created_at,
+              product: row.product,
+              content: row.content,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("History load error:", error);
+        if (!cancelled) {
+          showNotice(
+            "بارگذاری تاریخچه انجام نشد. اتصال Supabase و تنظیمات جدول را بررسی کن.",
+            "error"
+          );
+        }
+      } finally {
+        if (!cancelled) setHistoryReady(true);
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  async function handleAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!authEmail.trim() || !authPassword) {
+      setAuthMessage("ایمیل و رمز عبور را وارد کن.");
+      return;
+    }
+
+    if (authPassword.length < 6) {
+      setAuthMessage("رمز عبور باید حداقل ۶ کاراکتر باشد.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthMessage("");
+
+    try {
+      if (authMode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword,
+        });
+
+        if (error) throw error;
+
+        if (data.session) {
+          setAuthMessage("ثبت‌نام با موفقیت انجام شد.");
+        } else {
+          setAuthMessage(
+            "ثبت‌نام انجام شد. ایمیل خود را بررسی کن و لینک تأیید را باز کن؛ سپس وارد حساب شو."
+          );
+          setAuthMode("login");
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword,
+        });
+
+        if (error) throw error;
+        setAuthMessage("ورود موفقیت‌آمیز بود.");
+      }
+    } catch (error) {
+      setAuthMessage(
+        error instanceof Error ? error.message : "خطا در ورود یا ثبت‌نام."
+      );
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      showNotice(`خطا در خروج: ${error.message}`, "error");
+      return;
+    }
+
+    setContent(null);
+    setProduct(initialProduct);
+    setHistory([]);
+    setSelectedHistoryId("");
+    showNotice("از حساب کاربری خارج شدی.", "success");
+  }
 
   const filled = useMemo(
     () => product.name.trim().length > 1 && product.features.trim().length > 2,
@@ -202,11 +398,6 @@ export default function Home() {
         .includes(term)
     );
   }, [history, historySearch]);
-
-  function showNotice(message: string, type: "success" | "error" | "info" = "info") {
-    setNotice(message);
-    setNoticeType(type);
-  }
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
     setProduct((old) => ({ ...old, [key]: value }));
@@ -249,6 +440,7 @@ export default function Home() {
       }
 
       const generated = data.content as Content;
+
       if (
         !generated ||
         typeof generated.caption !== "string" ||
@@ -259,23 +451,44 @@ export default function Home() {
         throw new Error("ساختار پاسخ هوش مصنوعی معتبر نیست. دوباره تلاش کن.");
       }
 
-      const newItem: HistoryItem = {
-        id: createId(),
-        createdAt: new Date().toISOString(),
-        product: { ...product },
-        content: generated,
-      };
-
       setContent(generated);
       setActiveTab("caption");
       setDraftText(generated.caption);
+      setSelectedHistoryId("");
+
+      const { data: savedRow, error: saveError } = await supabase
+        .from("content_history")
+        .insert({
+          user_id: user!.id,
+          product: { ...product },
+          content: generated,
+        })
+        .select("id, product, content, created_at")
+        .single();
+
+      if (saveError) {
+        console.error("Save history error:", saveError);
+        showNotice(
+          "محتوا تولید شد، اما ذخیره آنلاین آن ناموفق بود. دوباره تلاش کن.",
+          "error"
+        );
+        return;
+      }
+
+      const newItem: HistoryItem = {
+        id: savedRow.id,
+        createdAt: savedRow.created_at,
+        product: savedRow.product,
+        content: savedRow.content,
+      };
+
       setSelectedHistoryId(newItem.id);
       setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
 
       showNotice(
         data.mode === "demo"
-          ? "خروجی نمونه ساخته شد؛ برای تولید هوش مصنوعی کلید Gemini را در تنظیمات سرور قرار بده."
-          : `محتوا با موفقیت تولید شد${data.model ? ` (${data.model})` : ""} و در تاریخچه ذخیره شد.`,
+          ? "خروجی نمونه ساخته و در حساب تو ذخیره شد. برای تولید واقعی، تنظیمات Gemini را بررسی کن."
+          : `محتوا با موفقیت تولید و آنلاین ذخیره شد${data.model ? ` (${data.model})` : ""}.`,
         data.mode === "demo" ? "info" : "success"
       );
     } catch (error) {
@@ -288,10 +501,28 @@ export default function Home() {
     }
   }
 
-  function saveEdits() {
-    if (!content) return;
+  async function saveEdits() {
+    if (!content || !selectedHistoryId) {
+      showNotice("ابتدا یک بسته ذخیره‌شده را انتخاب کن.", "error");
+      return;
+    }
+
     const updatedContent = currentWorkingContent();
     if (!updatedContent) return;
+
+    const { error } = await supabase
+      .from("content_history")
+      .update({
+        product: { ...product },
+        content: updatedContent,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", selectedHistoryId);
+
+    if (error) {
+      showNotice(`ذخیره تغییرات ناموفق بود: ${error.message}`, "error");
+      return;
+    }
 
     setContent(updatedContent);
     setHistory((old) =>
@@ -302,7 +533,7 @@ export default function Home() {
       )
     );
     setDraftText(getTabText(updatedContent, activeTab));
-    showNotice("تغییرات این بسته ذخیره شد.", "success");
+    showNotice("تغییرات در دیتابیس آنلاین ذخیره شد.", "success");
   }
 
   async function copyText(text: string) {
@@ -310,16 +541,16 @@ export default function Home() {
       await navigator.clipboard.writeText(text);
       showNotice("متن کپی شد.", "success");
     } catch {
-      showNotice("کپی خودکار در این مرورگر فعال نیست؛ متن را دستی انتخاب کن.", "error");
+      showNotice("کپی خودکار فعال نیست؛ متن را دستی انتخاب کن.", "error");
     }
   }
 
   function exportTXT() {
     const working = currentWorkingContent();
     if (!working) return showNotice("ابتدا یک بسته محتوایی تولید کن.", "error");
-    const name = safeFileName(product.name);
+
     downloadFile(
-      `AI-Content-${name}.txt`,
+      `AI-Content-${safeFileName(product.name)}.txt`,
       buildTextExport(product, working),
       "text/plain"
     );
@@ -330,17 +561,19 @@ export default function Home() {
     const working = currentWorkingContent();
     if (!working) return showNotice("ابتدا یک بسته محتوایی تولید کن.", "error");
 
-    const exportData = {
-      application: "AI Content Factory",
-      version: "1.0",
-      exportedAt: new Date().toISOString(),
-      product,
-      content: working,
-    };
-
     downloadFile(
       `AI-Content-${safeFileName(product.name)}.json`,
-      JSON.stringify(exportData, null, 2),
+      JSON.stringify(
+        {
+          application: "AI Content Factory",
+          version: "2.0",
+          exportedAt: new Date().toISOString(),
+          product,
+          content: working,
+        },
+        null,
+        2
+      ),
       "application/json"
     );
     showNotice("فایل JSON دانلود شد.", "success");
@@ -356,29 +589,160 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function deleteHistory(id: string) {
+  async function deleteHistory(id: string) {
     if (!window.confirm("این بسته محتوایی از تاریخچه حذف شود؟")) return;
+
+    const { error } = await supabase
+      .from("content_history")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      showNotice(`حذف ناموفق بود: ${error.message}`, "error");
+      return;
+    }
+
     setHistory((old) => old.filter((item) => item.id !== id));
-    if (selectedHistoryId === id) setSelectedHistoryId("");
-    showNotice("بسته از تاریخچه حذف شد.", "success");
+    if (selectedHistoryId === id) {
+      setSelectedHistoryId("");
+      setContent(null);
+    }
+    showNotice("بسته از تاریخچه آنلاین حذف شد.", "success");
   }
 
-  function clearHistory() {
+  async function clearHistory() {
     if (!history.length) return;
-    if (!window.confirm("تمام تاریخچه حذف شود؟ این کار قابل بازگشت نیست.")) return;
+    if (!window.confirm("تمام تاریخچه حساب کاربری حذف شود؟ این کار قابل بازگشت نیست.")) return;
+
+    const ids = history.map((item) => item.id);
+    const { error } = await supabase
+      .from("content_history")
+      .delete()
+      .in("id", ids);
+
+    if (error) {
+      showNotice(`پاک کردن تاریخچه ناموفق بود: ${error.message}`, "error");
+      return;
+    }
+
     setHistory([]);
     setSelectedHistoryId("");
-    showNotice("تاریخچه پاک شد.", "success");
+    setContent(null);
+    showNotice("تاریخچه حساب کاربری پاک شد.", "success");
   }
 
   function exportHistory() {
     if (!history.length) return showNotice("تاریخچه خالی است.", "error");
+
     downloadFile(
       "AI-Content-Factory-History.json",
       JSON.stringify(history, null, 2),
       "application/json"
     );
     showNotice("نسخه پشتیبان تاریخچه دانلود شد.", "success");
+  }
+
+  if (!authReady) {
+    return (
+      <main className="shell" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
+        <div className="panel">در حال بررسی حساب کاربری...</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main
+        className="shell"
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          paddingTop: 35,
+          paddingBottom: 35,
+        }}
+      >
+        <section className="panel" style={{ width: "100%", maxWidth: 460, padding: 30 }}>
+          <div style={{ textAlign: "center", marginBottom: 25 }}>
+            <div className="brand-mark" style={{ margin: "0 auto 12px", width: 48, height: 48, fontSize: 28 }}>✳</div>
+            <h1 style={{ fontSize: 27, letterSpacing: 0 }}>AI Content Factory</h1>
+            <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 2 }}>
+              برای استفاده از استودیوی محتوا وارد حساب خود شو یا ثبت‌نام کن.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+            <button
+              type="button"
+              className={authMode === "login" ? "generate" : "secondary-button"}
+              style={{ flex: 1, justifyContent: "center", margin: 0 }}
+              onClick={() => {
+                setAuthMode("login");
+                setAuthMessage("");
+              }}
+            >
+              ورود
+            </button>
+            <button
+              type="button"
+              className={authMode === "signup" ? "generate" : "secondary-button"}
+              style={{ flex: 1, justifyContent: "center", margin: 0 }}
+              onClick={() => {
+                setAuthMode("signup");
+                setAuthMessage("");
+              }}
+            >
+              ثبت‌نام
+            </button>
+          </div>
+
+          <form onSubmit={handleAuth} style={{ display: "grid", gap: 14 }}>
+            <label>
+              ایمیل
+              <input
+                type="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                placeholder="name@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label>
+              رمز عبور
+              <input
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                placeholder="حداقل ۶ کاراکتر"
+                autoComplete={authMode === "signup" ? "new-password" : "current-password"}
+                minLength={6}
+                required
+              />
+            </label>
+
+            <button className="generate" type="submit" disabled={authLoading}>
+              {authLoading
+                ? "لطفاً صبر کن..."
+                : authMode === "signup"
+                  ? "ساخت حساب کاربری"
+                  : "ورود به حساب"}
+            </button>
+          </form>
+
+          {authMessage && (
+            <div className="notice info" role="status" style={{ marginTop: 15 }}>
+              {authMessage}
+            </div>
+          )}
+
+          <p className="privacy-note" style={{ textAlign: "center", marginTop: 20 }}>
+            تاریخچه محتواها در حساب کاربری تو ذخیره می‌شود و با حساب دیگران مشترک نیست.
+          </p>
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -388,7 +752,11 @@ export default function Home() {
           <span className="brand-mark">✳</span>
           <span>AI Content Factory</span>
         </a>
-        <span className="top-tag">نسخه ۱.۰</span>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="top-tag" dir="ltr">{user.email}</span>
+          <button className="history-backup" onClick={logout}>خروج</button>
+        </div>
       </header>
 
       <section className="hero">
@@ -479,7 +847,7 @@ export default function Home() {
           <button className="generate" onClick={generate} disabled={loading || !filled}>
             {loading ? <><span className="spinner" /> در حال تولید محتوا...</> : <>✦ ساخت بسته محتوایی <span>←</span></>}
           </button>
-          <p className="privacy-note">نام محصول و ویژگی‌های واقعی الزامی هستند. اطلاعات این فرم برای تولید محتوا به سرور ارسال می‌شود.</p>
+          <p className="privacy-note">نام محصول و ویژگی‌های واقعی الزامی هستند. تاریخچه در حساب کاربری تو ذخیره می‌شود.</p>
         </section>
 
         <section className="panel output-panel">
@@ -498,7 +866,7 @@ export default function Home() {
           ) : (
             <>
               <div className="loaded-label">
-                {selectedHistoryId ? "این بسته در تاریخچه ذخیره شده است." : "این محتوا هنوز در تاریخچه ثبت نشده است."}
+                {selectedHistoryId ? "این بسته در حساب کاربری ذخیره شده است." : "این محتوا هنوز در تاریخچه ثبت نشده است."}
               </div>
 
               <nav className="tabs" aria-label="بخش‌های محتوا">
@@ -566,7 +934,7 @@ export default function Home() {
         {!historyReady ? (
           <div className="history-empty">در حال بارگذاری تاریخچه...</div>
         ) : history.length === 0 ? (
-          <div className="history-empty"><span className="history-empty-icon">◷</span><b>هنوز محتوایی ذخیره نشده است.</b><p>بعد از اولین تولید، بسته‌ها در این قسمت نگهداری می‌شوند.</p></div>
+          <div className="history-empty"><span className="history-empty-icon">◷</span><b>هنوز محتوایی ذخیره نشده است.</b><p>بعد از اولین تولید، بسته‌ها در حساب کاربری تو نگهداری می‌شوند.</p></div>
         ) : filteredHistory.length === 0 ? (
           <div className="history-empty">موردی با این عبارت پیدا نشد.</div>
         ) : (
@@ -586,7 +954,7 @@ export default function Home() {
             ))}
           </div>
         )}
-        <p className="privacy-note">تاریخچه فعلاً فقط در همین مرورگر و همین دستگاه ذخیره می‌شود؛ با پاک‌کردن داده‌های مرورگر ممکن است حذف شود.</p>
+        <p className="privacy-note">تاریخچه به حساب کاربری تو متصل است و پس از ورود از دستگاه‌های دیگر نیز قابل دسترسی خواهد بود.</p>
       </section>
 
       <section className="bottom-row">
@@ -594,7 +962,7 @@ export default function Home() {
         <div className="mini-card"><span className="mini-icon">↓</span><div><b>خروجی و پشتیبان</b><small>دانلود بسته‌ها به صورت TXT و JSON.</small></div></div>
       </section>
 
-      <footer>AI Content Factory <span>·</span> نسخه ۱.۰ <span>·</span> ابزار تولید محتوای فروشگاهی</footer>
+      <footer>AI Content Factory <span>·</span> نسخه ۲.۰ <span>·</span> ابزار تولید محتوای فروشگاهی</footer>
     </main>
   );
 }
