@@ -1686,7 +1686,7 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">برنامه‌ریزی</span>
             <h2>تقویم محتوایی</h2>
-            <p>برای هر بسته زمان انتشار تعیین کن؛ این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
+            <p>برای ۵۰ محتوای اخیر زمان انتشار تعیین کن؛ این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
           </div>
           <div className="planner-total"><strong>{scheduledItems.length.toLocaleString("fa-IR")}</strong><span>محتوای زمان‌بندی‌شده</span></div>
         </div>
