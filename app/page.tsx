@@ -183,7 +183,7 @@ type DbContentVersionRow = {
 
 const STORAGE_KEY = "ai-content-factory-history-v1";
 
-const MAX_HISTORY = 50;
+const HISTORY_PAGE_SIZE = 50;
 
 const initialProduct: Product = {
   businessType: "retail",
@@ -549,6 +549,8 @@ export default function Home() {
     if (!user) {
 
       setHistory([]);
+      setHistoryHasMore(false);
+      setHistoryCursor(null);
       versionsRequestRef.current += 1;
         setContentVersions([]);
       setVersionsError("");
@@ -576,7 +578,7 @@ export default function Home() {
 
           .order("created_at", { ascending: false })
           .order("id", { ascending: false })
-          .limit(MAX_HISTORY);
+          .limit(HISTORY_PAGE_SIZE);
 
         if (error) throw error;
 
@@ -597,7 +599,7 @@ export default function Home() {
 
               if (Array.isArray(oldItems) && oldItems.length > 0) {
 
-                const records = oldItems.slice(0, MAX_HISTORY).map((item) => ({
+                const records = oldItems.slice(0, HISTORY_PAGE_SIZE).map((item) => ({
 
                   user_id: user!.id,
 
@@ -639,7 +641,7 @@ export default function Home() {
 
             .order("created_at", { ascending: false })
             .order("id", { ascending: false })
-            .limit(MAX_HISTORY);
+            .limit(HISTORY_PAGE_SIZE);
 
           if (refreshError) throw refreshError;
 
@@ -666,7 +668,7 @@ export default function Home() {
           );
           const lastRow = rows[rows.length - 1];
           setHistoryCursor(lastRow ? { createdAt: lastRow.created_at, id: lastRow.id } : null);
-          setHistoryHasMore(rows.length === MAX_HISTORY);
+          setHistoryHasMore(rows.length === HISTORY_PAGE_SIZE);
 
         }
 
@@ -716,7 +718,7 @@ export default function Home() {
         .or(`created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
-        .limit(MAX_HISTORY);
+        .limit(HISTORY_PAGE_SIZE);
 
       if (error) throw error;
 
@@ -735,7 +737,7 @@ export default function Home() {
 
       const lastRow = rows[rows.length - 1];
       if (lastRow) setHistoryCursor({ createdAt: lastRow.created_at, id: lastRow.id });
-      setHistoryHasMore(rows.length === MAX_HISTORY);
+      setHistoryHasMore(rows.length === HISTORY_PAGE_SIZE);
     } catch (error) {
       showNotice(
         error instanceof Error ? `بارگذاری موارد قدیمی‌تر ناموفق بود: ${error.message}` : "بارگذاری موارد قدیمی‌تر ناموفق بود.",
@@ -1475,6 +1477,8 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    setHistoryHasMore(false);
+    setHistoryCursor(null);
     versionsRequestRef.current += 1;
         setContentVersions([]);
     setVersionsError("");
