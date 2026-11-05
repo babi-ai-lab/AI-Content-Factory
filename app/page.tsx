@@ -480,6 +480,10 @@ export default function Home() {
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
   const [brandProfileSaving, setBrandProfileSaving] = useState(false);
   const [brandProfileNotice, setBrandProfileNotice] = useState("");
+  const [instagramConnection, setInstagramConnection] = useState<{ username: string; token_expires_at: string } | null>(null);
+  const [instagramLoading, setInstagramLoading] = useState(false);
+  const [instagramBusy, setInstagramBusy] = useState(false);
+  const [instagramNotice, setInstagramNotice] = useState("");
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -667,6 +671,86 @@ export default function Home() {
       if (requestId === calendarRequestRef.current) setCalendarLoading(false);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id) {
+      setInstagramConnection(null);
+      setInstagramLoading(false);
+      return () => { cancelled = true; };
+    }
+    async function loadInstagramStatus() {
+      setInstagramLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error("نشست کاربری معتبر نیست.");
+        const response = await fetch("/api/integrations/instagram/status", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          cache: "no-store",
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "خواندن وضعیت اتصال ناموفق بود.");
+        if (!cancelled) setInstagramConnection(result.connection || null);
+      } catch (error) {
+        if (!cancelled) setInstagramNotice(error instanceof Error ? error.message : "وضعیت اینستاگرام دریافت نشد.");
+      } finally {
+        if (!cancelled) setInstagramLoading(false);
+      }
+    }
+    void loadInstagramStatus();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("instagram");
+    if (status === "connected") setInstagramNotice("حساب اینستاگرام با موفقیت متصل شد.");
+    if (status === "error") setInstagramNotice("اتصال اینستاگرام کامل نشد. دوباره تلاش کن.");
+    if (status === "login-required") setInstagramNotice("برای تکمیل اتصال، ابتدا وارد حساب برنامه شو.");
+    if (status) window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
+  async function connectInstagram() {
+    setInstagramBusy(true);
+    setInstagramNotice("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("ابتدا وارد حساب کاربری شو.");
+      const response = await fetch("/api/integrations/instagram/connect", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.authorizationUrl) throw new Error(result.error || "شروع اتصال اینستاگرام ناموفق بود.");
+      window.location.assign(result.authorizationUrl);
+    } catch (error) {
+      setInstagramNotice(error instanceof Error ? error.message : "شروع اتصال اینستاگرام ناموفق بود.");
+      setInstagramBusy(false);
+    }
+  }
+
+  async function disconnectInstagram() {
+    if (!window.confirm("اتصال اینستاگرام قطع شود؟")) return;
+    setInstagramBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("نشست کاربری معتبر نیست.");
+      const response = await fetch("/api/integrations/instagram/disconnect", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: "no-store",
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "قطع اتصال ناموفق بود.");
+      setInstagramConnection(null);
+      setInstagramNotice("اتصال اینستاگرام قطع شد و توکن ذخیره‌شده حذف شد.");
+    } catch (error) {
+      setInstagramNotice(error instanceof Error ? error.message : "قطع اتصال ناموفق بود.");
+    } finally {
+      setInstagramBusy(false);
+    }
+  }
 
   function showNotice(message: string, type: "success" | "error" | "info" = "info") {
 
@@ -2036,6 +2120,32 @@ const response = await fetch("/api/generate", {
         </div>
         {brandProfileNotice && <div className="notice info" role="status">{brandProfileNotice}</div>}
       </details>
+
+      <section className="instagram-integration-section" aria-labelledby="instagram-integration-title">
+        <div className="instagram-integration-copy">
+          <span className="step">اتصال شبکه اجتماعی</span>
+          <h2 id="instagram-integration-title">انتشار در اینستاگرام</h2>
+          <p>حساب حرفه‌ای اینستاگرام را متصل کن تا در مرحله بعد، انتشار مستقیم و زمان‌بندی‌شده محتوا را فعال کنیم.</p>
+          <small>فقط حساب‌های Professional از نوع Business یا Creator پشتیبانی می‌شوند؛ حساب شخصی قابل اتصال نیست.</small>
+        </div>
+        <div className="instagram-integration-actions">
+          {instagramLoading ? (
+            <span className="privacy-note">در حال بررسی اتصال...</span>
+          ) : instagramConnection ? (
+            <>
+              <span className="instagram-connected-label">متصل: <strong dir="ltr">@{instagramConnection.username}</strong></span>
+              <button type="button" className="secondary-button" onClick={disconnectInstagram} disabled={instagramBusy}>
+                {instagramBusy ? "در حال انجام..." : "قطع اتصال"}
+              </button>
+            </>
+          ) : (
+            <button type="button" className="primary-button" onClick={connectInstagram} disabled={instagramBusy || !user}>
+              {instagramBusy ? "در حال انتقال..." : "اتصال حساب اینستاگرام"}
+            </button>
+          )}
+        </div>
+        {instagramNotice && <p className="instagram-integration-notice" role="status">{instagramNotice}</p>}
+      </section>
 
       <section className="analytics-section" aria-labelledby="analytics-title">
         <div className="analytics-heading">
