@@ -747,11 +747,11 @@ export default function Home() {
     }
     const isValidFile = instagramMediaType === "image"
       ? instagramMediaFile.type === "image/jpeg" && instagramMediaFile.size <= 8 * 1024 * 1024
-      : instagramMediaFile.type === "video/mp4" && instagramMediaFile.size <= 300 * 1024 * 1024;
+      : instagramMediaFile.type === "video/mp4" && instagramMediaFile.size <= 50 * 1024 * 1024;
     if (!isValidFile) {
       setInstagramNotice(instagramMediaType === "image"
         ? "برای پست تصویری فقط JPEG تا ۸ مگابایت مجاز است."
-        : "برای ریلز فقط MP4 تا ۳۰۰ مگابایت مجاز است.");
+        : "برای ریلز فقط MP4 تا ۵۰ مگابایت مجاز است.");
       return;
     }
 
@@ -2235,7 +2235,7 @@ const response = await fetch("/api/generate", {
               <button type="button" className={instagramMediaType === "reel" ? "active" : ""} onClick={() => { setInstagramMediaType("reel"); setInstagramMediaFile(null); setInstagramMediaUrl(""); setInstagramRequestId(""); }}>ریلز</button>
             </div>
             <label className="instagram-upload-label">
-              {instagramMediaType === "image" ? "انتخاب تصویر JPEG (حداکثر ۸ مگابایت)" : "انتخاب ویدئوی MP4 (حداکثر ۳۰۰ مگابایت)"}
+              {instagramMediaType === "image" ? "انتخاب تصویر JPEG (حداکثر ۸ مگابایت)" : "انتخاب ویدئوی MP4 (حداکثر ۵۰ مگابایت)"}
               <input
                 type="file"
                 accept={instagramMediaType === "image" ? "image/jpeg" : "video/mp4"}
