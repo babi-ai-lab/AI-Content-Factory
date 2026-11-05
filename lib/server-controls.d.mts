@@ -1,6 +1,6 @@
 export const MAX_BODY_BYTES: number;
 
-export interface BusinessInput {
+export interface BrandProfileInput {\n  brandName: string;\n  tagline: string;\n  audience: string;\n  valueProposition: string;\n  voice: string;\n  preferredTerms: string;\n  avoidTerms: string;\n  cta: string;\n}\n\nexport interface BusinessInput {\n  brandProfile: BrandProfileInput;
   businessType: "retail" | "services" | "restaurant" | "real_estate" | "construction" | "education" | "fitness" | "personal_brand" | "other";
   businessName: string;
   name: string;
