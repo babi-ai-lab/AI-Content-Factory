@@ -1509,7 +1509,8 @@ const response = await fetch("/api/generate", {
       while (hasMore && allItems.length < maxRows) {
         let query = supabase
           .from("content_history")
-          .select("id, product, content, created_at");
+          .select("id, product, content, created_at")
+          .eq("user_id", user.id);
 
         if (cursor) {
           query = query.or(
