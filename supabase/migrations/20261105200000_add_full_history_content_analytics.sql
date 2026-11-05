@@ -1,3 +1,7 @@
+-- Composite index supports user-scoped date filters and stable history pagination.
+CREATE INDEX IF NOT EXISTS content_history_user_created_at_idx
+  ON public.content_history (user_id, created_at DESC, id DESC);
+
 -- Full-history analytics calculated in PostgreSQL under the caller's RLS context.
 CREATE OR REPLACE FUNCTION public.get_content_analytics(p_period_days integer DEFAULT 30)
 RETURNS jsonb
