@@ -21,7 +21,11 @@
 - [ ] در Authentication → URL Configuration، آدرس `https://ai-content-factory-6m32.onrender.com` را در Redirect URLs مجاز اضافه کن.
 - [ ] Site URL را با دامنه واقعی Production هماهنگ کن.
 - [ ] برای ارسال قابل اتکای ایمیل تأیید و بازیابی رمز، SMTP اختصاصی تنظیم کن.
-- [ ] در صورت پشتیبانی طرح فعلی، Leaked Password Protection را فعال کن. برای این کار طرح پولی را بدون تأیید ارتقا نده.
+- [ ] تأیید ایمیل (Confirm Email) را فعال کن و اعتبار لینک/OTP را حداکثر یک ساعت تنظیم کن.
+- [ ] CAPTCHA را برای ثبت‌نام، ورود و بازیابی رمز بررسی و در صورت امکان فعال کن.
+- [ ] MFA را برای حساب مالک Supabase و GitHub فعال کن.
+- [ ] SSL Enforcement پایگاه داده را در Supabase بررسی و فعال بودنش را تأیید کن؛ Network Restrictions را متناسب با روش اتصال بررسی کن.
+- [ ] در صورت پشتیبانی طرح فعلی، Leaked Password Protection را فعال کن. این قابلیت طبق مستندات Supabase به Pro و بالاتر نیاز دارد؛ هیچ ارتقای پولی بدون تأیید انجام نده.
 
 ### ۲. Render
 
