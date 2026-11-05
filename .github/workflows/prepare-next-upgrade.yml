@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: next16-upgrade-{github.ref}
+  group: next16-upgrade
   cancel-in-progress: true
 
 jobs:
@@ -28,8 +28,12 @@ jobs:
           cache: npm
       - name: Upgrade framework and React
         run: npm install next@16.4.5 react@latest react-dom@latest
-      - name: Upgrade TypeScript React definitions
-        run: npm install --save-dev @types/react@latest @types/react-dom@latest @types/node@^24
+      - name: Upgrade TypeScript and lint tooling
+        run: npm install --save-dev @types/react@latest @types/react-dom@latest @types/node@^24 eslint@^9 eslint-config-next@16.4.5
+      - name: Update lint command
+        run: npm pkg set scripts.lint=eslint .
+      - name: Verify tests and production build
+        run: npm test && npm run lint && npm run build
       - name: Commit generated dependency lockfile
         run: |
           git config user.name "github-actions[bot]"
