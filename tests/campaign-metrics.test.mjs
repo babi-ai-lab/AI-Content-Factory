@@ -13,6 +13,8 @@ test("rejects negative, malformed, and fractional count metrics", () => {
   assert.equal(parseCampaignMetric("12.345"), null);
   assert.equal(parseCampaignMetric("12.5", { integer: true }), null);
   assert.equal(parseCampaignMetric("abc"), null);
+  assert.equal(parseCampaignMetric("9999999999999"), null);
+  assert.equal(parseCampaignMetric("9007199254740993", { integer: true }), null);
 });
 
 test("calculates campaign KPIs without dividing by zero", () => {
