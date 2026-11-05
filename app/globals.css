@@ -494,3 +494,21 @@ footer span { padding: 0 6px; }
  .quick-start-panel { grid-template-columns:1fr; gap:14px; padding:16px; }
  .quick-start-intro h2 { font-size:16px; }
 }
+
+.campaign-performance { display:grid; gap:12px; margin-top:18px; padding:15px; border:1px solid var(--line); border-radius:13px; background:#fbfcff; }
+.campaign-performance-note { margin:-5px 0 0; color:var(--muted); font-size:9px; line-height:1.8; }
+.campaign-metrics-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.campaign-metrics-form label { display:grid; gap:5px; color:var(--ink); font-size:10px; font-weight:700; }
+.campaign-metrics-form input { min-width:0; width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font:inherit; font-size:11px; }
+.campaign-kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; }
+.campaign-kpi-grid>div { display:grid; gap:5px; min-width:0; padding:10px; border:1px solid var(--line); border-radius:9px; background:#fff; }
+.campaign-kpi-grid small { color:var(--muted); font-size:9px; }
+.campaign-kpi-grid strong { color:var(--ink); font-size:13px; overflow-wrap:anywhere; }
+@media (max-width:900px) {
+ .campaign-metrics-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .campaign-kpi-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (max-width:520px) {
+ .campaign-metrics-form { grid-template-columns:1fr 1fr; gap:8px; }
+ .campaign-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
