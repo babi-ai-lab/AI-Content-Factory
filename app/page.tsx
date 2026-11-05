@@ -1669,7 +1669,7 @@ const response = await fetch("/api/generate", {
             <input className="history-search" style={{ margin: 0 }} value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="جست‌وجو در نام، موضوع، برچسب یا پوشه..." />
             <select value={historyFolderFilter} onChange={(e) => setHistoryFolderFilter(e.target.value)} aria-label="فیلتر پوشه">
               <option>همه پوشه‌ها</option>
-              {[...new Set(history.map((item) => item.product._factoryMeta?.folder || "عمومی"))].sort().map((folder) => <option key={folder}>{folder}</option>)}
+              {Array.from(new Set(history.map((item) => item.product._factoryMeta?.folder || "عمومی"))).sort().map((folder) => <option key={folder}>{folder}</option>)}
             </select>
             <button className={historyFavoritesOnly ? "history-open" : "history-backup"} onClick={() => setHistoryFavoritesOnly((value) => !value)}>★ منتخب‌ها</button>
             <button className="history-backup" onClick={() => setSelectedBulkIds(filteredHistory.map((item) => item.id))} disabled={!filteredHistory.length}>انتخاب نتایج</button>
