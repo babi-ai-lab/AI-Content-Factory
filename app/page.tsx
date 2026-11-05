@@ -517,6 +517,8 @@ export default function Home() {
       if (event !== "USER_UPDATED") {
         setBrandProfileNotice("");
         setHistory([]);
+        setContentVersions([]);
+        setVersionsError("");
         setHistoryReady(false);
         setSelectedHistoryId("");
       }
@@ -540,6 +542,8 @@ export default function Home() {
     if (!user) {
 
       setHistory([]);
+      setContentVersions([]);
+      setVersionsError("");
 
       setHistoryReady(false);
       setBrandProfile(initialBrandProfile);
@@ -821,6 +825,8 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
+    setContentVersions([]);
+    setVersionsError("");
 
     setSelectedHistoryId("");
 
@@ -1064,6 +1070,8 @@ const response = await fetch("/api/generate", {
       };
 
       setSelectedHistoryId(newItem.id);
+      setContentVersions([]);
+      setVersionsError("");
 
       setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
 
@@ -1296,6 +1304,8 @@ const response = await fetch("/api/generate", {
     if (selectedHistoryId === id) {
 
       setSelectedHistoryId("");
+      setContentVersions([]);
+      setVersionsError("");
 
       setContent(null);
 
@@ -1330,6 +1340,8 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    setContentVersions([]);
+    setVersionsError("");
 
     setSelectedHistoryId("");
 
