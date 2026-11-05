@@ -3,7 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-type Product = {
+type BusinessType =
+  | "retail"
+  | "services"
+  | "restaurant"
+  | "real_estate"
+  | "construction"
+  | "education"
+  | "fitness"
+  | "personal_brand"
+  | "other";
+
+type BusinessInput = {
+  businessType?: BusinessType | string;
+  businessName?: string;
   name: string;
   price?: string;
   category?: string;
@@ -13,6 +26,10 @@ type Product = {
   audience?: string;
   goal?: string;
   tone?: string;
+  serviceArea?: string;
+  offer?: string;
+  differentiators?: string;
+  additionalInfo?: string;
 };
 
 type GeneratedContent = {
@@ -28,64 +45,135 @@ type ModelResult = {
   model: string;
 };
 
-function demoContent(p: Product): GeneratedContent {
-  const price = p.price?.trim()
-    ? `قیمت: ${p.price.trim()}`
-    : "برای اطلاع از قیمت پیام بده.";
+const businessLabels: Record<string, string> = {
+  retail: "فروشگاه و خرده‌فروشی",
+  services: "خدمات و کسب‌وکارهای خدماتی",
+  restaurant: "رستوران، کافه و صنایع غذایی",
+  real_estate: "املاک و مستغلات",
+  construction: "ساختمان، معماری و بازسازی",
+  education: "آموزش و آموزشگاه",
+  fitness: "ورزش، باشگاه و تناسب اندام",
+  personal_brand: "برند شخصی و فعالیت حرفه‌ای",
+  other: "سایر کسب‌وکارها",
+};
 
-  const colors = p.colors?.trim()
-    ? `رنگ‌بندی: ${p.colors.trim()}.`
-    : "";
+function getBusinessLabel(type?: string) {
+  return businessLabels[type || "retail"] || businessLabels.other;
+}
 
-  const fabric = p.fabric?.trim()
-    ? `جنس: ${p.fabric.trim()}.`
-    : "";
-
+function demoContent(p: BusinessInput): GeneratedContent {
+  const businessType = p.businessType || "retail";
+  const businessName = p.businessName?.trim() || p.name.trim();
+  const name = p.name.trim();
   const features = p.features.trim();
 
-  return {
-    caption: `گاهی یک انتخاب ساده، حال‌وهوای استایلت را عوض می‌کند.
+  const price = p.price?.trim()
+    ? `قیمت: ${p.price.trim()}`
+    : "";
 
-${p.name}؛ ${features}.
-${fabric} ${colors}
+  const area = p.serviceArea?.trim()
+    ? `محدوده فعالیت: ${p.serviceArea.trim()}`
+    : "";
 
-${price}
+  const offer = p.offer?.trim()
+    ? `پیشنهاد: ${p.offer.trim()}`
+    : "";
 
-برای دریافت راهنمای انتخاب و ثبت سفارش، پیام بده.
+  const differentiators = p.differentiators?.trim()
+    ? `مزیت‌ها: ${p.differentiators.trim()}`
+    : "";
 
-#استایل #پوشاک #خرید_آنلاین`,
+  const commonDetails = [
+    features,
+    differentiators,
+    area,
+    offer,
+    price,
+  ]
+    .filter(Boolean)
+    .join("\n");
 
-    reel: `سناریوی ریلز ۲۰ تا ۲۵ ثانیه‌ای برای ${p.name}
+  const intro = `با ${businessName} بیشتر آشنا شوید.`;
 
-صحنه ۱ (۰ تا ۴ ثانیه): نمای نزدیک از محصول. نوشته روی تصویر: «دنبال یک انتخاب کاربردی برای استایلت هستی؟»
+  const caption = `${intro}
 
-صحنه ۲ (۴ تا ۱۲ ثانیه): نمایش محصول از چند زاویه و جزئیات واقعی آن. گوینده: «${p.name} با این ویژگی‌ها: ${features}.»
+${name}
 
-صحنه ۳ (۱۲ تا ۱۹ ثانیه): نمایش رنگ‌ها یا نحوه ست‌کردن. ${colors}
+${commonDetails}
 
-صحنه ۴ (۱۹ تا ۲۵ ثانیه): نمایش قیمت و دعوت به اقدام: «برای سفارش و راهنمایی، دایرکت بده.»
+برای دریافت اطلاعات بیشتر و مشاوره، با ما در ارتباط باشید.
 
-نکته تولید: فقط ویژگی‌هایی را نمایش بده که واقعاً در محصول وجود دارند.`,
+${p.audience?.trim() ? `مناسب برای: ${p.audience.trim()}` : ""}
 
-    stories: [
-      `اسلاید ۱ — معرفی: «محصولی که ارزش دیدن جزئیاتش را دارد» | ${p.name}`,
-      `اسلاید ۲ — ویژگی: «چه چیزی این محصول را متمایز می‌کند؟» | ${features}`,
-      `اسلاید ۳ — مشخصات: ${fabric} ${colors}`,
-      `اسلاید ۴ — قیمت: ${price}`,
-      "اسلاید ۵ — دعوت به اقدام: «برای سفارش یا پرسیدن سؤال، همین حالا پیام بده.»"
-    ],
+#کسب_و_کار #معرفی #خدمات`;
 
-    ad: `برای استایل روزمره‌ات یک انتخاب تازه ببین.
+  const reel = `سناریوی ریلز ۲۰ تا ۳۰ ثانیه‌ای
 
-${p.name}
+صحنه ۱ (۰ تا ۵ ثانیه):
+نمای جذاب از ${name}.
+نوشته روی تصویر: «به دنبال یک انتخاب مناسب هستید؟»
+
+صحنه ۲ (۵ تا ۱۵ ثانیه):
+معرفی فعالیت و ویژگی‌های واقعی:
 ${features}
-${fabric} ${colors}
-${price}
 
-مناسب برای: ${p.audience || "مخاطبان فروشگاه"}
+صحنه ۳ (۱۵ تا ۲۳ ثانیه):
+نمایش مزیت‌ها و جزئیات:
+${differentiators || features}
 
-برای دریافت جزئیات و ثبت سفارش پیام بده.`
-  };
+صحنه ۴ (۲۳ تا ۳۰ ثانیه):
+دعوت به اقدام:
+«برای دریافت اطلاعات بیشتر با ما تماس بگیرید یا پیام بدهید.»
+
+نکته: فقط خدمات و ویژگی‌های واقعی را نمایش بده.`;
+
+  const stories = [
+    `استوری ۱ — معرفی:
+${intro}
+${name}`,
+
+    `استوری ۲ — نیاز مخاطب:
+مخاطب شما به دنبال چه راه‌حلی است؟
+${features}`,
+
+    `استوری ۳ — مزیت‌ها:
+${differentiators || features}`,
+
+    `استوری ۴ — اطلاعات تکمیلی:
+${[area, offer, price].filter(Boolean).join("\n") || "برای دریافت اطلاعات بیشتر پیام بدهید."}`,
+
+    `استوری ۵ — دعوت به اقدام:
+برای دریافت اطلاعات بیشتر همین حالا پیام بدهید.`,
+  ];
+
+  const ad = `${businessName}
+
+${name}
+
+${commonDetails}
+
+اگر به دنبال گزینه‌ای مناسب برای نیاز خود هستید، با ما در ارتباط باشید.
+
+برای دریافت اطلاعات و مشاوره پیام بدهید.`;
+
+  if (businessType === "restaurant") {
+    return {
+      caption: `${intro}
+
+${name}
+
+${features}
+
+${offer}
+
+برای اطلاع از منو و سفارش، با ما در ارتباط باشید.`,
+      reel,
+      stories,
+      ad,
+    };
+  }
+
+  return { caption, reel, stories, ad };
 }
 
 function extractJson(text: string): GeneratedContent {
@@ -118,16 +206,14 @@ function extractJson(text: string): GeneratedContent {
     caption: parsed.caption,
     reel: parsed.reel,
     stories,
-    ad: parsed.ad
+    ad: parsed.ad,
   };
 }
 
 function wait(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Send request to one Gemini model.
-// Retry temporary errors before returning the result.
 async function callGeminiModel(
   model: string,
   apiKey: string,
@@ -147,10 +233,10 @@ async function callGeminiModel(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
+          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(45000)
+        signal: AbortSignal.timeout(45000),
       });
 
       lastResponse = response;
@@ -158,13 +244,11 @@ async function callGeminiModel(
       if (response.ok) {
         return {
           response,
-          model
+          model,
         };
       }
 
-      const retryableStatuses = [
-        429, 500, 502, 503, 504
-      ];
+      const retryableStatuses = [429, 500, 502, 503, 504];
 
       if (
         !retryableStatuses.includes(response.status) ||
@@ -178,7 +262,6 @@ async function callGeminiModel(
       );
 
       await wait(1500 * attempt);
-
     } catch (error) {
       lastNetworkError = error;
 
@@ -196,13 +279,80 @@ async function callGeminiModel(
   return {
     response: lastResponse,
     networkError: lastNetworkError,
-    model
+    model,
   };
+}
+
+function buildSystemPrompt(businessType: string) {
+  const businessLabel = getBusinessLabel(businessType);
+
+  return `تو یک استراتژیست حرفه‌ای بازاریابی دیجیتال و متخصص تولید محتوای فارسی هستی.
+
+حوزه فعالیت کسب‌وکار:
+${businessLabel}
+
+وظیفه تو تولید محتوای حرفه‌ای و متناسب با ماهیت همین کسب‌وکار است.
+
+قوانین مهم:
+
+۱. ابتدا نوع کسب‌وکار و اطلاعات ارائه‌شده را تحلیل کن.
+۲. محتوا باید دقیقاً متناسب با همان صنعت باشد.
+۳. برای رستوران از زبان و نیازهای حوزه غذا و پذیرایی استفاده کن.
+۴. برای املاک روی معرفی ملک، ویژگی‌های واقعی، موقعیت و اعتمادسازی تمرکز کن.
+۵. برای ساختمان و بازسازی روی فرایند اجرا، تخصص، کیفیت و اعتمادسازی تمرکز کن.
+۶. برای آموزش روی ارزش آموزشی، مهارت‌آموزی و نتیجه قابل ارائه تمرکز کن.
+۷. برای ورزش روی برنامه‌ها، خدمات و تجربه مخاطب تمرکز کن.
+۸. برای خدمات روی مسئله مشتری، راه‌حل و مزیت واقعی تمرکز کن.
+۹. برای برند شخصی روی تخصص، اعتبار، تجربه و شخصیت حرفه‌ای تمرکز کن.
+۱۰. برای فروشگاه‌ها همچنان اصول معرفی محصول و فروش را رعایت کن.
+
+قوانین صحت اطلاعات:
+
+- فقط از اطلاعاتی استفاده کن که کاربر ارائه کرده است.
+- قیمت، تخفیف، ضمانت، مجوز، سابقه، آمار، نتیجه یا ویژگی تأییدنشده نساز.
+- درباره خدمات یا محصولاتی که معرفی نشده‌اند ادعا نکن.
+- اگر اطلاعاتی وجود ندارد، آن را به‌صورت سؤال یا دعوت به تماس مطرح کن.
+- از تکرار بی‌دلیل و متن‌های کلیشه‌ای خودداری کن.
+- لحن درخواستی کاربر را رعایت کن.
+- خروجی باید طبیعی، حرفه‌ای، کاربردی و قابل انتشار باشد.
+- تمام محتوا باید به زبان فارسی باشد.
+
+چهار خروجی زیر را تولید کن:
+
+۱. caption:
+یک کپشن کامل، جذاب و متناسب با کسب‌وکار، همراه با دعوت به اقدام مناسب.
+
+۲. reel:
+سناریوی ویدیوی کوتاه با زمان‌بندی، صحنه‌ها، متن روی تصویر و پیشنهاد گفتار.
+
+۳. stories:
+دقیقاً پنج استوری متوالی و مرتبط، با هدف معرفی، ایجاد علاقه، اعتمادسازی و دعوت به اقدام.
+
+۴. ad:
+یک متن تبلیغاتی حرفه‌ای و متقاعدکننده برای معرفی کسب‌وکار یا پیشنهاد آن.
+
+فقط JSON معتبر برگردان.
+هیچ توضیحی خارج از JSON ننویس.
+
+ساختار دقیق پاسخ:
+
+{
+  "caption": "متن کپشن",
+  "reel": "سناریوی ریلز",
+  "stories": [
+    "استوری اول",
+    "استوری دوم",
+    "استوری سوم",
+    "استوری چهارم",
+    "استوری پنجم"
+  ],
+  "ad": "متن تبلیغاتی"
+}`;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const p = (await request.json()) as Product;
+    const p = (await request.json()) as BusinessInput;
 
     if (
       !p ||
@@ -213,23 +363,26 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error: "نام محصول و ویژگی‌های آن الزامی است."
+          error: "نام محصول یا خدمت و توضیحات آن الزامی است.",
         },
         { status: 400 }
       );
     }
 
+    const businessType = p.businessType || "retail";
+
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Demo mode if API key is missing.
     if (!apiKey) {
       return NextResponse.json({
         mode: "demo",
-        content: demoContent(p)
+        content: demoContent({
+          ...p,
+          businessType,
+        }),
       });
     }
 
-    // Primary and fallback models.
     const primaryModel =
       process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
@@ -237,45 +390,35 @@ export async function POST(request: NextRequest) {
       process.env.GEMINI_FALLBACK_MODEL ||
       "gemini-3.5-flash-lite";
 
-    const systemPrompt = `تو دستیار حرفه‌ای تولید محتوای فارسی برای فروشگاه پوشاک و اکسسوری هستی.
-
-فقط از اطلاعاتی که فروشنده داده استفاده کن.
-هیچ ویژگی، تخفیف، موجودی، ضمانت یا ادعای تأییدنشده‌ای نساز.
-
-خروجی را فقط به صورت JSON معتبر با کلیدهای زیر برگردان:
-
-caption: متن کپشن
-reel: سناریوی ریلز
-stories: آرایه‌ای شامل دقیقاً پنج اسلاید استوری
-ad: متن تبلیغاتی
-
-لحن را مطابق درخواست فروشنده تنظیم کن.
-متن‌ها طبیعی، دقیق، جذاب، قابل انتشار و فروش‌محور باشند.
-در صورت نبود قیمت یا رنگ، درباره آن‌ها ادعای مشخص نکن.
-محتوا باید به زبان فارسی باشد.`;
+    const systemPrompt = buildSystemPrompt(businessType);
 
     const requestBody = {
       systemInstruction: {
-        parts: [{ text: systemPrompt }]
+        parts: [{ text: systemPrompt }],
       },
       contents: [
         {
           role: "user",
           parts: [
             {
-              text: JSON.stringify(p)
-            }
-          ]
-        }
+              text: JSON.stringify({
+                ...p,
+                businessType,
+                businessTypeLabel: getBusinessLabel(businessType),
+              }),
+            },
+          ],
+        },
       ],
       generationConfig: {
         temperature: 0.7,
-        responseMimeType: "application/json"
-      }
+        responseMimeType: "application/json",
+      },
     };
 
-    // First attempt: primary model.
-    console.log(`Trying primary Gemini model: ${primaryModel}`);
+    console.log(
+      `Generating content for business type: ${businessType}`
+    );
 
     let result = await callGeminiModel(
       primaryModel,
@@ -283,8 +426,6 @@ ad: متن تبلیغاتی
       requestBody
     );
 
-    // Fallback only when the primary model has a temporary
-    // availability, rate-limit, or connection problem.
     const shouldFallback =
       !result.response ||
       [429, 500, 502, 503, 504].includes(
@@ -306,7 +447,6 @@ ad: متن تبلیغاتی
       );
     }
 
-    // Handle connection failures.
     if (!result.response) {
       console.error(
         "Both Gemini model attempts failed:",
@@ -315,7 +455,8 @@ ad: متن تبلیغاتی
 
       return NextResponse.json(
         {
-          error: "ارتباط با مدل‌های Gemini برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن."
+          error:
+            "ارتباط با مدل‌های Gemini برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن.",
         },
         { status: 502 }
       );
@@ -323,7 +464,6 @@ ad: متن تبلیغاتی
 
     const aiResponse = result.response;
 
-    // Handle API errors.
     if (!aiResponse.ok) {
       const detail = await aiResponse.text();
 
@@ -336,7 +476,8 @@ ad: متن تبلیغاتی
       if (aiResponse.status === 429) {
         return NextResponse.json(
           {
-            error: "سهمیه یا محدودیت درخواست Gemini برای هر دو مدل فعال شده است. بعداً دوباره تلاش کن."
+            error:
+              "سهمیه یا محدودیت درخواست Gemini برای هر دو مدل فعال شده است. بعداً دوباره تلاش کن.",
           },
           { status: 429 }
         );
@@ -345,7 +486,8 @@ ad: متن تبلیغاتی
       if (aiResponse.status === 503) {
         return NextResponse.json(
           {
-            error: "هر دو مدل Gemini در حال حاضر با مشکل ظرفیت مواجه هستند. چند دقیقه دیگر دوباره تلاش کن."
+            error:
+              "هر دو مدل Gemini در حال حاضر با مشکل ظرفیت مواجه هستند. چند دقیقه دیگر دوباره تلاش کن.",
           },
           { status: 503 }
         );
@@ -354,7 +496,8 @@ ad: متن تبلیغاتی
       if ([500, 502, 504].includes(aiResponse.status)) {
         return NextResponse.json(
           {
-            error: "سرویس Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن."
+            error:
+              "سرویس Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن.",
           },
           { status: 502 }
         );
@@ -366,7 +509,8 @@ ad: متن تبلیغاتی
       ) {
         return NextResponse.json(
           {
-            error: "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن."
+            error:
+              "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن.",
           },
           { status: 502 }
         );
@@ -378,7 +522,8 @@ ad: متن تبلیغاتی
       ) {
         return NextResponse.json(
           {
-            error: "کلید Gemini معتبر نیست یا دسترسی API برای آن فعال نشده است."
+            error:
+              "کلید Gemini معتبر نیست یا دسترسی API برای آن فعال نشده است.",
           },
           { status: 502 }
         );
@@ -386,13 +531,13 @@ ad: متن تبلیغاتی
 
       return NextResponse.json(
         {
-          error: "ارتباط با Gemini برقرار نشد. تنظیمات API را بررسی کن."
+          error:
+            "ارتباط با Gemini برقرار نشد. تنظیمات API را بررسی کن.",
         },
         { status: 502 }
       );
     }
 
-    // Read Gemini response.
     const resultData = await aiResponse.json();
 
     const raw = resultData.candidates?.[0]?.content?.parts
@@ -408,13 +553,12 @@ ad: متن تبلیغاتی
 
       return NextResponse.json(
         {
-          error: "پاسخ مدل خالی بود. دوباره تلاش کن."
+          error: "پاسخ مدل خالی بود. دوباره تلاش کن.",
         },
         { status: 502 }
       );
     }
 
-    // Validate generated content.
     const content = extractJson(raw);
 
     console.log(
@@ -424,18 +568,17 @@ ad: متن تبلیغاتی
     return NextResponse.json({
       mode: "ai",
       model: result.model,
-      content
+      content,
     });
-
   } catch (error) {
     console.error("Generate API error:", error);
 
     return NextResponse.json(
       {
-        error: "در پردازش درخواست خطایی رخ داد. دوباره تلاش کن."
+        error:
+          "در پردازش درخواست خطایی رخ داد. دوباره تلاش کن.",
       },
       { status: 500 }
     );
   }
 }
-
