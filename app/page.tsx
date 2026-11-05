@@ -70,25 +70,59 @@ function formatDate(value: string) {
   });
 }
 
+function getTabText(content: Content, tab: TabId) {
+  if (tab === "caption") return content.caption;
+  if (tab === "reel") return content.reel;
+  if (tab === "ad") return content.ad;
+
+  return content.stories
+    .map((story, index) => `${index + 1}. ${story}`)
+    .join("\n\n");
+}
+
+function updateTabContent(
+  content: Content,
+  tab: TabId,
+  text: string
+): Content {
+  if (tab === "caption") {
+    return { ...content, caption: text };
+  }
+
+  if (tab === "reel") {
+    return { ...content, reel: text };
+  }
+
+  if (tab === "ad") {
+    return { ...content, ad: text };
+  }
+
+  const stories = text
+    .split(/\n\s*\n/)
+    .map((story) => story.replace(/^\s*\d+[\.\)\-]\s*/, "").trim())
+    .filter(Boolean);
+
+  return { ...content, stories };
+}
+
 export default function Home() {
   const [product, setProduct] = useState<Product>(initialProduct);
   const [content, setContent] = useState<Content | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>("caption");
+  const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyReady, setHistoryReady] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState("");
 
-  // بارگذاری تاریخچه از مرورگر
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
+
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setHistory(parsed);
-        }
+        if (Array.isArray(parsed)) setHistory(parsed);
       }
     } catch (error) {
       console.error("خطا در خواندن تاریخچه:", error);
@@ -97,7 +131,6 @@ export default function Home() {
     }
   }, []);
 
-  // ذخیره تغییرات تاریخچه در مرورگر
   useEffect(() => {
     if (!historyReady) return;
 
@@ -105,7 +138,7 @@ export default function Home() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
     } catch (error) {
       console.error("خطا در ذخیره تاریخچه:", error);
-      setNotice("فضای ذخیره مرورگر کافی نیست؛ برخی موارد قدیمی را حذف کن.");
+      setNotice("فضای ذخیره مرورگر کافی نیست.");
     }
   }, [history, historyReady]);
 
@@ -116,6 +149,14 @@ export default function Home() {
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
     setProduct((old) => ({ ...old, [key]: value }));
+  }
+
+  function selectTab(tab: TabId) {
+    setActiveTab(tab);
+
+    if (content) {
+      setDraftText(getTabText(content, tab));
+    }
   }
 
   async function generate() {
@@ -142,10 +183,6 @@ export default function Home() {
 
       const generatedContent = data.content as Content;
 
-      setContent(generatedContent);
-      setActiveTab("caption");
-      setSelectedHistoryId("");
-
       const newItem: HistoryItem = {
         id: createId(),
         createdAt: new Date().toISOString(),
@@ -153,12 +190,16 @@ export default function Home() {
         content: generatedContent,
       };
 
+      setContent(generatedContent);
+      setActiveTab("caption");
+      setDraftText(getTabText(generatedContent, "caption"));
+      setSelectedHistoryId(newItem.id);
       setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
 
       setNotice(
         data.mode === "demo"
-          ? "خروجی نمونه تولید شد. برای استفاده از هوش مصنوعی واقعی، کلید API را تنظیم کن."
-          : "محتوا با موفقیت تولید و در تاریخچه ذخیره شد."
+          ? "خروجی نمونه تولید شد."
+          : "محتوا با موفقیت تولید و ذخیره شد."
       );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "خطای نامشخص");
@@ -167,18 +208,43 @@ export default function Home() {
     }
   }
 
+  function saveEdits() {
+    if (!content) return;
+
+    const updatedContent = updateTabContent(
+      content,
+      activeTab,
+      draftText
+    );
+
+    setContent(updatedContent);
+
+    if (selectedHistoryId) {
+      setHistory((old) =>
+        old.map((item) =>
+          item.id === selectedHistoryId
+            ? { ...item, content: updatedContent }
+            : item
+        )
+      );
+    }
+
+    setDraftText(getTabText(updatedContent, activeTab));
+    setNotice("تغییرات ذخیره شدند.");
+  }
+
   function openHistory(item: HistoryItem) {
     setProduct(item.product);
     setContent(item.content);
     setActiveTab("caption");
+    setDraftText(getTabText(item.content, "caption"));
     setSelectedHistoryId(item.id);
     setNotice("محتوای ذخیره‌شده بارگذاری شد.");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function deleteHistory(id: string) {
-    const confirmed = window.confirm("این بسته محتوایی حذف شود؟");
-    if (!confirmed) return;
+    if (!window.confirm("این بسته محتوایی حذف شود؟")) return;
 
     setHistory((old) => old.filter((item) => item.id !== id));
 
@@ -192,11 +258,13 @@ export default function Home() {
   function clearHistory() {
     if (history.length === 0) return;
 
-    const confirmed = window.confirm(
-      "تمام تاریخچه حذف شود؟ این عملیات قابل بازگشت نیست."
-    );
-
-    if (!confirmed) return;
+    if (
+      !window.confirm(
+        "تمام تاریخچه حذف شود؟ این عملیات قابل بازگشت نیست."
+      )
+    ) {
+      return;
+    }
 
     setHistory([]);
     setSelectedHistoryId("");
@@ -212,16 +280,6 @@ export default function Home() {
     }
   }
 
-  const currentText = content
-    ? activeTab === "caption"
-      ? content.caption
-      : activeTab === "reel"
-        ? content.reel
-        : activeTab === "stories"
-          ? content.stories.map((s, i) => `${i + 1}. ${s}`).join("\n\n")
-          : content.ad
-    : "";
-
   return (
     <main className="shell">
       <header className="topbar">
@@ -229,7 +287,7 @@ export default function Home() {
           <span className="brand-mark">✳</span>
           <span>AI Content Factory</span>
         </a>
-        <span className="top-tag">نسخه آزمایشی ۰٫۲</span>
+        <span className="top-tag">نسخه آزمایشی ۰٫۳</span>
       </header>
 
       <section className="hero">
@@ -245,6 +303,7 @@ export default function Home() {
             ریلز، استوری و متن تبلیغاتی بگیر.
           </p>
         </div>
+
         <div className="hero-orb">
           <span>✦</span>
           <small>
@@ -412,7 +471,7 @@ export default function Home() {
             <>
               {selectedHistoryId && (
                 <div className="loaded-label">
-                  این محتوا از تاریخچه بارگذاری شده است.
+                  این محتوا در تاریخچه ذخیره شده است.
                 </div>
               )}
 
@@ -421,7 +480,7 @@ export default function Home() {
                   <button
                     key={tab.id}
                     className={activeTab === tab.id ? "tab active" : "tab"}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => selectTab(tab.id)}
                   >
                     {tab.label}
                   </button>
@@ -432,12 +491,43 @@ export default function Home() {
                 <div className="content-label">
                   {tabs.find((t) => t.id === activeTab)?.label}
                 </div>
-                <pre>{currentText}</pre>
+
+                <textarea
+                  value={draftText}
+                  onChange={(e) => setDraftText(e.target.value)}
+                  rows={12}
+                  dir="rtl"
+                  aria-label="ویرایش محتوای تولیدشده"
+                  style={{
+                    width: "100%",
+                    minHeight: "280px",
+                    lineHeight: 2.2,
+                    fontSize: "13px",
+                    padding: "14px",
+                    marginTop: "8px",
+                    resize: "vertical",
+                    whiteSpace: "pre-wrap",
+                  }}
+                />
+
+                {activeTab === "stories" && (
+                  <p className="privacy-note">
+                    برای جدا کردن استوری‌ها، بین متن هر استوری یک خط خالی قرار بده.
+                  </p>
+                )}
+
                 <button
                   className="copy-button"
-                  onClick={() => copy(currentText)}
+                  onClick={() => copy(draftText)}
                 >
                   کپی متن ↗
+                </button>
+
+                <button
+                  className="secondary-button"
+                  onClick={saveEdits}
+                >
+                  ذخیره تغییرات
                 </button>
               </div>
 
@@ -465,10 +555,12 @@ export default function Home() {
             <span className="step">۰۳</span>
             <h2>تاریخچه محتواها</h2>
           </div>
+
           <div className="history-actions">
             <span className="history-count">
               {history.length.toLocaleString("fa-IR")} از ۵۰
             </span>
+
             <button
               className="clear-history"
               onClick={clearHistory}
@@ -480,7 +572,9 @@ export default function Home() {
         </div>
 
         {!historyReady ? (
-          <div className="history-empty">در حال بارگذاری تاریخچه...</div>
+          <div className="history-empty">
+            در حال بارگذاری تاریخچه...
+          </div>
         ) : history.length === 0 ? (
           <div className="history-empty">
             <span className="history-empty-icon">◷</span>
@@ -508,6 +602,7 @@ export default function Home() {
                   >
                     مشاهده محتوا
                   </button>
+
                   <button
                     className="history-delete"
                     onClick={() => deleteHistory(item.id)}
@@ -525,12 +620,13 @@ export default function Home() {
 
       <section className="bottom-row">
         <div className="mini-card">
-          <span className="mini-icon">◷</span>
+          <span className="mini-icon">✎</span>
           <div>
-            <b>ذخیره تاریخچه</b>
-            <small>ذخیره خودکار تا ۵۰ بسته محتوایی در همین مرورگر.</small>
+            <b>ویرایش محتوا</b>
+            <small>متن تولیدشده را قبل از انتشار اصلاح و ذخیره کن.</small>
           </div>
         </div>
+
         <div className="mini-card">
           <span className="mini-icon">◎</span>
           <div>
@@ -541,7 +637,7 @@ export default function Home() {
       </section>
 
       <footer>
-        AI Content Factory <span>·</span> MVP 0.2 <span>·</span> ساخته‌شده برای آزمایش بازار
+        AI Content Factory <span>·</span> MVP 0.3 <span>·</span> ساخته‌شده برای آزمایش بازار
       </footer>
     </main>
   );
