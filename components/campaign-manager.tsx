@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { calculateCampaignMetrics, parseCampaignMetric } from "@/lib/campaign-metrics.mjs";
 
 type CampaignStatus = "draft" | "active" | "paused" | "completed";
 type CampaignStage = { id: string; title: string; done: boolean };
@@ -13,8 +14,51 @@ type Campaign = {
   channels: string[];
   status: CampaignStatus;
   stages: CampaignStage[];
+  currency_label: string;
+  budget_amount: number;
+  spend_amount: number;
+  impressions: number;
+  clicks: number;
+  leads: number;
+  conversions: number;
+  revenue_amount: number;
   created_at: string;
 };
+
+type CampaignMetricsDraft = {
+  currency_label: string;
+  budget_amount: string;
+  spend_amount: string;
+  impressions: string;
+  clicks: string;
+  leads: string;
+  conversions: string;
+  revenue_amount: string;
+};
+
+function toMetricsDraft(campaign: Campaign): CampaignMetricsDraft {
+  return {
+    currency_label: campaign.currency_label || "",
+    budget_amount: String(campaign.budget_amount ?? 0),
+    spend_amount: String(campaign.spend_amount ?? 0),
+    impressions: String(campaign.impressions ?? 0),
+    clicks: String(campaign.clicks ?? 0),
+    leads: String(campaign.leads ?? 0),
+    conversions: String(campaign.conversions ?? 0),
+    revenue_amount: String(campaign.revenue_amount ?? 0),
+  };
+}
+
+function formatMetricValue(value: number | null, suffix = "") {
+  if (value === null) return "—";
+  return `${new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 }).format(value)}${suffix}`;
+}
+
+function formatMetricAmount(value: number | null, currency: string) {
+  if (value === null) return "—";
+  const formatted = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 }).format(value);
+  return currency ? `${formatted} ${currency}` : formatted;
+}
 type ContentOption = {
   id: string;
   product: Record<string, unknown>;
@@ -61,6 +105,8 @@ function getContentTitle(option: ContentOption) {
 
 export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 }: { userId: string; refreshKey?: number; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience" | "channels">) => void }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [metricsDrafts, setMetricsDrafts] = useState<Record<string, CampaignMetricsDraft>>({});
+  const [savingMetricsId, setSavingMetricsId] = useState<string | null>(null);
   const [contentOptions, setContentOptions] = useState<ContentOption[]>([]);
   const [contentLinks, setContentLinks] = useState<CampaignContentLink[]>([]);
   const [selectedContentByCampaign, setSelectedContentByCampaign] = useState<Record<string, string>>({});
@@ -75,8 +121,15 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   const [audience, setAudience] = useState("");
   const [channels, setChannels] = useState("تلگرام، وب‌سایت، پیامک");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const loadedUserIdRef = useRef<string | null>(null);
 
   const loadCampaigns = useCallback(async () => {
+    if (loadedUserIdRef.current !== userId) {
+      loadedUserIdRef.current = userId;
+      setMetricsDrafts({});
+      setSelectedContentByCampaign({});
+      setExpandedId(null);
+    }
     setLoading(true);
     setError("");
     setCampaigns([]);
@@ -85,7 +138,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
     const [campaignResult, linkResult, contentResult] = await Promise.all([
       supabase
         .from("marketing_campaigns")
-        .select("id,name,goal,audience,channels,status,stages,created_at")
+        .select("id,name,goal,audience,channels,status,stages,currency_label,budget_amount,spend_amount,impressions,clicks,leads,conversions,revenue_amount,created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabase
@@ -129,7 +182,15 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       }
     }
 
-    setCampaigns((campaignResult.data || []) as Campaign[]);
+    const loadedCampaigns = (campaignResult.data || []) as Campaign[];
+    setCampaigns(loadedCampaigns);
+    setMetricsDrafts((current) => {
+      const next = { ...current };
+      for (const campaign of loadedCampaigns) {
+        if (!next[campaign.id]) next[campaign.id] = toMetricsDraft(campaign);
+      }
+      return next;
+    });
     setContentLinks(links);
     setContentOptions(allContent);
     setLoading(false);
@@ -158,12 +219,13 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
         status: "draft",
         stages: defaultStages,
       })
-      .select("id,name,goal,audience,channels,status,stages,created_at")
+      .select("id,name,goal,audience,channels,status,stages,currency_label,budget_amount,spend_amount,impressions,clicks,leads,conversions,revenue_amount,created_at")
       .single();
     if (insertError) {
       setError("ساخت کمپین انجام نشد: " + insertError.message);
     } else if (data) {
       setCampaigns((current) => [data as Campaign, ...current]);
+      setMetricsDrafts((current) => ({ ...current, [data.id]: toMetricsDraft(data as Campaign) }));
       setName("");
       setGoal("");
       setAudience("");
@@ -185,6 +247,65 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       return;
     }
     setCampaigns((current) => current.map((campaign) => campaign.id === id ? { ...campaign, ...changes } : campaign));
+  }
+
+  function updateMetricsDraft(id: string, key: keyof CampaignMetricsDraft, value: string) {
+    setMetricsDrafts((current) => ({
+      ...current,
+      [id]: { ...(current[id] || {} as CampaignMetricsDraft), [key]: value },
+    }));
+  }
+
+  async function saveCampaignMetrics(campaign: Campaign) {
+    const draft = metricsDrafts[campaign.id] || toMetricsDraft(campaign);
+    const budget = parseCampaignMetric(draft.budget_amount);
+    const spend = parseCampaignMetric(draft.spend_amount);
+    const impressions = parseCampaignMetric(draft.impressions, { integer: true });
+    const clicks = parseCampaignMetric(draft.clicks, { integer: true });
+    const leads = parseCampaignMetric(draft.leads, { integer: true });
+    const conversions = parseCampaignMetric(draft.conversions, { integer: true });
+    const revenue = parseCampaignMetric(draft.revenue_amount);
+
+    if ([budget, spend, impressions, clicks, leads, conversions, revenue].some((value) => value === null)) {
+      setError("مقادیر عملکرد باید عددی و نامنفی باشند؛ تعداد نمایش، کلیک، سرنخ و تبدیل باید عدد صحیح باشد.");
+      return;
+    }
+    const currency = draft.currency_label.trim();
+    if (currency.length > 20) {
+      setError("واحد پول نباید بیشتر از ۲۰ کاراکتر باشد.");
+      return;
+    }
+
+    setSavingMetricsId(campaign.id);
+    setError("");
+    setNotice("");
+    const changes = {
+      currency_label: currency,
+      budget_amount: budget as number,
+      spend_amount: spend as number,
+      impressions: impressions as number,
+      clicks: clicks as number,
+      leads: leads as number,
+      conversions: conversions as number,
+      revenue_amount: revenue as number,
+    };
+    const { data, error: updateError } = await supabase
+      .from("marketing_campaigns")
+      .update(changes)
+      .eq("id", campaign.id)
+      .eq("user_id", userId)
+      .select("id,name,goal,audience,channels,status,stages,currency_label,budget_amount,spend_amount,impressions,clicks,leads,conversions,revenue_amount,created_at")
+      .single();
+
+    if (updateError || !data) {
+      setError("ذخیره نتایج کمپین انجام نشد: " + (updateError?.message || "خطای نامشخص"));
+    } else {
+      const updated = data as Campaign;
+      setCampaigns((current) => current.map((item) => item.id === campaign.id ? updated : item));
+      setMetricsDrafts((current) => ({ ...current, [campaign.id]: toMetricsDraft(updated) }));
+      setNotice("نتایج کمپین ذخیره شد؛ شاخص‌ها بر اساس داده‌های واردشده محاسبه شدند.");
+    }
+    setSavingMetricsId(null);
   }
 
   async function addContentToCampaign(campaignId: string) {
@@ -243,6 +364,11 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       return;
     }
     setCampaigns((current) => current.filter((item) => item.id !== campaign.id));
+    setMetricsDrafts((current) => {
+      const next = { ...current };
+      delete next[campaign.id];
+      return next;
+    });
     setContentLinks((current) => current.filter((item) => item.campaign_id !== campaign.id));
     setNotice("کمپین حذف شد. محتواهای ذخیره‌شده حذف نشده‌اند.");
   }
@@ -371,6 +497,51 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
                           </button>
                         </div>
                         {contentOptions.length === 0 && <small className="campaign-content-hint">برای افزودن محتوا، ابتدا از بخش تولید محتوا یک خروجی را ذخیره کن.</small>}
+                      </div>
+
+                      <div className="campaign-performance">
+                        <div className="campaign-content-heading">
+                          <h4>ثبت و تحلیل عملکرد کمپین</h4>
+                          <span>ورود دستی داده‌ها</span>
+                        </div>
+                        <p className="campaign-performance-note">آمار را پس از اجرای کمپین وارد کن؛ شاخص‌ها بعد از ذخیره به‌روزرسانی می‌شوند. این بخش به شبکه‌های اجتماعی متصل نیست و داده‌ای را خودکار دریافت نمی‌کند.</p>
+                        {(() => {
+                          const draft = metricsDrafts[campaign.id] || toMetricsDraft(campaign);
+                          const kpis = calculateCampaignMetrics({
+                            impressions: campaign.impressions,
+                            clicks: campaign.clicks,
+                            budget: campaign.budget_amount,
+                            leads: campaign.leads,
+                            conversions: campaign.conversions,
+                            spend: campaign.spend_amount,
+                            revenue: campaign.revenue_amount,
+                          });
+                          return (
+                            <>
+                              <div className="campaign-metrics-form">
+                                <label>واحد پول (اختیاری)<input value={draft.currency_label} onChange={(event) => updateMetricsDraft(campaign.id, "currency_label", event.target.value)} maxLength={20} placeholder="مثلاً تومان یا USD" /></label>
+                                <label>بودجه برنامه‌ریزی‌شده<input inputMode="decimal" value={draft.budget_amount} onChange={(event) => updateMetricsDraft(campaign.id, "budget_amount", event.target.value)} placeholder="۰" /></label>
+                                <label>هزینه واقعی<input inputMode="decimal" value={draft.spend_amount} onChange={(event) => updateMetricsDraft(campaign.id, "spend_amount", event.target.value)} placeholder="۰" /></label>
+                                <label>نمایش‌ها<input inputMode="numeric" value={draft.impressions} onChange={(event) => updateMetricsDraft(campaign.id, "impressions", event.target.value)} placeholder="۰" /></label>
+                                <label>کلیک‌ها<input inputMode="numeric" value={draft.clicks} onChange={(event) => updateMetricsDraft(campaign.id, "clicks", event.target.value)} placeholder="۰" /></label>
+                                <label>سرنخ‌ها<input inputMode="numeric" value={draft.leads} onChange={(event) => updateMetricsDraft(campaign.id, "leads", event.target.value)} placeholder="۰" /></label>
+                                <label>تبدیل‌ها<input inputMode="numeric" value={draft.conversions} onChange={(event) => updateMetricsDraft(campaign.id, "conversions", event.target.value)} placeholder="۰" /></label>
+                                <label>درآمد منتسب<input inputMode="decimal" value={draft.revenue_amount} onChange={(event) => updateMetricsDraft(campaign.id, "revenue_amount", event.target.value)} placeholder="۰" /></label>
+                              </div>
+                              <button type="button" className="primary-button" disabled={savingMetricsId === campaign.id} onClick={() => void saveCampaignMetrics(campaign)}>
+                                {savingMetricsId === campaign.id ? "در حال ذخیره..." : "ذخیره نتایج کمپین"}
+                              </button>
+                              <div className="campaign-kpi-grid">
+                                <div><small>نرخ کلیک (CTR)</small><strong>{formatMetricValue(kpis.ctr, "٪")}</strong></div>
+                                <div><small>هزینه هر سرنخ (CPL)</small><strong>{formatMetricAmount(kpis.cpl, campaign.currency_label)}</strong></div>
+                                <div><small>هزینه هر تبدیل (CPA)</small><strong>{formatMetricAmount(kpis.cpa, campaign.currency_label)}</strong></div>
+                                <div><small>نرخ تبدیل کلیک</small><strong>{formatMetricValue(kpis.conversionRate, "٪")}</strong></div>
+                                <div><small>مصرف بودجه</small><strong>{formatMetricValue(kpis.budgetUtilization, "٪")}</strong></div>
+                                <div><small>بازده هزینه تبلیغ (ROAS)</small><strong>{formatMetricValue(kpis.roas, "×")}</strong></div>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
