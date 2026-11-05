@@ -1505,7 +1505,7 @@ const response = await fetch("/api/generate", {
 
     );
 
-    showNotice("نسخه پشتیبان تاریخچه دانلود شد.", "success");
+    showNotice("نسخه پشتیبان از موارد بارگذاری‌شده دانلود شد.", "success");
 
   }
 
@@ -2262,7 +2262,7 @@ const response = await fetch("/api/generate", {
             <span className="history-count">{history.length.toLocaleString("fa-IR")} مورد بارگذاری‌شده</span>
             <button className="history-backup" onClick={exportSelectedHistory} disabled={!selectedBulkIds.length}>خروجی انتخاب‌شده ({selectedBulkIds.length})</button>
 
-            <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه</button>
+            <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه بارگذاری‌شده</button>
 
             <button className="clear-history" onClick={clearHistory} disabled={!history.length}>پاک کردن همه</button>
 
