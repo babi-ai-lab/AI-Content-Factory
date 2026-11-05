@@ -105,6 +105,68 @@ function updateTabContent(
   return { ...content, stories };
 }
 
+function buildTextExport(product: Product, content: Content) {
+  return [
+    "AI CONTENT FACTORY",
+    "بسته محتوایی محصول",
+    "================================",
+    "",
+    "مشخصات محصول",
+    "--------------------------------",
+    `نام محصول: ${product.name}`,
+    `قیمت: ${product.price}`,
+    `دسته‌بندی: ${product.category}`,
+    `جنس: ${product.fabric}`,
+    `رنگ‌ها: ${product.colors}`,
+    `ویژگی‌ها: ${product.features}`,
+    `مخاطب هدف: ${product.audience}`,
+    `هدف محتوا: ${product.goal}`,
+    `لحن برند: ${product.tone}`,
+    "",
+    "۱. کپشن فروش",
+    "--------------------------------",
+    content.caption,
+    "",
+    "۲. سناریوی ریلز",
+    "--------------------------------",
+    content.reel,
+    "",
+    "۳. استوری‌ها",
+    "--------------------------------",
+    ...content.stories.map(
+      (story, index) => `استوری ${index + 1}\n${story}`
+    ),
+    "",
+    "۴. متن تبلیغاتی",
+    "--------------------------------",
+    content.ad,
+    "",
+    "================================",
+    "ساخته‌شده با AI Content Factory",
+  ].join("\n");
+}
+
+function downloadFile(
+  filename: string,
+  content: string,
+  mimeType: string
+) {
+  const blob = new Blob(["\uFEFF", content], {
+    type: `${mimeType};charset=utf-8`,
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
 export default function Home() {
   const [product, setProduct] = useState<Product>(initialProduct);
   const [content, setContent] = useState<Content | null>(null);
@@ -143,7 +205,9 @@ export default function Home() {
   }, [history, historyReady]);
 
   const filled = useMemo(
-    () => product.name.trim().length > 1 && product.features.trim().length > 2,
+    () =>
+      product.name.trim().length > 1 &&
+      product.features.trim().length > 2,
     [product]
   );
 
@@ -208,14 +272,17 @@ export default function Home() {
     }
   }
 
+  function getCurrentContent() {
+    if (!content) return null;
+
+    return updateTabContent(content, activeTab, draftText);
+  }
+
   function saveEdits() {
     if (!content) return;
 
-    const updatedContent = updateTabContent(
-      content,
-      activeTab,
-      draftText
-    );
+    const updatedContent = getCurrentContent();
+    if (!updatedContent) return;
 
     setContent(updatedContent);
 
@@ -223,7 +290,11 @@ export default function Home() {
       setHistory((old) =>
         old.map((item) =>
           item.id === selectedHistoryId
-            ? { ...item, content: updatedContent }
+            ? {
+                ...item,
+                product: { ...product },
+                content: updatedContent,
+              }
             : item
         )
       );
@@ -231,6 +302,47 @@ export default function Home() {
 
     setDraftText(getTabText(updatedContent, activeTab));
     setNotice("تغییرات ذخیره شدند.");
+  }
+
+  function exportTXT() {
+    const currentContent = getCurrentContent();
+
+    if (!currentContent) {
+      setNotice("ابتدا یک بسته محتوایی تولید کن.");
+      return;
+    }
+
+    const text = buildTextExport(product, currentContent);
+    const filename = `AI-Content-${Date.now()}.txt`;
+
+    downloadFile(filename, text, "text/plain");
+    setNotice("فایل TXT با موفقیت آماده دانلود شد.");
+  }
+
+  function exportJSON() {
+    const currentContent = getCurrentContent();
+
+    if (!currentContent) {
+      setNotice("ابتدا یک بسته محتوایی تولید کن.");
+      return;
+    }
+
+    const exportData = {
+      application: "AI Content Factory",
+      exportedAt: new Date().toISOString(),
+      product,
+      content: currentContent,
+    };
+
+    const filename = `AI-Content-${Date.now()}.json`;
+
+    downloadFile(
+      filename,
+      JSON.stringify(exportData, null, 2),
+      "application/json"
+    );
+
+    setNotice("فایل JSON با موفقیت آماده دانلود شد.");
   }
 
   function openHistory(item: HistoryItem) {
@@ -287,7 +399,7 @@ export default function Home() {
           <span className="brand-mark">✳</span>
           <span>AI Content Factory</span>
         </a>
-        <span className="top-tag">نسخه آزمایشی ۰٫۳</span>
+        <span className="top-tag">نسخه آزمایشی ۰٫۴</span>
       </header>
 
       <section className="hero">
@@ -529,6 +641,31 @@ export default function Home() {
                 >
                   ذخیره تغییرات
                 </button>
+
+                <div className="export-area">
+                  <div className="export-heading">
+                    <b>دانلود بسته محتوایی</b>
+                    <span>خروجی کامل محصول و تمام متن‌ها</span>
+                  </div>
+
+                  <div className="export-buttons">
+                    <button
+                      className="export-button"
+                      onClick={exportTXT}
+                    >
+                      <span>↓</span>
+                      دانلود فایل TXT
+                    </button>
+
+                    <button
+                      className="export-button json"
+                      onClick={exportJSON}
+                    >
+                      <span>↓</span>
+                      دانلود فایل JSON
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <button
@@ -628,16 +765,16 @@ export default function Home() {
         </div>
 
         <div className="mini-card">
-          <span className="mini-icon">◎</span>
+          <span className="mini-icon">↓</span>
           <div>
-            <b>مخصوص فروشگاه‌های مد</b>
-            <small>نسخه اول برای پوشاک و اکسسوری طراحی شده است.</small>
+            <b>خروجی قابل دانلود</b>
+            <small>بسته محتوایی را در قالب TXT یا JSON دریافت کن.</small>
           </div>
         </div>
       </section>
 
       <footer>
-        AI Content Factory <span>·</span> MVP 0.3 <span>·</span> ساخته‌شده برای آزمایش بازار
+        AI Content Factory <span>·</span> MVP 0.4 <span>·</span> ساخته‌شده برای آزمایش بازار
       </footer>
     </main>
   );
