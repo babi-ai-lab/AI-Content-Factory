@@ -15,6 +15,18 @@ type Campaign = {
   stages: CampaignStage[];
   created_at: string;
 };
+type ContentOption = {
+  id: string;
+  product: Record<string, unknown>;
+  created_at: string;
+};
+type CampaignContentLink = {
+  id: string;
+  campaign_id: string;
+  content_id: string;
+  notes: string;
+  created_at: string;
+};
 
 const defaultStages: CampaignStage[] = [
   { id: "brief", title: "تعیین هدف، پیشنهاد و پیام اصلی", done: false },
@@ -38,10 +50,24 @@ function formatCampaignDate(value: string) {
   });
 }
 
+function getContentTitle(option: ContentOption) {
+  const product = option.product || {};
+  for (const key of ["name", "businessName", "category"]) {
+    const value = product[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "محتوای ذخیره‌شده";
+}
+
 export default function CampaignManager({ userId }: { userId: string }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [contentOptions, setContentOptions] = useState<ContentOption[]>([]);
+  const [contentLinks, setContentLinks] = useState<CampaignContentLink[]>([]);
+  const [selectedContentByCampaign, setSelectedContentByCampaign] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [linkingCampaignId, setLinkingCampaignId] = useState<string | null>(null);
+  const [removingLinkId, setRemovingLinkId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [name, setName] = useState("");
@@ -53,17 +79,56 @@ export default function CampaignManager({ userId }: { userId: string }) {
   const loadCampaigns = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: queryError } = await supabase
-      .from("marketing_campaigns")
-      .select("id,name,goal,audience,channels,status,stages,created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    if (queryError) {
-      setError("بارگذاری کمپین‌ها انجام نشد: " + queryError.message);
+    const [campaignResult, linkResult, contentResult] = await Promise.all([
+      supabase
+        .from("marketing_campaigns")
+        .select("id,name,goal,audience,channels,status,stages,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("marketing_campaign_content")
+        .select("id,campaign_id,content_id,notes,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("content_history")
+        .select("id,product,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+
+    if (campaignResult.error || linkResult.error || contentResult.error) {
+      const failure = campaignResult.error || linkResult.error || contentResult.error;
+      setError("بارگذاری کمپین‌ها یا محتواهای مرتبط انجام نشد: " + (failure?.message || "خطای نامشخص"));
       setCampaigns([]);
-    } else {
-      setCampaigns((data || []) as Campaign[]);
+      setContentLinks([]);
+      setContentOptions([]);
+      setLoading(false);
+      return;
     }
+
+    const links = (linkResult.data || []) as CampaignContentLink[];
+    const recentContent = (contentResult.data || []) as ContentOption[];
+    const recentIds = new Set(recentContent.map((item) => item.id));
+    const missingLinkedIds = Array.from(new Set(links.map((link) => link.content_id)))
+      .filter((id) => !recentIds.has(id));
+
+    let allContent = recentContent;
+    if (missingLinkedIds.length) {
+      const { data: linkedContent, error: linkedContentError } = await supabase
+        .from("content_history")
+        .select("id,product,created_at")
+        .eq("user_id", userId)
+        .in("id", missingLinkedIds);
+      if (!linkedContentError && linkedContent) {
+        allContent = [...recentContent, ...(linkedContent as ContentOption[])];
+      }
+    }
+
+    setCampaigns((campaignResult.data || []) as Campaign[]);
+    setContentLinks(links);
+    setContentOptions(allContent);
     setLoading(false);
   }, [userId]);
 
@@ -99,7 +164,7 @@ export default function CampaignManager({ userId }: { userId: string }) {
       setName("");
       setGoal("");
       setAudience("");
-      setNotice("کمپین جدید ساخته شد. می‌توانی مراحل اجرای آن را پیگیری کنی.");
+      setNotice("کمپین جدید ساخته شد. حالا می‌توانی محتواهای ذخیره‌شده را به آن متصل کنی.");
       setExpandedId(data.id);
     }
     setSaving(false);
@@ -119,6 +184,50 @@ export default function CampaignManager({ userId }: { userId: string }) {
     setCampaigns((current) => current.map((campaign) => campaign.id === id ? { ...campaign, ...changes } : campaign));
   }
 
+  async function addContentToCampaign(campaignId: string) {
+    const contentId = selectedContentByCampaign[campaignId];
+    if (!contentId) {
+      setError("ابتدا یک محتوای ذخیره‌شده انتخاب کن.");
+      return;
+    }
+    setLinkingCampaignId(campaignId);
+    setError("");
+    setNotice("");
+    const { data, error: insertError } = await supabase
+      .from("marketing_campaign_content")
+      .insert({ user_id: userId, campaign_id: campaignId, content_id: contentId })
+      .select("id,campaign_id,content_id,notes,created_at")
+      .single();
+
+    if (insertError) {
+      setError(insertError.code === "23505"
+        ? "این محتوا قبلاً به همین کمپین اضافه شده است."
+        : "اتصال محتوا به کمپین انجام نشد: " + insertError.message);
+    } else if (data) {
+      setContentLinks((current) => [data as CampaignContentLink, ...current]);
+      setSelectedContentByCampaign((current) => ({ ...current, [campaignId]: "" }));
+      setNotice("محتوا به کمپین اضافه شد.");
+    }
+    setLinkingCampaignId(null);
+  }
+
+  async function removeContentLink(link: CampaignContentLink) {
+    setRemovingLinkId(link.id);
+    setError("");
+    const { error: deleteError } = await supabase
+      .from("marketing_campaign_content")
+      .delete()
+      .eq("id", link.id)
+      .eq("user_id", userId);
+    if (deleteError) {
+      setError("حذف ارتباط محتوا با کمپین انجام نشد: " + deleteError.message);
+    } else {
+      setContentLinks((current) => current.filter((item) => item.id !== link.id));
+      setNotice("ارتباط محتوا با کمپین حذف شد؛ خود محتوا در تاریخچه باقی می‌ماند.");
+    }
+    setRemovingLinkId(null);
+  }
+
   async function deleteCampaign(campaign: Campaign) {
     if (!window.confirm(`کمپین «${campaign.name}» حذف شود؟ این عملیات قابل بازگشت نیست.`)) return;
     const { error: deleteError } = await supabase
@@ -131,7 +240,8 @@ export default function CampaignManager({ userId }: { userId: string }) {
       return;
     }
     setCampaigns((current) => current.filter((item) => item.id !== campaign.id));
-    setNotice("کمپین حذف شد.");
+    setContentLinks((current) => current.filter((item) => item.campaign_id !== campaign.id));
+    setNotice("کمپین حذف شد. محتواهای ذخیره‌شده حذف نشده‌اند.");
   }
 
   function toggleStage(campaign: Campaign, stageId: string) {
@@ -175,6 +285,9 @@ export default function CampaignManager({ userId }: { userId: string }) {
               const completed = campaign.stages.filter((stage) => stage.done).length;
               const progress = campaign.stages.length ? Math.round((completed / campaign.stages.length) * 100) : 0;
               const expanded = expandedId === campaign.id;
+              const linked = contentLinks.filter((link) => link.campaign_id === campaign.id);
+              const linkedIds = new Set(linked.map((link) => link.content_id));
+              const available = contentOptions.filter((option) => !linkedIds.has(option.id));
               return (
                 <article className="campaign-card" key={campaign.id}>
                   <div className="campaign-card-top">
@@ -193,19 +306,64 @@ export default function CampaignManager({ userId }: { userId: string }) {
                     <small>{completed.toLocaleString("fa-IR")} از {campaign.stages.length.toLocaleString("fa-IR")} مرحله</small>
                   </div>
                   <div className="campaign-card-actions">
-                    <span>ایجاد: {formatCampaignDate(campaign.created_at)}</span>
-                    <button type="button" className="history-open" onClick={() => setExpandedId(expanded ? null : campaign.id)}>{expanded ? "بستن مراحل" : "پیگیری مراحل"}</button>
+                    <span>ایجاد: {formatCampaignDate(campaign.created_at)} · {linked.length.toLocaleString("fa-IR")} محتوای مرتبط</span>
+                    <button type="button" className="history-open" onClick={() => setExpandedId(expanded ? null : campaign.id)}>{expanded ? "بستن جزئیات" : "مدیریت محتوا و مراحل"}</button>
                     <button type="button" className="campaign-delete" onClick={() => void deleteCampaign(campaign)}>حذف کمپین</button>
                   </div>
                   {expanded && (
-                    <div className="campaign-stages">
-                      <h4>مراحل اجرای کمپین</h4>
-                      {campaign.stages.map((stage) => (
-                        <label className={stage.done ? "campaign-stage done" : "campaign-stage"} key={stage.id}>
-                          <input type="checkbox" checked={stage.done} onChange={() => toggleStage(campaign, stage.id)} />
-                          <span>{stage.title}</span>
-                        </label>
-                      ))}
+                    <div className="campaign-expanded">
+                      <div className="campaign-stages">
+                        <h4>مراحل اجرای کمپین</h4>
+                        {campaign.stages.map((stage) => (
+                          <label className={stage.done ? "campaign-stage done" : "campaign-stage"} key={stage.id}>
+                            <input type="checkbox" checked={stage.done} onChange={() => toggleStage(campaign, stage.id)} />
+                            <span>{stage.title}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="campaign-content">
+                        <div className="campaign-content-heading">
+                          <h4>محتواهای مرتبط با کمپین</h4>
+                          <span>{linked.length.toLocaleString("fa-IR")} مورد</span>
+                        </div>
+                        {linked.length > 0 ? (
+                          <div className="campaign-linked-list">
+                            {linked.map((link) => {
+                              const option = contentOptions.find((item) => item.id === link.content_id);
+                              return (
+                                <div className="campaign-linked-item" key={link.id}>
+                                  <div className="campaign-link-copy">
+                                    <strong>{option ? getContentTitle(option) : "محتوای مرتبط"}</strong>
+                                    <small>{option ? formatCampaignDate(option.created_at) : "تاریخچه محتوا"}</small>
+                                  </div>
+                                  <button type="button" className="campaign-unlink" disabled={removingLinkId === link.id} onClick={() => void removeContentLink(link)}>
+                                    {removingLinkId === link.id ? "در حال حذف..." : "حذف ارتباط"}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="campaign-content-empty">هنوز محتوایی به این کمپین متصل نشده است.</p>
+                        )}
+                        <div className="campaign-content-add">
+                          <select
+                            aria-label={`انتخاب محتوا برای کمپین ${campaign.name}`}
+                            value={selectedContentByCampaign[campaign.id] || ""}
+                            onChange={(event) => setSelectedContentByCampaign((current) => ({ ...current, [campaign.id]: event.target.value }))}
+                          >
+                            <option value="">انتخاب از تاریخچه محتوا</option>
+                            {available.map((option) => (
+                              <option key={option.id} value={option.id}>{getContentTitle(option)} · {formatCampaignDate(option.created_at)}</option>
+                            ))}
+                          </select>
+                          <button type="button" className="primary-button" disabled={!selectedContentByCampaign[campaign.id] || linkingCampaignId === campaign.id} onClick={() => void addContentToCampaign(campaign.id)}>
+                            {linkingCampaignId === campaign.id ? "در حال اتصال..." : "افزودن محتوا"}
+                          </button>
+                        </div>
+                        {contentOptions.length === 0 && <small className="campaign-content-hint">برای افزودن محتوا، ابتدا از بخش تولید محتوا یک خروجی را ذخیره کن.</small>}
+                      </div>
                     </div>
                   )}
                 </article>
