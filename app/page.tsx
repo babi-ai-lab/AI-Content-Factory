@@ -518,6 +518,7 @@ export default function Home() {
       if (event !== "USER_UPDATED") {
         setBrandProfileNotice("");
         setHistory([]);
+        versionsRequestRef.current += 1;
         setContentVersions([]);
         setVersionsError("");
         setHistoryReady(false);
@@ -543,7 +544,8 @@ export default function Home() {
     if (!user) {
 
       setHistory([]);
-      setContentVersions([]);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
       setVersionsError("");
 
       setHistoryReady(false);
@@ -826,7 +828,8 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
-    setContentVersions([]);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
     setVersionsError("");
 
     setSelectedHistoryId("");
@@ -1071,7 +1074,8 @@ const response = await fetch("/api/generate", {
       };
 
       setSelectedHistoryId(newItem.id);
-      setContentVersions([]);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
       setVersionsError("");
 
       setHistory((old) => [newItem, ...old].slice(0, MAX_HISTORY));
@@ -1182,7 +1186,8 @@ const response = await fetch("/api/generate", {
     if (requestId !== versionsRequestRef.current) return;
 
     if (error) {
-      setContentVersions([]);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
       setVersionsError("بارگذاری نسخه‌های قبلی انجام نشد: " + error.message);
       setVersionsLoading(false);
       return;
@@ -1350,7 +1355,8 @@ const response = await fetch("/api/generate", {
     setDraftText(item.content.caption);
 
     setSelectedHistoryId(item.id);
-    setContentVersions([]);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
     setVersionsError("");
     void loadContentVersions(item.id);
 
@@ -1385,7 +1391,8 @@ const response = await fetch("/api/generate", {
     if (selectedHistoryId === id) {
 
       setSelectedHistoryId("");
-      setContentVersions([]);
+      versionsRequestRef.current += 1;
+        setContentVersions([]);
       setVersionsError("");
 
       setContent(null);
@@ -1421,7 +1428,8 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
-    setContentVersions([]);
+    versionsRequestRef.current += 1;
+        setContentVersions([]);
     setVersionsError("");
 
     setSelectedHistoryId("");
