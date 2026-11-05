@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 
 type CalendarItem = {
@@ -11,6 +11,9 @@ type CalendarItem = {
 
 type Props = {
   items: CalendarItem[];
+  loading: boolean;
+  error: string;
+  onMonthChange: (startIso: string, endIso: string) => void;
   onOpen: (id: string) => void;
   onReschedule: (id: string, value: string) => void;
 };
@@ -57,11 +60,20 @@ function formatTime(value: string) {
     : new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
-export default function MonthlyContentCalendar({ items, onOpen, onReschedule }: Props) {
+export default function MonthlyContentCalendar({ items, loading, error, onMonthChange, onOpen, onReschedule }: Props) {
   const today = getJalaliParts(new Date());
   const [visibleYear, setVisibleYear] = useState(today.year);
   const [visibleMonth, setVisibleMonth] = useState(today.month);
   const [selectedDay, setSelectedDay] = useState(today.day);
+
+  useEffect(() => {
+    const firstDay = fromJalali(visibleYear, visibleMonth, 1);
+    const nextMonth = shiftMonth(visibleYear, visibleMonth, 1);
+    const nextFirstDay = fromJalali(nextMonth.year, nextMonth.month, 1);
+    if (firstDay && nextFirstDay) {
+      onMonthChange(firstDay.toISOString(), nextFirstDay.toISOString());
+    }
+  }, [visibleYear, visibleMonth, onMonthChange]);
 
   const monthDays = useMemo(() => {
     const first = fromJalali(visibleYear, visibleMonth, 1);
@@ -150,7 +162,11 @@ export default function MonthlyContentCalendar({ items, onOpen, onReschedule }: 
           <strong>برنامه‌های {toPersianDigits(selectedDay)} {monthNames[visibleMonth - 1]}</strong>
           <span>{toPersianDigits(selectedItems.length)} مورد</span>
         </div>
-        {selectedItems.length === 0 ? (
+        {loading ? (
+          <p className="planner-empty-inline">در حال بارگذاری تمام برنامه‌های این ماه...</p>
+        ) : error ? (
+          <p className="planner-empty-inline" role="alert">بارگذاری تقویم ناموفق بود: {error}</p>
+        ) : selectedItems.length === 0 ? (
           <p className="planner-empty-inline">برای این روز برنامه‌ای ثبت نشده است. از تاریخچه یک محتوا را زمان‌بندی کن.</p>
         ) : (
           <div className="monthly-calendar-agenda-list">
