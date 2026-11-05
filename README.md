@@ -116,4 +116,4 @@ GitHub Actions همین کنترل‌ها را برای Pull Request به `main`
 
 ## نقشه راه
 
-برای وضعیت فازها، معیارهای تحویل و موارد باقی‌مانده به [نقشه راه محصول](docs/ROADMAP.md)، [تحلیل رقابتی](docs/COMPETITIVE_POSITIONING.md) و [چک‌لیست عرضه](docs/RELEASE_CHECKLIST.md) مراجعه کن.
+برای وضعیت فازها، معیارهای تحویل و موارد باقی‌مانده به [نقشه راه محصول](docs/ROADMAP.md)، [تحلیل رقابتی](docs/COMPETITIVE_POSITIONING.md)، [چک‌لیست عرضه](docs/RELEASE_CHECKLIST.md)، [پیش‌نویس حریم خصوصی](docs/PRIVACY_POLICY_DRAFT.md) و [پیش‌نویس شرایط استفاده](docs/TERMS_DRAFT.md) مراجعه کن.
