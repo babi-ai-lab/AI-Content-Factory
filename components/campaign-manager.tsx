@@ -255,7 +255,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   }
 
   return (
-    <section className="campaign-section" aria-labelledby="campaign-title">
+    <section id="campaign-manager" className="campaign-section" aria-labelledby="campaign-title">
       <div className="campaign-heading">
         <div>
           <span className="step">مدیریت بازاریابی</span>
