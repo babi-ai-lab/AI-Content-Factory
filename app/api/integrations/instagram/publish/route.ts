@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
 
   const parsedBody = await readBoundedJsonBody(request.body, 12 * 1024);
-  if (parsedBody.error === "too_large") {
-    return NextResponse.json({ error: "حجم درخواست بیش از حد مجاز است." }, { status: 413 });
-  }
-  if (parsedBody.error || !parsedBody.value) {
+  if ("error" in parsedBody) {
+    if (parsedBody.error === "too_large") {
+      return NextResponse.json({ error: "حجم درخواست بیش از حد مجاز است." }, { status: 413 });
+    }
     return NextResponse.json({ error: "ساختار درخواست معتبر نیست." }, { status: 400 });
   }
   const validation = validateInstagramPublishInput(parsedBody.value);
