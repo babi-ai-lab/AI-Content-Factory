@@ -49,9 +49,6 @@ function toPersianDigits(value: number | string) {
   return String(value).replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)]);
 }
 
-function dayKey(parts: JalaliParts) {
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
 
 function formatTime(value: string) {
   const date = new Date(value);
