@@ -161,8 +161,16 @@ Deno.serve(async (request) => {
       return Response.json({ error: "Instagram encryption key is not configured in Supabase Vault" }, { status: 503 });
     }
 
+    const staleBefore = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    await supabase.from("instagram_publish_jobs").update({
+      status: "failed",
+      error_code: "WORKER_TIMEOUT",
+      error_message: "پردازش انتشار بیش از ۱۵ دقیقه بدون نتیجه باقی ماند.",
+      completed_at: new Date().toISOString(),
+    }).eq("status", "publishing").lt("started_at", staleBefore);
+
     const { data: jobs, error: claimError } = await supabase.rpc("claim_due_instagram_publish_jobs", {
-      p_limit: 5,
+      p_limit: 1,
     });
     if (claimError) {
       console.error("Could not claim due Instagram jobs:", claimError.message);
