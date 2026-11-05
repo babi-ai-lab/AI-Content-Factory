@@ -441,6 +441,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [historyBackupLoading, setHistoryBackupLoading] = useState(false);
   const [historyCursor, setHistoryCursor] = useState<{ createdAt: string; id: string } | null>(null);
   const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -1491,22 +1492,77 @@ const response = await fetch("/api/generate", {
 
   }
 
-  function exportHistory() {
-
+  async function exportHistory() {
+    if (!user) return showNotice("برای تهیه پشتیبان وارد حساب کاربری شو.", "error");
     if (!history.length) return showNotice("تاریخچه خالی است.", "error");
 
-    downloadFile(
+    setHistoryBackupLoading(true);
+    showNotice("در حال دریافت همه صفحات تاریخچه برای تهیه پشتیبان...", "info");
 
-      "AI-Content-Factory-History.json",
+    try {
+      const pageSize = 100;
+      const maxRows = 10000;
+      const allItems: HistoryItem[] = [];
+      let cursor: { createdAt: string; id: string } | null = null;
+      let hasMore = true;
 
-      JSON.stringify(history, null, 2),
+      while (hasMore && allItems.length < maxRows) {
+        let query = supabase
+          .from("content_history")
+          .select("id, product, content, created_at")
+          .eq("user_id", user.id);
 
-      "application/json"
+        if (cursor) {
+          query = query.or(
+            `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`
+          );
+        }
 
-    );
+        const { data, error } = await query
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .limit(pageSize);
 
-    showNotice("نسخه پشتیبان از موارد بارگذاری‌شده دانلود شد.", "success");
+        if (error) throw error;
 
+        const rows = (data || []) as DbHistoryRow[];
+        allItems.push(...rows.map((row) => ({
+          id: row.id,
+          createdAt: row.created_at,
+          product: normalizeProduct(row.product),
+          content: row.content,
+        })));
+
+        const lastRow = rows[rows.length - 1];
+        if (lastRow) cursor = { createdAt: lastRow.created_at, id: lastRow.id };
+        hasMore = rows.length === pageSize;
+      }
+
+      if (!allItems.length) {
+        showNotice("تاریخچه‌ای برای پشتیبان‌گیری پیدا نشد.", "info");
+        return;
+      }
+
+      downloadFile(
+        "AI-Content-Factory-Content-History.json",
+        JSON.stringify(allItems, null, 2),
+        "application/json"
+      );
+
+      showNotice(
+        allItems.length >= maxRows
+          ? "پشتیبان ۱۰٬۰۰۰ مورد اخیر دانلود شد؛ برای تاریخچه بزرگ‌تر با پشتیبانی تماس بگیر."
+          : `پشتیبان ${allItems.length.toLocaleString("fa-IR")} بسته محتوا دانلود شد؛ نسخه‌های قبلی ویرایش در جدول نسخه‌ها نگهداری می‌شوند.`,
+        "success"
+      );
+    } catch (error) {
+      showNotice(
+        error instanceof Error ? `تهیه پشتیبان ناموفق بود: ${error.message}` : "تهیه پشتیبان ناموفق بود.",
+        "error"
+      );
+    } finally {
+      setHistoryBackupLoading(false);
+    }
   }
 
   if (!authReady) {
@@ -2262,7 +2318,7 @@ const response = await fetch("/api/generate", {
             <span className="history-count">{history.length.toLocaleString("fa-IR")} مورد بارگذاری‌شده</span>
             <button className="history-backup" onClick={exportSelectedHistory} disabled={!selectedBulkIds.length}>خروجی انتخاب‌شده ({selectedBulkIds.length})</button>
 
-            <button className="history-backup" onClick={exportHistory} disabled={!history.length}>پشتیبان تاریخچه بارگذاری‌شده</button>
+            <button className="history-backup" onClick={exportHistory} disabled={!history.length || historyBackupLoading}>{historyBackupLoading ? "در حال تهیه پشتیبان..." : "پشتیبان همه محتواها"}</button>
 
             <button className="clear-history" onClick={clearHistory} disabled={!history.length}>پاک کردن همه</button>
 
