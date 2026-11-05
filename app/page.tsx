@@ -183,6 +183,44 @@ type DbContentVersionRow = {
   created_at: string;
 };
 
+type AnalyticsSummary = {
+  entries: { length: number };
+  trend: { key: string; label: string; count: number }[];
+  maxDaily: number;
+  byBusiness: { label: string; count: number }[];
+  formats: { label: string; count: number }[];
+  totalPieces: number;
+  favorites: number;
+  folders: number;
+};
+
+type AnalyticsRpcPayload = {
+  entries?: { length?: number };
+  trend?: { key?: string; count?: number }[];
+  maxDaily?: number;
+  byBusiness?: { label?: string; count?: number }[];
+  formats?: { label?: string; count?: number }[];
+  totalPieces?: number;
+  favorites?: number;
+  folders?: number;
+};
+
+const initialAnalytics: AnalyticsSummary = {
+  entries: { length: 0 },
+  trend: [],
+  maxDaily: 1,
+  byBusiness: [],
+  formats: [
+    { label: "کپشن", count: 0 },
+    { label: "سناریوی ریلز", count: 0 },
+    { label: "استوری", count: 0 },
+    { label: "تبلیغ", count: 0 },
+  ],
+  totalPieces: 0,
+  favorites: 0,
+  folders: 0,
+};
+
 const STORAGE_KEY = "ai-content-factory-history-v1";
 
 const HISTORY_PAGE_SIZE = 50;
@@ -443,6 +481,70 @@ export default function Home() {
   const [selectedBulkIds, setSelectedBulkIds] = useState<string[]>([]);
 
   const [analyticsPeriod, setAnalyticsPeriod] = useState<"7" | "30" | "all">("30");
+  const [analytics, setAnalytics] = useState<AnalyticsSummary>(initialAnalytics);
+  const [analyticsReady, setAnalyticsReady] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.id) {
+      setAnalytics(initialAnalytics);
+      setAnalyticsReady(false);
+      setAnalyticsError("");
+      return () => { cancelled = true; };
+    }
+
+    async function loadAnalytics() {
+      setAnalyticsReady(false);
+      setAnalyticsError("");
+      try {
+        const { data, error } = await supabase.rpc("get_content_analytics", {
+          p_period_days: analyticsPeriod === "all" ? null : Number(analyticsPeriod),
+        });
+        if (error) throw error;
+        if (cancelled) return;
+
+        const result = (data || {}) as AnalyticsRpcPayload;
+        const trend = Array.isArray(result.trend)
+          ? result.trend.map((day) => {
+              const date = new Date(`${day.key || ""}T12:00:00`);
+              return {
+                key: day.key || "",
+                label: Number.isNaN(date.getTime())
+                  ? ""
+                  : date.toLocaleDateString("fa-IR", { weekday: "short" }),
+                count: Math.max(0, Number(day.count) || 0),
+              };
+            })
+          : [];
+
+        setAnalytics({
+          entries: { length: Math.max(0, Number(result.entries?.length) || 0) },
+          trend,
+          maxDaily: Math.max(1, Number(result.maxDaily) || 1),
+          byBusiness: Array.isArray(result.byBusiness)
+            ? result.byBusiness.map((item) => ({ label: item.label || "سایر کسب‌وکارها", count: Math.max(0, Number(item.count) || 0) }))
+            : [],
+          formats: Array.isArray(result.formats)
+            ? result.formats.map((item) => ({ label: item.label || "", count: Math.max(0, Number(item.count) || 0) }))
+            : initialAnalytics.formats,
+          totalPieces: Math.max(0, Number(result.totalPieces) || 0),
+          favorites: Math.max(0, Number(result.favorites) || 0),
+          folders: Math.max(0, Number(result.folders) || 0),
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setAnalyticsError(error instanceof Error ? error.message : "محاسبه آمار انجام نشد.");
+        setAnalytics(initialAnalytics);
+      } finally {
+        if (!cancelled) setAnalyticsReady(true);
+      }
+    }
+
+    void loadAnalytics();
+    return () => { cancelled = true; };
+  }, [user?.id, analyticsPeriod]);
 
   function showNotice(message: string, type: "success" | "error" | "info" = "info") {
 
@@ -899,48 +1001,6 @@ export default function Home() {
       return matchesSearch && matchesFolder && matchesFavorite;
     });
   }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
-
-  const analytics = useMemo(() => {
-    const now = new Date();
-    const cutoff = analyticsPeriod === "all"
-      ? null
-      : new Date(now.getTime() - Number(analyticsPeriod) * 24 * 60 * 60 * 1000);
-    const entries = history.filter((item) => {
-      const date = new Date(item.createdAt);
-      return !Number.isNaN(date.getTime()) && (!cutoff || date >= cutoff);
-    });
-    const countByDay = new Map<string, number>();
-    const dayLabels = Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(now);
-      date.setDate(now.getDate() - (6 - index));
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      return { key, label: date.toLocaleDateString("fa-IR", { weekday: "short" }) };
-    });
-    entries.forEach((item) => {
-      const date = new Date(item.createdAt);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      countByDay.set(key, (countByDay.get(key) || 0) + 1);
-    });
-    const trend = dayLabels.map((day) => ({ ...day, count: countByDay.get(day.key) || 0 }));
-    const maxDaily = Math.max(1, ...trend.map((day) => day.count));
-    const byBusiness = businessTypes
-      .map((type) => ({
-        label: type.label,
-        count: entries.filter((item) => item.product.businessType === type.value).length,
-      }))
-      .filter((item) => item.count > 0)
-      .sort((a, b) => b.count - a.count);
-    const formats = [
-      { label: "کپشن", count: entries.filter((item) => Boolean(item.content.caption?.trim())).length },
-      { label: "سناریوی ریلز", count: entries.filter((item) => Boolean(item.content.reel?.trim())).length },
-      { label: "استوری", count: entries.reduce((sum, item) => sum + (item.content.stories?.length || 0), 0) },
-      { label: "تبلیغ", count: entries.filter((item) => Boolean(item.content.ad?.trim())).length },
-    ];
-    const totalPieces = formats.reduce((sum, item) => sum + item.count, 0);
-    const favorites = entries.filter((item) => item.product._factoryMeta?.favorite).length;
-    const folders = new Set(entries.map((item) => item.product._factoryMeta?.folder || "عمومی")).size;
-    return { entries, trend, maxDaily, byBusiness, formats, totalPieces, favorites, folders };
-  }, [history, analyticsPeriod]);
 
   const qualityAnalysis = useMemo(() => {
     if (!content) return null;
@@ -1858,7 +1918,7 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">مرکز آمار</span>
             <h2 id="analytics-title">عملکرد محتوای شما</h2>
-            <p>آمار بر اساس ۵۰ محتوای اخیر بارگذاری‌شده از تاریخچه همین حساب محاسبه می‌شود.</p>
+            <p>گزارش مستقیماً از تمام سوابق ذخیره‌شده حساب در پایگاه داده محاسبه می‌شود.</p>
           </div>
           <div className="analytics-period" role="group" aria-label="بازه آماری">
             <button type="button" className={analyticsPeriod === "7" ? "active" : ""} onClick={() => setAnalyticsPeriod("7")}>۷ روز</button>
@@ -1869,8 +1929,10 @@ const response = await fetch("/api/generate", {
 
         {!user ? (
           <div className="analytics-empty">برای مشاهده آمار اختصاصی، ابتدا وارد حساب کاربری شو.</div>
-        ) : !historyReady ? (
+        ) : !analyticsReady ? (
           <div className="analytics-empty">در حال محاسبه آمار...</div>
+        ) : analyticsError ? (
+          <div className="analytics-empty" role="alert">محاسبه آمار ناموفق بود: {analyticsError}</div>
         ) : (
           <>
             <div className="analytics-kpis">
