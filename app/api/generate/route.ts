@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { BrandProfileInput } from "@/lib/server-controls.mjs";
 export const runtime = "nodejs";
@@ -378,6 +379,7 @@ ${selectedTemplate}
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = randomUUID();
   try {
     // بررسی وجود توکن ورود
     const authorization = request.headers.get("authorization");
@@ -669,6 +671,25 @@ export async function POST(request: NextRequest) {
 
     const resultData = await aiResponse.json();
 
+    const usageMetadata = resultData.usageMetadata || {};
+    const usage = {
+      promptTokens: Math.max(0, Number(usageMetadata.promptTokenCount) || 0),
+      candidateTokens: Math.max(0, Number(usageMetadata.candidatesTokenCount) || 0),
+      totalTokens: Math.max(0, Number(usageMetadata.totalTokenCount) || 0),
+    };
+
+    const { error: usageLogError } = await supabaseServer.rpc("record_ai_usage", {
+      p_request_id: requestId,
+      p_model: result.model,
+      p_prompt_tokens: usage.promptTokens,
+      p_candidate_tokens: usage.candidateTokens,
+      p_total_tokens: usage.totalTokens,
+    });
+    if (usageLogError) {
+      // Generation must remain available if telemetry storage is temporarily unavailable.
+      console.error("AI usage telemetry could not be saved:", usageLogError);
+    }
+
     const raw = resultData.candidates?.[0]?.content?.parts
       ?.map((part: { text?: string }) => part.text || "")
       .join("")
@@ -689,7 +710,6 @@ export async function POST(request: NextRequest) {
     }
 
     const content = extractJson(raw);
-
     console.log(
       `Content successfully generated using ${result.model}`
     );
@@ -698,6 +718,7 @@ export async function POST(request: NextRequest) {
       mode: "ai",
       model: result.model,
       content,
+      usage,
     });
   } catch (error) {
     console.error("Generate API error:", error);

@@ -229,6 +229,30 @@ const initialAnalytics: AnalyticsSummary = {
   folders: 0,
 };
 
+type AiUsageSummary = {
+  generations: number;
+  promptTokens: number;
+  candidateTokens: number;
+  totalTokens: number;
+  models: { model: string; generations: number; totalTokens: number }[];
+};
+
+type AiUsageRpcPayload = {
+  generations?: number;
+  promptTokens?: number;
+  candidateTokens?: number;
+  totalTokens?: number;
+  models?: { model?: string; generations?: number; totalTokens?: number }[];
+};
+
+const initialAiUsage: AiUsageSummary = {
+  generations: 0,
+  promptTokens: 0,
+  candidateTokens: 0,
+  totalTokens: 0,
+  models: [],
+};
+
 const STORAGE_KEY = "ai-content-factory-history-v1";
 
 const HISTORY_PAGE_SIZE = 50;
@@ -496,6 +520,9 @@ export default function Home() {
   const [analytics, setAnalytics] = useState<AnalyticsSummary>(initialAnalytics);
   const [analyticsReady, setAnalyticsReady] = useState(false);
   const [analyticsError, setAnalyticsError] = useState("");
+  const [aiUsage, setAiUsage] = useState<AiUsageSummary>(initialAiUsage);
+  const [aiUsageReady, setAiUsageReady] = useState(false);
+  const [aiUsageError, setAiUsageError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -555,6 +582,52 @@ export default function Home() {
     }
 
     void loadAnalytics();
+    return () => { cancelled = true; };
+  }, [user?.id, analyticsPeriod]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user?.id) {
+      setAiUsage(initialAiUsage);
+      setAiUsageReady(false);
+      setAiUsageError("");
+      return () => { cancelled = true; };
+    }
+
+    async function loadAiUsage() {
+      setAiUsageReady(false);
+      setAiUsageError("");
+      try {
+        const { data, error } = await supabase.rpc("get_ai_usage_summary", {
+          p_period_days: analyticsPeriod === "all" ? null : Number(analyticsPeriod),
+        });
+        if (error) throw error;
+        if (cancelled) return;
+        const result = (data || {}) as AiUsageRpcPayload;
+        setAiUsage({
+          generations: Math.max(0, Number(result.generations) || 0),
+          promptTokens: Math.max(0, Number(result.promptTokens) || 0),
+          candidateTokens: Math.max(0, Number(result.candidateTokens) || 0),
+          totalTokens: Math.max(0, Number(result.totalTokens) || 0),
+          models: Array.isArray(result.models)
+            ? result.models.map((item) => ({
+                model: item.model || "نامشخص",
+                generations: Math.max(0, Number(item.generations) || 0),
+                totalTokens: Math.max(0, Number(item.totalTokens) || 0),
+              }))
+            : [],
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setAiUsageError(error instanceof Error ? error.message : "بارگذاری آمار مصرف هوش مصنوعی ناموفق بود.");
+        setAiUsage(initialAiUsage);
+      } finally {
+        if (!cancelled) setAiUsageReady(true);
+      }
+    }
+
+    void loadAiUsage();
     return () => { cancelled = true; };
   }, [user?.id, analyticsPeriod]);
 
@@ -1991,7 +2064,14 @@ const response = await fetch("/api/generate", {
               <article className="analytics-kpi"><span>خروجی متنی</span><strong>{analytics.totalPieces.toLocaleString("fa-IR")}</strong><small>کپشن، ریلز، استوری و تبلیغ</small></article>
               <article className="analytics-kpi"><span>محتوای منتخب</span><strong>{analytics.favorites.toLocaleString("fa-IR")}</strong><small>ذخیره‌شده در علاقه‌مندی‌ها</small></article>
               <article className="analytics-kpi"><span>پوشه‌های فعال</span><strong>{analytics.folders.toLocaleString("fa-IR")}</strong><small>در بازه انتخاب‌شده</small></article>
+              <article className="analytics-kpi analytics-usage-kpi">
+                <span>تولیدهای موفق هوش مصنوعی</span>
+                <strong>{aiUsageReady ? aiUsage.generations.toLocaleString("fa-IR") : "…"}</strong>
+                <small>{aiUsageReady ? `مصرف ${aiUsage.totalTokens.toLocaleString("fa-IR")} توکن` : "در حال دریافت آمار مصرف"}</small>
+              </article>
             </div>
+            {aiUsageError && <p className="analytics-usage-note" role="status">آمار مصرف هوش مصنوعی در دسترس نیست: {aiUsageError}</p>}
+            <p className="analytics-usage-note">مصرف توکن‌ها ثبت می‌شود؛ سقف ماهانه و بسته‌های اعتباری هنوز تنظیم نشده‌اند.</p>
 
             <div className="analytics-grid">
               <article className="analytics-card">
