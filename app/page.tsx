@@ -32,7 +32,7 @@ type Product = {
   offer: string;
   differentiators: string;
   additionalInfo: string;
-  _factoryMeta?: { tags: string[]; folder: string; favorite: boolean };
+  _factoryMeta?: { tags: string[]; folder: string; favorite: boolean; scheduledAt?: string };
 };
 
 type BrandProfile = {
@@ -102,7 +102,7 @@ function businessTypeLabel(value?: string) {
 }
 
 function normalizeProduct(value: Partial<Product> | null | undefined): Product {
-  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, ...(value?._factoryMeta || {}) } };
+  return { ...initialProduct, ...(value || {}), businessType: value?.businessType || "retail", _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", ...(value?._factoryMeta || {}) } };
 }
 
 type Content = {
@@ -185,6 +185,19 @@ function createId() {
 
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+}
+
+function toLocalDateTimeInput(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function toIsoDateTime(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
 }
 
 function formatDate(value: string) {
@@ -784,7 +797,7 @@ export default function Home() {
 
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
-      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
       const matchesFavorite = !historyFavoritesOnly || meta.favorite;
@@ -839,6 +852,23 @@ export default function Home() {
     const editedContent = updateTabContent(content, activeTab, draftText);
     return analyzeContent(editedContent, brandProfile);
   }, [content, activeTab, draftText, brandProfile]);
+
+  const scheduledItems = useMemo(() => history
+    .filter((item) => {
+      const value = item.product._factoryMeta?.scheduledAt;
+      return Boolean(value && !Number.isNaN(new Date(value).getTime()));
+    })
+    .sort((a, b) =>
+      new Date(a.product._factoryMeta!.scheduledAt!).getTime() -
+      new Date(b.product._factoryMeta!.scheduledAt!).getTime()
+    ), [history]);
+
+  const upcomingItems = scheduledItems.filter((item) =>
+    new Date(item.product._factoryMeta!.scheduledAt!).getTime() >= Date.now()
+  );
+  const overdueItems = scheduledItems.filter((item) =>
+    new Date(item.product._factoryMeta!.scheduledAt!).getTime() < Date.now()
+  );
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
 
@@ -1157,8 +1187,8 @@ const response = await fetch("/api/generate", {
 
   }
 
-  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean }>) {
-    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
+  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string }>) {
+    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "" };
     const nextProduct = { ...item.product, _factoryMeta: { ...current, ...patch } };
     const { error } = await supabase.from("content_history").update({ product: nextProduct }).eq("id", item.id);
     if (error) return showNotice("ذخیره مشخصات کتابخانه ناموفق بود: " + error.message, "error");
@@ -1651,6 +1681,42 @@ const response = await fetch("/api/generate", {
         )}
       </section>
 
+      <section className="planner-section">
+        <div className="planner-heading">
+          <div>
+            <span className="step">برنامه‌ریزی</span>
+            <h2>تقویم محتوایی</h2>
+            <p>برای ۵۰ محتوای اخیر زمان انتشار تعیین کن؛ این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
+          </div>
+          <div className="planner-total"><strong>{scheduledItems.length.toLocaleString("fa-IR")}</strong><span>محتوای زمان‌بندی‌شده</span></div>
+        </div>
+
+        {scheduledItems.length === 0 ? (
+          <div className="planner-empty">هنوز محتوایی زمان‌بندی نشده است. از قسمت تاریخچه برای هر بسته زمان انتشار تعیین کن.</div>
+        ) : (
+          <div className="planner-columns">
+            <div className="planner-column">
+              <h3>انتشارهای پیش‌رو <span>{upcomingItems.length.toLocaleString("fa-IR")}</span></h3>
+              {upcomingItems.length ? upcomingItems.slice(0, 5).map((item) => (
+                <div className="planner-item" key={item.id}>
+                  <div><b>{item.product.name || "محتوا بدون نام"}</b><small>{formatDate(item.product._factoryMeta!.scheduledAt!)}</small></div>
+                  <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
+                </div>
+              )) : <p className="planner-empty-inline">برنامه‌ای برای آینده ثبت نشده است.</p>}
+            </div>
+            <div className="planner-column">
+              <h3>موعدهای گذشته <span>{overdueItems.length.toLocaleString("fa-IR")}</span></h3>
+              {overdueItems.length ? overdueItems.slice(-3).reverse().map((item) => (
+                <div className="planner-item overdue" key={item.id}>
+                  <div><b>{item.product.name || "محتوا بدون نام"}</b><small>{formatDate(item.product._factoryMeta!.scheduledAt!)}</small></div>
+                  <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
+                </div>
+              )) : <p className="planner-empty-inline">موردی با موعد گذشته وجود ندارد.</p>}
+            </div>
+          </div>
+        )}
+      </section>
+
       <div className="workspace">
 
         <section className="panel form-panel">
@@ -2005,6 +2071,16 @@ const response = await fetch("/api/generate", {
                     const folder = window.prompt("نام پوشه:", item.product._factoryMeta?.folder || "عمومی");
                     if (folder !== null && folder.trim()) updateHistoryMeta(item, { folder: folder.trim().slice(0, 40) });
                   }}>پوشه</button>
+
+                  <label className="schedule-control">
+                    <span>زمان انتشار</span>
+                    <input
+                      type="datetime-local"
+                      aria-label={`زمان انتشار ${item.product.name || "محتوا"}`}
+                      value={toLocalDateTimeInput(item.product._factoryMeta?.scheduledAt)}
+                      onChange={(e) => updateHistoryMeta(item, { scheduledAt: toIsoDateTime(e.target.value) })}
+                    />
+                  </label>
 
                   <button className="history-open" onClick={() => openHistory(item)}>باز کردن</button>
 
