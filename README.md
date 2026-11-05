@@ -74,7 +74,7 @@ select vault.create_secret('<یک secret تصادفی طولانی برای HMAC
 select vault.create_secret('https://ovtawuqavhzyknwdxies.supabase.co', 'supabase_project_url');
 select public.schedule_instagram_publish_cron();
 ```
-این دستور را فقط یک بار اجرا کن. هیچ secretی را در Git commit نکن یا در پیام عمومی قرار نده.
+این دستور را فقط یک بار اجرا کن. سپس در Render مقدار `INSTAGRAM_SCHEDULER_ENABLED=true` را تنظیم کن تا API زمان‌بندی را بپذیرد. تا پیش از این مرحله، زمان‌بندی به‌صورت ایمن غیرفعال می‌ماند. هیچ secretی را در Git commit نکن یا در پیام عمومی قرار نده.
 
 اگر کلید Gemini تنظیم نشده باشد، API محتوای نمونه (demo) برمی‌گرداند؛ این خروجی تولید واقعی مدل نیست. سهمیه Gemini به طرح ارائه‌دهنده وابسته است و در صورت اتمام سهمیه، API پاسخ 429 با پیام مشخص برمی‌گرداند.
 
