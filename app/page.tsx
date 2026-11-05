@@ -985,12 +985,14 @@ export default function Home() {
 
     }
 
-    if (authPassword.length < 6) {
-
-      setAuthMessage("رمز عبور باید حداقل ۶ کاراکتر باشد.");
-
+    const minimumPasswordLength = authMode === "signup" ? 8 : 6;
+    if (authPassword.length < minimumPasswordLength) {
+      setAuthMessage(
+        authMode === "signup"
+          ? "برای ساخت حساب، رمز عبور باید حداقل ۸ کاراکتر باشد."
+          : "رمز عبور باید حداقل ۶ کاراکتر باشد."
+      );
       return;
-
     }
 
     setAuthLoading(true);
@@ -1059,6 +1061,25 @@ export default function Home() {
 
   }
 
+  async function revokeDataProcessingNotice() {
+    setDataNoticeSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { aiContentFactoryDataProcessingNoticeAcceptedAt: null },
+      });
+      if (error) throw error;
+      setDataProcessingNoticeAccepted(false);
+      showNotice("تأییدیه لغو شد؛ برای تولید جدید باید دوباره اطلاعیه را تأیید کنی.", "success");
+    } catch (error) {
+      showNotice(
+        error instanceof Error ? `لغو تأییدیه ناموفق بود: ${error.message}` : "لغو تأییدیه ناموفق بود.",
+        "error"
+      );
+    } finally {
+      setDataNoticeSaving(false);
+    }
+  }
+
   async function acceptDataProcessingNotice() {
     setDataNoticeSaving(true);
     try {
@@ -1102,8 +1123,8 @@ export default function Home() {
 
   async function handlePasswordRecovery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (newPassword.length < 6) {
-      setAuthMessage("رمز عبور جدید باید حداقل ۶ کاراکتر باشد.");
+    if (newPassword.length < 8) {
+      setAuthMessage("رمز عبور جدید باید حداقل ۸ کاراکتر باشد.");
       return;
     }
     if (newPassword !== confirmNewPassword) {
@@ -1886,11 +1907,11 @@ const response = await fetch("/api/generate", {
           <form onSubmit={handlePasswordRecovery} style={{ display: "grid", gap: 14 }}>
             <label>
               رمز عبور جدید
-              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} autoComplete="new-password" required />
             </label>
             <label>
               تکرار رمز عبور جدید
-              <input type="password" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} minLength={6} autoComplete="new-password" required />
+              <input type="password" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} minLength={8} autoComplete="new-password" required />
             </label>
             <button className="generate" type="submit" disabled={authLoading}>
               {authLoading ? "در حال ذخیره..." : "ذخیره رمز عبور جدید"}
@@ -2029,11 +2050,11 @@ const response = await fetch("/api/generate", {
 
                 onChange={(e) => setAuthPassword(e.target.value)}
 
-                placeholder="حداقل ۶ کاراکتر"
+                placeholder={authMode === "signup" ? "حداقل ۸ کاراکتر" : "رمز عبور فعلی"}
 
                 autoComplete={authMode === "signup" ? "new-password" : "current-password"}
 
-                minLength={6}
+                minLength={authMode === "signup" ? 8 : 6}
 
                 required
 
@@ -2509,7 +2530,12 @@ const response = await fetch("/api/generate", {
             </p>
             <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer">مشاهده شرایط پردازش داده Gemini</a>
             {dataProcessingNoticeAccepted ? (
-              <span className="provider-disclosure-accepted">اطلاعیه را تأیید کرده‌ای.</span>
+              <div className="provider-disclosure-accepted-row">
+                <span className="provider-disclosure-accepted">اطلاعیه را تأیید کرده‌ای.</span>
+                <button type="button" className="provider-disclosure-revoke" disabled={dataNoticeSaving} onClick={() => void revokeDataProcessingNotice()}>
+                  {dataNoticeSaving ? "در حال ثبت..." : "لغو تأیید"}
+                </button>
+              </div>
             ) : (
               <button type="button" className="secondary-button" disabled={dataNoticeSaving} onClick={() => void acceptDataProcessingNotice()}>
                 {dataNoticeSaving ? "در حال ثبت..." : "مطالعه کردم و تأیید می‌کنم"}
