@@ -489,6 +489,7 @@ export default function Home() {
   const [instagramMediaUrl, setInstagramMediaUrl] = useState("");
   const [instagramCaption, setInstagramCaption] = useState("");
   const [instagramPublishBusy, setInstagramPublishBusy] = useState(false);
+  const [instagramRequestId, setInstagramRequestId] = useState("");
 
   const [content, setContent] = useState<Content | null>(null);
 
@@ -756,6 +757,8 @@ export default function Home() {
 
     setInstagramPublishBusy(true);
     setInstagramNotice("در حال بارگذاری رسانه...");
+    const requestId = instagramRequestId || crypto.randomUUID();
+    if (!instagramRequestId) setInstagramRequestId(requestId);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("نشست کاربری معتبر نیست.");
@@ -784,7 +787,7 @@ export default function Home() {
           mediaUrl,
           mediaType: instagramMediaType,
           caption: instagramCaption,
-          requestId: crypto.randomUUID(),
+          requestId,
         }),
         cache: "no-store",
       });
@@ -794,6 +797,7 @@ export default function Home() {
       setInstagramMediaFile(null);
       setInstagramMediaUrl("");
       setInstagramCaption("");
+      setInstagramRequestId("");
     } catch (error) {
       setInstagramNotice(error instanceof Error ? error.message : "انتشار در اینستاگرام ناموفق بود.");
     } finally {
@@ -2227,15 +2231,15 @@ const response = await fetch("/api/generate", {
           </div>
           <div className="instagram-publish-form">
             <div className="instagram-publish-type" role="group" aria-label="نوع محتوا">
-              <button type="button" className={instagramMediaType === "image" ? "active" : ""} onClick={() => { setInstagramMediaType("image"); setInstagramMediaFile(null); setInstagramMediaUrl(""); }}>پست تصویر</button>
-              <button type="button" className={instagramMediaType === "reel" ? "active" : ""} onClick={() => { setInstagramMediaType("reel"); setInstagramMediaFile(null); setInstagramMediaUrl(""); }}>ریلز</button>
+              <button type="button" className={instagramMediaType === "image" ? "active" : ""} onClick={() => { setInstagramMediaType("image"); setInstagramMediaFile(null); setInstagramMediaUrl(""); setInstagramRequestId(""); }}>پست تصویر</button>
+              <button type="button" className={instagramMediaType === "reel" ? "active" : ""} onClick={() => { setInstagramMediaType("reel"); setInstagramMediaFile(null); setInstagramMediaUrl(""); setInstagramRequestId(""); }}>ریلز</button>
             </div>
             <label className="instagram-upload-label">
               {instagramMediaType === "image" ? "انتخاب تصویر JPEG (حداکثر ۸ مگابایت)" : "انتخاب ویدئوی MP4 (حداکثر ۳۰۰ مگابایت)"}
               <input
                 type="file"
                 accept={instagramMediaType === "image" ? "image/jpeg" : "video/mp4"}
-                onChange={(event) => { setInstagramMediaFile(event.target.files?.[0] || null); setInstagramMediaUrl(""); }}
+                onChange={(event) => { setInstagramMediaFile(event.target.files?.[0] || null); setInstagramMediaUrl(""); setInstagramRequestId(crypto.randomUUID()); }}
                 disabled={instagramPublishBusy}
               />
             </label>
