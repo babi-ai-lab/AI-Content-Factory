@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
 import { analyzeContent } from "@/lib/content-quality.mjs";
@@ -167,6 +167,14 @@ type DbHistoryRow = {
 
   created_at: string;
 
+};
+
+type DbCalendarRow = {
+  id: string;
+  product: Product;
+  content: Content;
+  created_at: string;
+  scheduled_at: string;
 };
 
 type ContentVersion = {
@@ -462,6 +470,10 @@ export default function Home() {
   const [noticeType, setNoticeType] = useState<"success" | "error" | "info">("info");
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [calendarHistory, setCalendarHistory] = useState<HistoryItem[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState("");
+  const calendarRequestRef = useRef(0);
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
   const [historyBackupLoading, setHistoryBackupLoading] = useState(false);
@@ -545,6 +557,43 @@ export default function Home() {
     void loadAnalytics();
     return () => { cancelled = true; };
   }, [user?.id, analyticsPeriod]);
+
+  const loadCalendarMonth = useCallback(async (startIso: string, endIso: string) => {
+    if (!user?.id) {
+      calendarRequestRef.current += 1;
+      setCalendarHistory([]);
+      setCalendarLoading(false);
+      setCalendarError("");
+      return;
+    }
+
+    const requestId = ++calendarRequestRef.current;
+    setCalendarLoading(true);
+    setCalendarError("");
+
+    try {
+      const { data, error } = await supabase.rpc("get_scheduled_content_for_range", {
+        p_start_iso: startIso,
+        p_end_iso: endIso,
+      });
+      if (error) throw error;
+      if (requestId !== calendarRequestRef.current) return;
+
+      const rows = (data || []) as DbCalendarRow[];
+      setCalendarHistory(rows.map((row) => ({
+        id: row.id,
+        createdAt: row.created_at,
+        product: normalizeProduct(row.product),
+        content: row.content,
+      })));
+    } catch (error) {
+      if (requestId !== calendarRequestRef.current) return;
+      setCalendarHistory([]);
+      setCalendarError(error instanceof Error ? error.message : "بارگذاری برنامه‌های این ماه ناموفق بود.");
+    } finally {
+      if (requestId === calendarRequestRef.current) setCalendarLoading(false);
+    }
+  }, [user?.id]);
 
   function showNotice(message: string, type: "success" | "error" | "info" = "info") {
 
@@ -968,6 +1017,7 @@ export default function Home() {
     setBrandProfileNotice("");
 
     setHistory([]);
+    setCalendarHistory([]);
     setHistoryHasMore(false);
     setHistoryCursor(null);
     versionsRequestRef.current += 1;
@@ -1008,22 +1058,6 @@ export default function Home() {
     return analyzeContent(editedContent, brandProfile);
   }, [content, activeTab, draftText, brandProfile]);
 
-  const scheduledItems = useMemo(() => history
-    .filter((item) => {
-      const value = item.product._factoryMeta?.scheduledAt;
-      return Boolean(value && !Number.isNaN(new Date(value).getTime()));
-    })
-    .sort((a, b) =>
-      new Date(a.product._factoryMeta!.scheduledAt!).getTime() -
-      new Date(b.product._factoryMeta!.scheduledAt!).getTime()
-    ), [history]);
-
-  const upcomingItems = scheduledItems.filter((item) =>
-    new Date(item.product._factoryMeta!.scheduledAt!).getTime() >= Date.now()
-  );
-  const overdueItems = scheduledItems.filter((item) =>
-    new Date(item.product._factoryMeta!.scheduledAt!).getTime() < Date.now()
-  );
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
 
@@ -1223,7 +1257,8 @@ const response = await fetch("/api/generate", {
     const updatedContent = currentWorkingContent();
     if (!updatedContent) return;
 
-    const previousItem = history.find((item) => item.id === selectedHistoryId);
+    const previousItem = history.find((item) => item.id === selectedHistoryId)
+      || calendarHistory.find((item) => item.id === selectedHistoryId);
     const hasContentChanges =
       previousItem && JSON.stringify(previousItem.content) !== JSON.stringify(updatedContent);
 
@@ -1243,6 +1278,13 @@ const response = await fetch("/api/generate", {
 
     setContent(updatedContent);
     setHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId
+          ? { ...item, product: { ...product }, content: updatedContent }
+          : item
+      )
+    );
+    setCalendarHistory((old) =>
       old.map((item) =>
         item.id === selectedHistoryId
           ? { ...item, product: { ...product }, content: updatedContent }
@@ -1307,7 +1349,8 @@ const response = await fetch("/api/generate", {
   async function restoreContentVersion(version: ContentVersion) {
     if (!selectedHistoryId || !user?.id) return;
 
-    const currentItem = history.find((item) => item.id === selectedHistoryId);
+    const currentItem = history.find((item) => item.id === selectedHistoryId)
+      || calendarHistory.find((item) => item.id === selectedHistoryId);
     if (!currentItem) return;
 
     if (JSON.stringify(currentItem.content) === JSON.stringify(version.content)) {
@@ -1339,6 +1382,11 @@ const response = await fetch("/api/generate", {
     setContent(version.content);
     setDraftText(getTabText(version.content, activeTab));
     setHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId ? { ...item, content: version.content } : item
+      )
+    );
+    setCalendarHistory((old) =>
       old.map((item) =>
         item.id === selectedHistoryId ? { ...item, content: version.content } : item
       )
@@ -1429,6 +1477,7 @@ const response = await fetch("/api/generate", {
     const { error } = await supabase.from("content_history").update({ product: nextProduct }).eq("id", item.id);
     if (error) return showNotice("ذخیره مشخصات کتابخانه ناموفق بود: " + error.message, "error");
     setHistory((old) => old.map((entry) => entry.id === item.id ? { ...entry, product: nextProduct } : entry));
+    setCalendarHistory((old) => old.map((entry) => entry.id === item.id ? { ...entry, product: nextProduct } : entry));
     if (selectedHistoryId === item.id) setProduct(nextProduct);
     showNotice("مشخصات کتابخانه ذخیره شد.", "success");
   }
@@ -1487,6 +1536,7 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory((old) => old.filter((item) => item.id !== id));
+    setCalendarHistory((old) => old.filter((item) => item.id !== id));
 
     if (selectedHistoryId === id) {
 
@@ -1523,6 +1573,7 @@ const response = await fetch("/api/generate", {
     }
 
     setHistory([]);
+    setCalendarHistory([]);
     setHistoryHasMore(false);
     setHistoryCursor(null);
     versionsRequestRef.current += 1;
@@ -1986,23 +2037,26 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">برنامه‌ریزی</span>
             <h2>تقویم محتوایی</h2>
-            <p>نمای ماهانه هجری شمسی، مشاهده برنامه‌های هر روز و تغییر سریع زمان انتشار. این بخش برنامه‌ریزی می‌کند و انتشار خودکار انجام نمی‌دهد.</p>
+            <p>نمای ماهانه هجری شمسی با بارگذاری تمام برنامه‌های همان ماه از کل تاریخچه حساب، مشاهده برنامه‌های هر روز و تغییر سریع زمان انتشار. انتشار خودکار هنوز فعال نیست.</p>
           </div>
-          <div className="planner-total"><strong>{scheduledItems.length.toLocaleString("fa-IR")}</strong><span>محتوای زمان‌بندی‌شده</span></div>
+          <div className="planner-total"><strong>{calendarHistory.length.toLocaleString("fa-IR")}</strong><span>برنامه در ماه جاری</span></div>
         </div>
 
         <MonthlyContentCalendar
-          items={scheduledItems.map((item) => ({
+          items={calendarHistory.map((item) => ({
             id: item.id,
             name: item.product.name || item.product.businessName || "محتوای بدون نام",
-            scheduledAt: item.product._factoryMeta!.scheduledAt!,
+            scheduledAt: item.product._factoryMeta?.scheduledAt || "",
           }))}
+          loading={calendarLoading}
+          error={calendarError}
+          onMonthChange={loadCalendarMonth}
           onOpen={(id) => {
-            const item = history.find((entry) => entry.id === id);
+            const item = calendarHistory.find((entry) => entry.id === id);
             if (item) openHistory(item);
           }}
           onReschedule={(id, scheduledAt) => {
-            const item = history.find((entry) => entry.id === id);
+            const item = calendarHistory.find((entry) => entry.id === id);
             if (item) void updateHistoryMeta(item, { scheduledAt });
           }}
         />
