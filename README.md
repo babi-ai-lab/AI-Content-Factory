@@ -26,6 +26,7 @@
 - اتصال OAuth امن حساب‌های حرفه‌ای اینستاگرام Business و Creator
 - بارگذاری امن رسانه با مسیر اختصاصی هر کاربر و انتشار دستی پست تصویری JPEG و ریلز MP4 از طریق Instagram Content Publishing API
 - ثبت تاریخچه انتشار، وضعیت موفق/ناموفق و جلوگیری از اجرای دوباره درخواست‌های موفق با شناسه idempotency
+- زمان‌بندی انتشار اینستاگرام با تاریخ شمسی، صف PostgreSQL، Supabase Cron و Edge Function؛ فعال‌سازی زمان‌بندی پس از ثبت سه secret در Supabase Vault
 - رابط فارسی، راست‌چین و واکنش‌گرا
 
 ## فناوری‌ها
@@ -65,6 +66,15 @@ npm run dev
 | `INSTAGRAM_REDIRECT_URI` | آدرس بازگشت OAuth؛ باید عیناً در Meta ثبت شود |
 | `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | کلید ۳۲ بایتی Base64 برای رمزگذاری توکن اینستاگرام در پایگاه داده |
 | `INSTAGRAM_GRAPH_API_VERSION` | نسخه Graph API؛ پیش‌فرض `v26.0` |
+
+برای فعال‌سازی زمان‌بندی خودکار، در SQL Editor پروژه Supabase این سه secret را در Vault بساز (مقدار کلید رمزگذاری باید دقیقاً با مقدار Render یکسان باشد؛ برای cron یک مقدار تصادفی جدید بساز):
+```sql
+select vault.create_secret('<همان INSTAGRAM_TOKEN_ENCRYPTION_KEY در Render>', 'instagram_token_encryption_key');
+select vault.create_secret('<یک secret تصادفی طولانی برای HMAC>', 'instagram_publish_cron_secret');
+select vault.create_secret('https://ovtawuqavhzyknwdxies.supabase.co', 'supabase_project_url');
+select public.schedule_instagram_publish_cron();
+```
+این دستور را فقط یک بار اجرا کن. سپس در Render مقدار `INSTAGRAM_SCHEDULER_ENABLED=true` را تنظیم کن تا API زمان‌بندی را بپذیرد. تا پیش از این مرحله، زمان‌بندی به‌صورت ایمن غیرفعال می‌ماند. هیچ secretی را در Git commit نکن یا در پیام عمومی قرار نده.
 
 اگر کلید Gemini تنظیم نشده باشد، API محتوای نمونه (demo) برمی‌گرداند؛ این خروجی تولید واقعی مدل نیست. سهمیه Gemini به طرح ارائه‌دهنده وابسته است و در صورت اتمام سهمیه، API پاسخ 429 با پیام مشخص برمی‌گرداند.
 
@@ -114,7 +124,7 @@ GitHub Actions همین کنترل‌ها را برای Pull Request به `main`
 - تاریخچه به‌صورت صفحه‌ای و ۵۰ رکورد در هر صفحه بارگذاری می‌شود؛ آمار و تقویم بر اساس صفحات بارگذاری‌شده محاسبه می‌شوند. برای دریافت همه محتواها از پشتیبان کامل استفاده کن.
 - پشتیبان کامل محتواها تا سقف ۱۰٬۰۰۰ رکورد را دریافت می‌کند؛ snapshotهای نسخه‌های قبلی در جدول جداگانه `content_versions` ذخیره می‌شوند و در فایل پشتیبان فعلی نیستند.
 - حداکثر ۱۰ نسخه اخیر هر محتوا در رابط نسخه‌بندی نمایش داده می‌شود.
-- اتصال OAuth و انتشار دستی پست تصویری/ریلز برای حساب‌های حرفه‌ای Business و Creator فراهم شده است؛ انتشار خودکار زمان‌بندی‌شده هنوز تکمیل نشده است.
+- اتصال OAuth، انتشار دستی پست تصویری/ریلز و زیرساخت صف انتشار زمان‌بندی‌شده برای حساب‌های حرفه‌ای Business و Creator فراهم شده است. برای فعال‌شدن worker باید کلید رمزگذاری موجود در Render و یک secret زمان‌بندی در Supabase Vault ثبت و Cron فعال شود.
 - توکن اینستاگرام پیش از ذخیره با AES-256-GCM رمزگذاری می‌شود؛ کلید رمزگذاری و Meta App Secret فقط در محیط سرور قرار می‌گیرند. مسیر انتشار، ciphertext را فقط با RLS حساب مالک می‌خواند و کلید رمزگشایی هرگز به مرورگر داده نمی‌شود.
 - Supabase Auth leaked-password protection هنوز در تنظیمات پروژه غیرفعال است و باید از بخش Password Security فعال شود؛ این قابلیت در طرح Pro و بالاتر در دسترس است.
 - سرویس فعلی Render روی پلن Free قرار دارد؛ برای دسترس‌پذیری همیشگی و مقیاس تجاری باید پلن و هزینه زیرساخت بازبینی شود.

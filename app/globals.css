@@ -446,3 +446,12 @@ footer span { padding: 0 6px; }
 .instagram-job-status.published { color: #18794e; }
 .instagram-job-status.failed, .instagram-job-error { color: #b54747 !important; }
 .instagram-job-status.publishing, .instagram-job-status.queued { color: #a56a14; }
+
+
+.instagram-publish-buttons { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.instagram-publish-buttons .primary-button, .instagram-publish-buttons .secondary-button { margin-top: 0; }
+.instagram-cancel-schedule { justify-self: start; border: 1px solid #f0d9d9; background: #fff8f8; color: #a14c4c; border-radius: 7px; padding: 5px 9px; font-size: 10px; }
+@media (max-width: 640px) {
+  .instagram-publish-buttons { display: grid; grid-template-columns: 1fr; }
+  .instagram-publish-buttons button { width: 100%; }
+}
