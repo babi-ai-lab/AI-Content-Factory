@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Content Factory",
-  description: "دستیار تولید محتوای فروشگاه‌های پوشاک",
+  title: "AI Content Factory | فضای کاری بازاریابی کسب‌وکارها",
+  description: "فضای کاری فارسی برای تولید محتوای متناسب با کانال، مدیریت کمپین، تاریخچه محتوا و سنجش عملکرد بازاریابی.",
+  applicationName: "AI Content Factory",
+  openGraph: {
+    title: "AI Content Factory | فضای کاری بازاریابی کسب‌وکارها",
+    description: "از پروفایل برند و تولید محتوای کانال‌محور تا مدیریت کمپین و سنجش عملکرد.",
+    locale: "fa_IR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
