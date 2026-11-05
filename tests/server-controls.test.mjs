@@ -77,3 +77,20 @@ test("rate limit isolates users and caps in-memory entries", () => {
   assert.equal(checkRateLimit(store, "user-b", 100, 2, options), false);
   assert.equal(checkRateLimit(store, "user-b", 1200, 3, options), true);
 });
+
+
+test("does not retry or switch models for quota responses", async () => {
+  const { shouldRetryGeminiStatus, shouldFallbackGeminiStatus } = await import("../lib/server-controls.mjs");
+  assert.equal(shouldRetryGeminiStatus(429), false);
+  assert.equal(shouldFallbackGeminiStatus(429), false);
+});
+
+test("retries and falls back for temporary Gemini service errors", async () => {
+  const { shouldRetryGeminiStatus, shouldFallbackGeminiStatus } = await import("../lib/server-controls.mjs");
+  for (const status of [500, 502, 503, 504]) {
+    assert.equal(shouldRetryGeminiStatus(status), true);
+    assert.equal(shouldFallbackGeminiStatus(status), true);
+  }
+  assert.equal(shouldRetryGeminiStatus(400), false);
+  assert.equal(shouldFallbackGeminiStatus(401), false);
+});

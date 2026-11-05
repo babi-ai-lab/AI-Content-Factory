@@ -4,6 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
 import {
   checkRateLimit,
+  shouldFallbackGeminiStatus,
+  shouldRetryGeminiStatus,
   MAX_BODY_BYTES,
   readBoundedJsonBody,
   validateBusinessInput,
@@ -266,10 +268,8 @@ async function callGeminiModel(
         };
       }
 
-      const retryableStatuses = [429, 500, 502, 503, 504];
-
       if (
-        !retryableStatuses.includes(response.status) ||
+        !shouldRetryGeminiStatus(response.status) ||
         attempt === maxAttempts
       ) {
         break;
@@ -528,9 +528,7 @@ export async function POST(request: NextRequest) {
 
     const shouldFallback =
       !result.response ||
-      [429, 500, 502, 503, 504].includes(
-        result.response.status
-      );
+      shouldFallbackGeminiStatus(result.response.status);
 
     if (
       shouldFallback &&
@@ -574,12 +572,21 @@ export async function POST(request: NextRequest) {
       );
 
       if (aiResponse.status === 429) {
+        const dailyQuotaExceeded = /per day/i.test(detail);
+        const retryAfter = aiResponse.headers.get("retry-after");
+
         return NextResponse.json(
           {
-            error:
-              "سهمیه یا محدودیت درخواست Gemini برای هر دو مدل فعال شده است. بعداً دوباره تلاش کن.",
+            code: "GEMINI_QUOTA_EXCEEDED",
+            quotaWindow: dailyQuotaExceeded ? "daily" : "short_term",
+            error: dailyQuotaExceeded
+              ? "سهمیه روزانه رایگان Gemini به پایان رسیده است. پس از تمدید سهمیه دوباره تلاش کن یا محدودیت طرح Gemini را بررسی کن."
+              : "محدودیت تعداد درخواست Gemini فعال شده است. چند دقیقه بعد دوباره تلاش کن.",
           },
-          { status: 429 }
+          {
+            status: 429,
+            headers: retryAfter ? { "Retry-After": retryAfter } : undefined,
+          }
         );
       }
 
