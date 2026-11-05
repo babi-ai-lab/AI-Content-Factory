@@ -323,3 +323,51 @@ footer span { padding: 0 6px; }
 .jalali-time-label input:disabled { opacity: .5; cursor: not-allowed; }
 .jalali-clear { align-self: flex-start; border: 0; padding: 2px 0; background: transparent; color: #a14c4c; font-size: 9px; cursor: pointer; }
 @media (max-width: 480px) { .jalali-schedule { width: 100%; } .jalali-calendar { width: min(270px, calc(100vw - 54px)); } }
+
+
+/* Full month Jalali content planner */
+.monthly-calendar { display: grid; gap: 16px; }
+.monthly-calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.monthly-calendar-month { display: flex; flex-direction: column; gap: 4px; }
+.monthly-calendar-month strong { color: var(--ink); font-size: 15px; }
+.monthly-calendar-month span { color: var(--muted); font-size: 10px; }
+.monthly-calendar-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.monthly-calendar-actions button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-size: 10px; cursor: pointer; }
+.monthly-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.monthly-calendar-weekday { padding: 8px 2px; color: var(--muted); font-size: 10px; text-align: center; }
+.monthly-calendar-blank { min-height: 74px; }
+.monthly-calendar-day { min-width: 0; min-height: 74px; display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font: inherit; text-align: right; cursor: pointer; }
+.monthly-calendar-day.is-selected { border-color: var(--blue, #2d4ba0); background: #f2f5ff; box-shadow: inset 0 0 0 1px var(--blue, #2d4ba0); }
+.monthly-calendar-day.is-today .monthly-calendar-day-number { display: inline-grid; place-items: center; width: 25px; height: 25px; border-radius: 50%; background: #1c2b5e; color: #fff; }
+.monthly-calendar-day-number { font-size: 12px; font-weight: 700; }
+.monthly-calendar-day-events { display: flex; flex-direction: column; gap: 3px; }
+.monthly-calendar-day-events small { color: var(--muted); font-size: 9px; }
+.monthly-calendar-dots { display: flex; gap: 3px; }
+.monthly-calendar-dots i { width: 5px; height: 5px; border-radius: 50%; background: #2d4ba0; }
+.monthly-calendar-agenda { padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: #fcfcff; }
+.monthly-calendar-agenda-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.monthly-calendar-agenda-head strong { font-size: 11px; }
+.monthly-calendar-agenda-head span { color: var(--muted); font-size: 10px; }
+.monthly-calendar-agenda-list { display: grid; gap: 9px; }
+.monthly-calendar-agenda-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.monthly-calendar-agenda-info { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.monthly-calendar-agenda-info b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.monthly-calendar-agenda-info small { color: var(--muted); font-size: 9px; }
+.monthly-calendar-agenda-item .jalali-schedule { width: min(240px, 48%); }
+@media (max-width: 700px) {
+  .monthly-calendar-grid { gap: 4px; }
+  .monthly-calendar-day { min-height: 61px; padding: 6px; border-radius: 8px; }
+  .monthly-calendar-weekday { font-size: 9px; }
+  .monthly-calendar-day-events small { font-size: 8px; }
+  .monthly-calendar-agenda-item { align-items: stretch; flex-direction: column; }
+  .monthly-calendar-agenda-item .jalali-schedule { width: 100%; }
+}
+@media (max-width: 420px) {
+  .monthly-calendar-toolbar { align-items: flex-start; flex-direction: column; }
+  .monthly-calendar-actions { width: 100%; }
+  .monthly-calendar-actions button { flex: 1; }
+  .monthly-calendar-day { min-height: 54px; }
+  .monthly-calendar-day-number { font-size: 10px; }
+  .monthly-calendar-day-events small { display: none; }
+  .monthly-calendar-blank { min-height: 54px; }
+}
