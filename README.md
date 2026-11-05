@@ -67,7 +67,14 @@ npm run dev
 | `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | کلید ۳۲ بایتی Base64 برای رمزگذاری توکن اینستاگرام در پایگاه داده |
 | `INSTAGRAM_GRAPH_API_VERSION` | نسخه Graph API؛ پیش‌فرض `v26.0` |
 
-برای زمان‌بندی خودکار، همین کلید رمزگذاری باید با نام `instagram_token_encryption_key` در Supabase Vault موجود باشد. همچنین دو secret با نام‌های `instagram_publish_cron_secret` و `supabase_project_url` لازم است؛ سپس RPC امن `schedule_instagram_publish_cron()` را با نقش `service_role` اجرا کن. هیچ secretی را در Git commit نکن.
+برای فعال‌سازی زمان‌بندی خودکار، در SQL Editor پروژه Supabase این سه secret را در Vault بساز (مقدار کلید رمزگذاری باید دقیقاً با مقدار Render یکسان باشد؛ برای cron یک مقدار تصادفی جدید بساز):
+```sql
+select vault.create_secret('<همان INSTAGRAM_TOKEN_ENCRYPTION_KEY در Render>', 'instagram_token_encryption_key');
+select vault.create_secret('<یک secret تصادفی طولانی برای HMAC>', 'instagram_publish_cron_secret');
+select vault.create_secret('https://ovtawuqavhzyknwdxies.supabase.co', 'supabase_project_url');
+select public.schedule_instagram_publish_cron();
+```
+این دستور را فقط یک بار اجرا کن. هیچ secretی را در Git commit نکن یا در پیام عمومی قرار نده.
 
 اگر کلید Gemini تنظیم نشده باشد، API محتوای نمونه (demo) برمی‌گرداند؛ این خروجی تولید واقعی مدل نیست. سهمیه Gemini به طرح ارائه‌دهنده وابسته است و در صورت اتمام سهمیه، API پاسخ 429 با پیام مشخص برمی‌گرداند.
 
