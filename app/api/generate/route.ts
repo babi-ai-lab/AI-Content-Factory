@@ -6,6 +6,7 @@ import type { BrandProfileInput } from "@/lib/server-controls.mjs";
 export const runtime = "nodejs";
 import {
   shouldFallbackGeminiStatus,
+  shouldUseDemoGeneration,
   shouldRetryGeminiStatus,
   MAX_BODY_BYTES,
   readBoundedJsonBody,
@@ -496,6 +497,17 @@ export async function POST(request: NextRequest) {
     const businessType = p.businessType || "retail";
 
     const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey && !shouldUseDemoGeneration(process.env.NODE_ENV, apiKey)) {
+      console.error("Gemini provider is not configured in production.", { requestId });
+      return NextResponse.json(
+        {
+          code: "AI_PROVIDER_NOT_CONFIGURED",
+          error: "سرویس تولید هوش مصنوعی هنوز برای این محیط پیکربندی نشده است. لطفاً بعداً دوباره تلاش کن.",
+        },
+        { status: 503 }
+      );
+    }
 
     if (!apiKey) {
       return NextResponse.json({
