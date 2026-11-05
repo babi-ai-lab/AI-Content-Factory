@@ -1106,62 +1106,136 @@ const response = await fetch("/api/generate", {
   }
 
   async function saveEdits() {
-
     if (!content || !selectedHistoryId) {
-
       showNotice("ابتدا یک بسته ذخیره‌شده را انتخاب کن.", "error");
-
       return;
-
+    }
+    if (!user?.id) {
+      showNotice("نشست کاربری معتبر نیست. دوباره وارد حساب شو.", "error");
+      return;
     }
 
     const updatedContent = currentWorkingContent();
-
     if (!updatedContent) return;
+
+    const previousItem = history.find((item) => item.id === selectedHistoryId);
+    const hasContentChanges =
+      previousItem && JSON.stringify(previousItem.content) !== JSON.stringify(updatedContent);
+
     const { error } = await supabase
-
       .from("content_history")
-
       .update({
-
         product: { ...product },
-
         content: updatedContent,
-
         updated_at: new Date().toISOString(),
-
       })
-
       .eq("id", selectedHistoryId);
 
     if (error) {
-
       showNotice(`ذخیره تغییرات ناموفق بود: ${error.message}`, "error");
-
       return;
-
     }
 
     setContent(updatedContent);
-
     setHistory((old) =>
-
       old.map((item) =>
-
         item.id === selectedHistoryId
-
           ? { ...item, product: { ...product }, content: updatedContent }
-
           : item
-
       )
-
     );
-
     setDraftText(getTabText(updatedContent, activeTab));
 
-    showNotice("تغییرات در دیتابیس آنلاین ذخیره شد.", "success");
+    if (hasContentChanges && previousItem) {
+      const { error: versionError } = await supabase.from("content_versions").insert({
+        history_id: selectedHistoryId,
+        user_id: user.id,
+        content: previousItem.content,
+      });
 
+      if (versionError) {
+        showNotice("محتوا ذخیره شد، اما ثبت نسخه قبلی ناموفق بود: " + versionError.message, "error");
+        return;
+      }
+
+      await loadContentVersions(selectedHistoryId);
+      showNotice("تغییرات ذخیره شد و نسخه قبلی در تاریخچه نسخه‌ها نگهداری شد.", "success");
+      return;
+    }
+
+    showNotice("تغییرات در دیتابیس آنلاین ذخیره شد.", "success");
+  }
+
+  async function loadContentVersions(historyId: string) {
+    setVersionsLoading(true);
+    setVersionsError("");
+
+    const { data, error } = await supabase
+      .from("content_versions")
+      .select("id, history_id, content, created_at")
+      .eq("history_id", historyId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      setContentVersions([]);
+      setVersionsError("بارگذاری نسخه‌های قبلی انجام نشد: " + error.message);
+      setVersionsLoading(false);
+      return;
+    }
+
+    setContentVersions(
+      ((data || []) as DbContentVersionRow[]).map((row) => ({
+        id: row.id,
+        historyId: row.history_id,
+        createdAt: row.created_at,
+        content: row.content,
+      }))
+    );
+    setVersionsLoading(false);
+  }
+
+  async function restoreContentVersion(version: ContentVersion) {
+    if (!selectedHistoryId || !user?.id) return;
+
+    const currentItem = history.find((item) => item.id === selectedHistoryId);
+    if (!currentItem) return;
+
+    if (JSON.stringify(currentItem.content) === JSON.stringify(version.content)) {
+      showNotice("این نسخه هم‌اکنون نسخه فعال محتواست.", "info");
+      return;
+    }
+
+    const { error: snapshotError } = await supabase.from("content_versions").insert({
+      history_id: selectedHistoryId,
+      user_id: user.id,
+      content: currentItem.content,
+    });
+
+    if (snapshotError) {
+      showNotice("پیش از بازگردانی، ذخیره نسخه فعلی ناموفق بود: " + snapshotError.message, "error");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("content_history")
+      .update({ content: version.content, updated_at: new Date().toISOString() })
+      .eq("id", selectedHistoryId);
+
+    if (error) {
+      showNotice("بازگردانی نسخه ناموفق بود: " + error.message, "error");
+      return;
+    }
+
+    setContent(version.content);
+    setDraftText(getTabText(version.content, activeTab));
+    setHistory((old) =>
+      old.map((item) =>
+        item.id === selectedHistoryId ? { ...item, content: version.content } : item
+      )
+    );
+    await loadContentVersions(selectedHistoryId);
+    showNotice("نسخه انتخاب‌شده با موفقیت بازگردانی شد.", "success");
   }
 
   async function copyText(text: string) {
