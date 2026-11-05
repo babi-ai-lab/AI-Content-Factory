@@ -83,3 +83,15 @@ GitHub Actions همین build را برای Pull Request به `main` و push ب�
 ## نقشه راه
 
 برای مراحل، معیارهای تحویل و اصول تصمیم‌گیری به [نقشه راه محصول](docs/ROADMAP.md) مراجعه کن.
+
+
+## Automated tests
+
+Run the built-in Node.js test suite before building:
+
+```bash
+npm test
+npm run build
+```
+
+The test suite covers request body size enforcement, JSON/UTF-8 parsing, business input validation, and the in-memory rate limiter (including expiry and capacity limits).

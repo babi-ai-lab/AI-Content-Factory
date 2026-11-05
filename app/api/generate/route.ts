@@ -2,46 +2,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
-type RateLimitEntry = {
-  count: number;
-  resetAt: number;
-};
+import {
+  checkRateLimit,
+  MAX_BODY_BYTES,
+  readBoundedJsonBody,
+  validateBusinessInput,
+} from "@/lib/server-controls.mjs";
 
 const rateLimitGlobal = globalThis as typeof globalThis & {
-  __aiContentRateLimit?: Map<string, RateLimitEntry>;
+  __aiContentRateLimit?: Map<string, { count: number; resetAt: number }>;
+  __aiContentRateLimitChecks?: number;
 };
 
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-
-  const store =
-    rateLimitGlobal.__aiContentRateLimit ??
-    (rateLimitGlobal.__aiContentRateLimit = new Map());
-
-  store.forEach((value, key) => {
-  if (value.resetAt <= now) {
-    store.delete(key);
-  }
-});
-
-  const entry = store.get(userId);
-
-  if (!entry || entry.resetAt <= now) {
-    store.set(userId, {
-      count: 1,
-      resetAt: now + 10 * 60 * 1000,
-    });
-
-    return true;
-  }
-
-  if (entry.count >= 8) {
-    return false;
-  }
-
-  entry.count += 1;
-  return true;
+function isWithinRateLimit(userId: string): boolean {
+  const store = rateLimitGlobal.__aiContentRateLimit ?? (rateLimitGlobal.__aiContentRateLimit = new Map());
+  const checks = (rateLimitGlobal.__aiContentRateLimitChecks ?? 0) + 1;
+  rateLimitGlobal.__aiContentRateLimitChecks = checks;
+  return checkRateLimit(store, userId, Date.now(), checks);
 }
+
 type BusinessType =
   | "retail"
   | "services"
@@ -98,118 +77,6 @@ const businessLabels: Record<string, string> = {
 
 function getBusinessLabel(type?: string) {
   return businessLabels[type || "retail"] || businessLabels.other;
-}
-
-const MAX_BODY_BYTES = 16 * 1024;
-const allowedBusinessTypes = new Set(Object.keys(businessLabels));
-const fieldLimits: Record<string, number> = {
-  businessName: 120,
-  name: 120,
-  price: 100,
-  category: 120,
-  fabric: 100,
-  colors: 120,
-  features: 1800,
-  audience: 160,
-  goal: 100,
-  tone: 100,
-  serviceArea: 160,
-  offer: 180,
-  differentiators: 220,
-  additionalInfo: 1000,
-};
-
-async function readJsonBody(
-  request: NextRequest
-): Promise<{ value: unknown } | { error: "too_large" | "invalid" }> {
-  const reader = request.body?.getReader();
-  if (!reader) return { error: "invalid" };
-
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
-
-      totalBytes += value.byteLength;
-      if (totalBytes > MAX_BODY_BYTES) {
-        await reader.cancel();
-        return { error: "too_large" };
-      }
-
-      chunks.push(value);
-    }
-  } catch {
-    return { error: "invalid" };
-  }
-
-  const body = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  try {
-    return { value: JSON.parse(new TextDecoder().decode(body)) };
-  } catch {
-    return { error: "invalid" };
-  }
-}
-
-function validateBusinessInput(value: unknown): BusinessInput | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-
-  const input = value as Record<string, unknown>;
-  if (
-    typeof input.name !== "string" ||
-    typeof input.features !== "string" ||
-    !input.name.trim() ||
-    !input.features.trim()
-  ) {
-    return null;
-  }
-
-  const businessType =
-    typeof input.businessType === "string" ? input.businessType : "retail";
-  if (!allowedBusinessTypes.has(businessType)) return null;
-
-  const sanitized: Record<string, string> = {};
-  for (const [field, maxLength] of Object.entries(fieldLimits)) {
-    const fieldValue = input[field];
-    if (fieldValue === undefined || fieldValue === null) {
-      sanitized[field] = "";
-      continue;
-    }
-    if (typeof fieldValue !== "string") return null;
-
-    const trimmed = fieldValue.trim();
-    if (trimmed.length > maxLength) return null;
-    sanitized[field] = trimmed;
-  }
-
-  if (sanitized.name.length < 2 || sanitized.features.length < 3) return null;
-
-  return {
-    businessType: businessType as BusinessType,
-    businessName: sanitized.businessName,
-    name: sanitized.name,
-    price: sanitized.price,
-    category: sanitized.category,
-    fabric: sanitized.fabric,
-    colors: sanitized.colors,
-    features: sanitized.features,
-    audience: sanitized.audience,
-    goal: sanitized.goal,
-    tone: sanitized.tone,
-    serviceArea: sanitized.serviceArea,
-    offer: sanitized.offer,
-    differentiators: sanitized.differentiators,
-    additionalInfo: sanitized.additionalInfo,
-  };
 }
 
 function demoContent(p: BusinessInput): GeneratedContent {
@@ -556,7 +423,7 @@ export async function POST(request: NextRequest) {
     }
 
     // محدودیت تعداد درخواست‌ها
-    if (!checkRateLimit(authenticatedUser.id)) {
+    if (!isWithinRateLimit(authenticatedUser.id)) {
       return NextResponse.json(
         {
           error:
@@ -578,7 +445,7 @@ export async function POST(request: NextRequest) {
     }
 
     // محدودسازی واقعی اندازه بدنه؛ حتی اگر Content-Length ارسال نشده باشد
-    const parsedBody = await readJsonBody(request);
+    const parsedBody = await readBoundedJsonBody(request.body, MAX_BODY_BYTES);
     if ("error" in parsedBody) {
       return NextResponse.json(
         {
