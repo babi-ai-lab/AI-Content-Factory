@@ -2273,7 +2273,32 @@ const response = await fetch("/api/generate", {
 
       </section>
 
-      <details className="brand-profile-section">
+      {historyReady && history.length === 0 && (
+        <section className="quick-start-panel" aria-labelledby="quick-start-title">
+          <div className="quick-start-intro">
+            <span className="step">شروع سریع</span>
+            <h2 id="quick-start-title">در سه گام، اولین جریان بازاریابی‌ات را بساز</h2>
+            <p>لازم نیست همه تنظیمات را از ابتدا کامل کنی؛ با اطلاعات واقعی کسب‌وکارت شروع کن و بعد خروجی‌ها را به کمپین وصل کن.</p>
+          </div>
+          <div className="quick-start-steps">
+            <button type="button" onClick={() => {
+              const section = document.getElementById("brand-profile") as HTMLDetailsElement | null;
+              if (section) section.open = true;
+              section?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}>
+              <b>۱</b><span><strong>هویت برند را ثبت کن</strong><small>نام، مخاطب، لحن و دعوت به اقدام</small></span><span>←</span>
+            </button>
+            <button type="button" onClick={() => document.getElementById("content-generator")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+              <b>۲</b><span><strong>محتوای کانال‌محور بساز</strong><small>اطلاعیه Gemini را تأیید کن و خروجی را بررسی کن</small></span><span>←</span>
+            </button>
+            <button type="button" onClick={() => document.getElementById("campaign-manager")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+              <b>۳</b><span><strong>کمپین را مدیریت کن</strong><small>هدف، کانال و محتواهای مرتبط را کنار هم نگه دار</small></span><span>←</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      <details id="brand-profile" className="brand-profile-section">
         <summary className="brand-profile-summary">
           <div>
             <span className="step">پروفایل برند</span>
