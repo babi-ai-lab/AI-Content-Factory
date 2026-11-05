@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "ساختار درخواست معتبر نیست." }, { status: 400 });
   }
   const validation = validateInstagramPublishInput(body);
-  if (!validation.valid) return NextResponse.json({ error: validation.error }, { status: 400 });
+  if (!validation.valid || !validation.value) return NextResponse.json({ error: validation.error || "درخواست انتشار معتبر نیست." }, { status: 400 });
   const input = validation.value;
   if (!validateInstagramMediaUrl(input.mediaUrl, supabaseUrl, user.id)) {
     return NextResponse.json({ error: "فقط فایل‌های بارگذاری‌شده در فضای رسانه همین حساب قابل انتشار هستند." }, { status: 400 });
