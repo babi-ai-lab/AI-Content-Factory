@@ -50,3 +50,5 @@ export function shouldRetryGeminiStatus(status: number): boolean;
 export function shouldFallbackGeminiStatus(status: number): boolean;
 
 export function shouldUseDemoGeneration(nodeEnv: string | undefined, apiKey: string | undefined): boolean;
+
+export function hasAcceptedAiDataProcessingNotice(userMetadata: unknown): boolean;

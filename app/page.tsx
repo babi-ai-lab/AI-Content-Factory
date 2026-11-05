@@ -476,6 +476,8 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [authMessage, setAuthMessage] = useState("");
+  const [dataProcessingNoticeAccepted, setDataProcessingNoticeAccepted] = useState(false);
+  const [dataNoticeSaving, setDataNoticeSaving] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -705,6 +707,7 @@ export default function Home() {
 
       );
       setBrandProfile(normalizeBrandProfile(data.session?.user.user_metadata?.aiContentFactoryBrandProfile));
+      setDataProcessingNoticeAccepted(Boolean(data.session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
 
       setAuthReady(true);
 
@@ -730,6 +733,7 @@ export default function Home() {
       });
 
       setBrandProfile(normalizeBrandProfile(session?.user.user_metadata?.aiContentFactoryBrandProfile));
+      setDataProcessingNoticeAccepted(Boolean(session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
 
       if (event === "PASSWORD_RECOVERY") {
         setIsPasswordRecovery(true);
@@ -1052,6 +1056,26 @@ export default function Home() {
 
   }
 
+  async function acceptDataProcessingNotice() {
+    setDataNoticeSaving(true);
+    try {
+      const acceptedAt = new Date().toISOString();
+      const { error } = await supabase.auth.updateUser({
+        data: { aiContentFactoryDataProcessingNoticeAcceptedAt: acceptedAt },
+      });
+      if (error) throw error;
+      setDataProcessingNoticeAccepted(true);
+      showNotice("اطلاعیه پردازش داده تأیید شد. اکنون می‌توانی تولید محتوا را آغاز کنی.", "success");
+    } catch (error) {
+      showNotice(
+        error instanceof Error ? `ثبت تأییدیه ناموفق بود: ${error.message}` : "ثبت تأییدیه ناموفق بود.",
+        "error"
+      );
+    } finally {
+      setDataNoticeSaving(false);
+    }
+  }
+
   async function handleForgotPassword() {
     if (!authEmail.trim()) {
       setAuthMessage("ابتدا ایمیل حساب کاربری را وارد کن.");
@@ -1220,6 +1244,11 @@ export default function Home() {
   }
 
   async function generate() {
+
+    if (!dataProcessingNoticeAccepted) {
+      showNotice("برای ادامه، ابتدا اطلاعیه پردازش داده‌های هوش مصنوعی را تأیید کن.", "error");
+      return;
+    }
 
     if (!filled) {
 
@@ -2381,12 +2410,28 @@ const response = await fetch("/api/generate", {
               <textarea rows={3} value={product.additionalInfo} onChange={(e) => update("additionalInfo", e.target.value)} placeholder="هر نکته‌ای که به تولید محتوای دقیق‌تر کمک می‌کند..." maxLength={1000} />
             </label>
           </div>
-          <button className="generate" onClick={generate} disabled={loading || !filled}>
+          <button className="generate" onClick={generate} disabled={loading || !filled || !dataProcessingNoticeAccepted}>
 
             {loading ? <><span className="spinner" /> در حال تولید محتوا...</> : <>✦ ساخت بسته محتوایی <span>←</span></>}
 
           </button>
 
+          <div className="provider-disclosure" role="note">
+            <strong>شفافیت پردازش داده‌ها</strong>
+            <p>
+              اطلاعات کسب‌وکار، مخاطب و پروفایل برند برای تولید به Google Gemini ارسال می‌شود.
+              در تنظیم فعلی از Free Tier استفاده می‌شود و طبق شرایط Google، داده‌های ارسالی ممکن است برای بهبود محصولات استفاده شوند.
+              اطلاعات محرمانه مشتریان، رمزها یا داده‌های شخصی حساس را وارد نکن.
+            </p>
+            <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer">مشاهده شرایط پردازش داده Gemini</a>
+            {dataProcessingNoticeAccepted ? (
+              <span className="provider-disclosure-accepted">اطلاعیه را تأیید کرده‌ای.</span>
+            ) : (
+              <button type="button" className="secondary-button" disabled={dataNoticeSaving} onClick={() => void acceptDataProcessingNotice()}>
+                {dataNoticeSaving ? "در حال ثبت..." : "مطالعه کردم و تأیید می‌کنم"}
+              </button>
+            )}
+          </div>
           <p className="privacy-note">نام موضوع و ویژگی‌های واقعی الزامی هستند. تاریخچه در حساب کاربری تو ذخیره می‌شود.</p>
 
         </section>

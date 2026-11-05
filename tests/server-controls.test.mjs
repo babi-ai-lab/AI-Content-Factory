@@ -6,6 +6,7 @@ import {
   validateBusinessInput,
   checkRateLimit,
   shouldUseDemoGeneration,
+  hasAcceptedAiDataProcessingNotice,
 } from "../lib/server-controls.mjs";
 
 function streamOf(text) {
@@ -138,4 +139,15 @@ test("allows demo generation only outside production when no provider key exists
   assert.equal(shouldUseDemoGeneration("test", ""), true);
   assert.equal(shouldUseDemoGeneration("production", ""), false);
   assert.equal(shouldUseDemoGeneration("production", "configured-key"), false);
+});
+
+
+test("requires a valid timestamped acknowledgement for external AI data processing", () => {
+  assert.equal(hasAcceptedAiDataProcessingNotice(null), false);
+  assert.equal(hasAcceptedAiDataProcessingNotice({}), false);
+  assert.equal(hasAcceptedAiDataProcessingNotice({ aiContentFactoryDataProcessingNoticeAcceptedAt: "yes" }), false);
+  assert.equal(
+    hasAcceptedAiDataProcessingNotice({ aiContentFactoryDataProcessingNoticeAcceptedAt: "2026-11-06T00:00:00.000Z" }),
+    true
+  );
 });
