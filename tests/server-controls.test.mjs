@@ -127,6 +127,7 @@ test("accepts supported content templates and defaults to balanced", () => {
   assert.equal(value.contentTemplate, "educational");
   const defaultValue = validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر" });
   assert.equal(defaultValue.contentTemplate, "balanced");
+  assert.equal(defaultValue.channel, "general");
 });
 
 test("rejects unsupported content template identifiers", () => {
@@ -150,4 +151,11 @@ test("requires a valid timestamped acknowledgement for external AI data processi
     hasAcceptedAiDataProcessingNotice({ aiContentFactoryDataProcessingNoticeAcceptedAt: "2026-11-06T00:00:00.000Z" }),
     true
   );
+});
+
+
+test("accepts supported content channels and rejects unknown channels", () => {
+  const value = validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", channel: "telegram" });
+  assert.equal(value.channel, "telegram");
+  assert.equal(validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", channel: "unknown-channel" }), null);
 });
