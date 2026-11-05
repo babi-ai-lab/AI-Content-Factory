@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { supabase } from "@/lib/supabase";
+import { analyzeContent } from "@/lib/content-quality.mjs";
 
 type BusinessType =
   | "retail"
@@ -832,6 +833,12 @@ export default function Home() {
     const folders = new Set(entries.map((item) => item.product._factoryMeta?.folder || "عمومی")).size;
     return { entries, trend, maxDaily, byBusiness, formats, totalPieces, favorites, folders };
   }, [history, analyticsPeriod]);
+
+  const qualityAnalysis = useMemo(() => {
+    if (!content) return null;
+    const editedContent = updateTabContent(content, activeTab, draftText);
+    return analyzeContent(editedContent, brandProfile);
+  }, [content, activeTab, draftText, brandProfile]);
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
 
@@ -1815,6 +1822,32 @@ const response = await fetch("/api/generate", {
                 {selectedHistoryId ? "این بسته در حساب کاربری ذخیره شده است." : "این محتوا هنوز در تاریخچه ثبت نشده است."}
 
               </div>
+
+              {qualityAnalysis && (
+                <details className="quality-panel">
+                  <summary className="quality-summary">
+                    <div>
+                      <b>بررسی کیفیت ساختاری محتوا</b>
+                      <small>کپشن، CTA، استوری‌ها، ریلز و هماهنگی با برند</small>
+                    </div>
+                    <span className={qualityAnalysis.score >= 80 ? "quality-score good" : qualityAnalysis.score >= 60 ? "quality-score medium" : "quality-score low"}>
+                      {qualityAnalysis.score.toLocaleString("fa-IR")} از ۱۰۰
+                    </span>
+                  </summary>
+                  <div className="quality-checks">
+                    {qualityAnalysis.checks.map((check) => (
+                      <div className="quality-check" key={check.id}>
+                        <span className={check.passed ? "quality-check-icon passed" : "quality-check-icon failed"}>{check.passed ? "✓" : "!"}</span>
+                        <div>
+                          <b>{check.label}</b>
+                          <small>{check.detail}</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="quality-disclaimer">این امتیاز یک بررسی خودکار و ساختاری است؛ صحت ادعاها و تناسب نهایی محتوا همچنان باید انسانی بازبینی شود.</p>
+                </details>
+              )}
 
               <nav className="tabs" aria-label="بخش‌های محتوا">
 
