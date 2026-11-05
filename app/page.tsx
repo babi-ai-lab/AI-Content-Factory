@@ -1543,7 +1543,7 @@ const response = await fetch("/api/generate", {
       }
 
       downloadFile(
-        "AI-Content-Factory-Full-History.json",
+        "AI-Content-Factory-Content-History.json",
         JSON.stringify(allItems, null, 2),
         "application/json"
       );
@@ -1551,7 +1551,7 @@ const response = await fetch("/api/generate", {
       showNotice(
         allItems.length >= maxRows
           ? "پشتیبان ۱۰٬۰۰۰ مورد اخیر دانلود شد؛ برای تاریخچه بزرگ‌تر با پشتیبانی تماس بگیر."
-          : `پشتیبان کامل ${allItems.length.toLocaleString("fa-IR")} محتوا دانلود شد.`,
+          : `پشتیبان ${allItems.length.toLocaleString("fa-IR")} بسته محتوا دانلود شد؛ نسخه‌های قبلی ویرایش در جدول نسخه‌ها نگهداری می‌شوند.`,
         "success"
       );
     } catch (error) {
@@ -2317,7 +2317,7 @@ const response = await fetch("/api/generate", {
             <span className="history-count">{history.length.toLocaleString("fa-IR")} مورد بارگذاری‌شده</span>
             <button className="history-backup" onClick={exportSelectedHistory} disabled={!selectedBulkIds.length}>خروجی انتخاب‌شده ({selectedBulkIds.length})</button>
 
-            <button className="history-backup" onClick={exportHistory} disabled={!history.length || historyBackupLoading}>{historyBackupLoading ? "در حال تهیه پشتیبان..." : "پشتیبان کامل تاریخچه"}</button>
+            <button className="history-backup" onClick={exportHistory} disabled={!history.length || historyBackupLoading}>{historyBackupLoading ? "در حال تهیه پشتیبان..." : "پشتیبان همه محتواها"}</button>
 
             <button className="clear-history" onClick={clearHistory} disabled={!history.length}>پاک کردن همه</button>
 
