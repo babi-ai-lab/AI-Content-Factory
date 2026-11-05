@@ -79,6 +79,9 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   const loadCampaigns = useCallback(async () => {
     setLoading(true);
     setError("");
+    setCampaigns([]);
+    setContentLinks([]);
+    setContentOptions([]);
     const [campaignResult, linkResult, contentResult] = await Promise.all([
       supabase
         .from("marketing_campaigns")
