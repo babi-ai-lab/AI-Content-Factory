@@ -22,6 +22,12 @@ type GeneratedContent = {
   ad: string;
 };
 
+type ModelResult = {
+  response: Response | null;
+  networkError?: unknown;
+  model: string;
+};
+
 function demoContent(p: Product): GeneratedContent {
   const price = p.price?.trim()
     ? `قیمت: ${p.price.trim()}`
@@ -100,7 +106,8 @@ function extractJson(text: string): GeneratedContent {
   }
 
   const stories = parsed.stories.filter(
-    (item: unknown): item is string => typeof item === "string"
+    (item: unknown): item is string =>
+      typeof item === "string"
   );
 
   if (stories.length !== 5) {
@@ -119,6 +126,80 @@ function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Send request to one Gemini model.
+// Retry temporary errors before returning the result.
+async function callGeminiModel(
+  model: string,
+  apiKey: string,
+  requestBody: object
+): Promise<ModelResult> {
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+  const maxAttempts = 2;
+
+  let lastResponse: Response | null = null;
+  let lastNetworkError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify(requestBody),
+        signal: AbortSignal.timeout(45000)
+      });
+
+      lastResponse = response;
+
+      if (response.ok) {
+        return {
+          response,
+          model
+        };
+      }
+
+      const retryableStatuses = [
+        429, 500, 502, 503, 504
+      ];
+
+      if (
+        !retryableStatuses.includes(response.status) ||
+        attempt === maxAttempts
+      ) {
+        break;
+      }
+
+      console.warn(
+        `${model} returned ${response.status}. Retry ${attempt}/${maxAttempts}.`
+      );
+
+      await wait(1500 * attempt);
+
+    } catch (error) {
+      lastNetworkError = error;
+
+      console.error(
+        `${model} connection attempt ${attempt} failed:`,
+        error
+      );
+
+      if (attempt < maxAttempts) {
+        await wait(1500 * attempt);
+      }
+    }
+  }
+
+  return {
+    response: lastResponse,
+    networkError: lastNetworkError,
+    model
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const p = (await request.json()) as Product;
@@ -131,14 +212,16 @@ export async function POST(request: NextRequest) {
       !p.features.trim()
     ) {
       return NextResponse.json(
-        { error: "نام محصول و ویژگی‌های آن الزامی است." },
+        {
+          error: "نام محصول و ویژگی‌های آن الزامی است."
+        },
         { status: 400 }
       );
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Demo mode when no API key is configured.
+    // Demo mode if API key is missing.
     if (!apiKey) {
       return NextResponse.json({
         mode: "demo",
@@ -146,7 +229,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+    // Primary and fallback models.
+    const primaryModel =
+      process.env.GEMINI_MODEL || "gemini-3.8-flash";
+
+    const fallbackModel =
+      process.env.GEMINI_FALLBACK_MODEL ||
+      "gemini-3.5-flash-lite";
 
     const systemPrompt = `تو دستیار حرفه‌ای تولید محتوای فارسی برای فروشگاه پوشاک و اکسسوری هستی.
 
@@ -165,9 +254,6 @@ ad: متن تبلیغاتی
 در صورت نبود قیمت یا رنگ، درباره آن‌ها ادعای مشخص نکن.
 محتوا باید به زبان فارسی باشد.`;
 
-    const endpoint =
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
-
     const requestBody = {
       systemInstruction: {
         parts: [{ text: systemPrompt }]
@@ -175,7 +261,11 @@ ad: متن تبلیغاتی
       contents: [
         {
           role: "user",
-          parts: [{ text: JSON.stringify(p) }]
+          parts: [
+            {
+              text: JSON.stringify(p)
+            }
+          ]
         }
       ],
       generationConfig: {
@@ -184,66 +274,61 @@ ad: متن تبلیغاتی
       }
     };
 
-    let aiResponse: Response | null = null;
+    // First attempt: primary model.
+    console.log(`Trying primary Gemini model: ${primaryModel}`);
 
-    const maxAttempts = 3;
+    let result = await callGeminiModel(
+      primaryModel,
+      apiKey,
+      requestBody
+    );
 
-    // Retry temporary server errors with exponential backoff.
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        aiResponse = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": apiKey
-          },
-          body: JSON.stringify(requestBody),
-          signal: AbortSignal.timeout(45000)
-        });
+    // Fallback only when the primary model has a temporary
+    // availability, rate-limit, or connection problem.
+    const shouldFallback =
+      !result.response ||
+      [429, 500, 502, 503, 504].includes(
+        result.response.status
+      );
 
-        const retryableStatuses = [500, 502, 503, 504];
+    if (
+      shouldFallback &&
+      fallbackModel !== primaryModel
+    ) {
+      console.warn(
+        `Primary model ${primaryModel} unavailable. Switching to ${fallbackModel}.`
+      );
 
-        if (
-          aiResponse.ok ||
-          !retryableStatuses.includes(aiResponse.status) ||
-          attempt === maxAttempts
-        ) {
-          break;
-        }
-
-        console.warn(
-          `Gemini returned ${aiResponse.status}. Retry ${attempt}/${maxAttempts}.`
-        );
-
-        await wait(1500 * Math.pow(2, attempt - 1));
-
-      } catch (error) {
-        console.error(
-          `Gemini connection attempt ${attempt} failed:`,
-          error
-        );
-
-        if (attempt === maxAttempts) {
-          throw error;
-        }
-
-        await wait(1500 * Math.pow(2, attempt - 1));
-      }
+      result = await callGeminiModel(
+        fallbackModel,
+        apiKey,
+        requestBody
+      );
     }
 
-    if (!aiResponse) {
+    // Handle connection failures.
+    if (!result.response) {
+      console.error(
+        "Both Gemini model attempts failed:",
+        result.networkError
+      );
+
       return NextResponse.json(
-        { error: "ارتباط با Gemini برقرار نشد. دوباره تلاش کن." },
+        {
+          error: "ارتباط با مدل‌های Gemini برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن."
+        },
         { status: 502 }
       );
     }
 
-    // Handle Gemini API errors.
+    const aiResponse = result.response;
+
+    // Handle API errors.
     if (!aiResponse.ok) {
       const detail = await aiResponse.text();
 
       console.error(
-        "Gemini API error:",
+        `Gemini API error (${result.model}):`,
         aiResponse.status,
         detail
       );
@@ -251,7 +336,7 @@ ad: متن تبلیغاتی
       if (aiResponse.status === 429) {
         return NextResponse.json(
           {
-            error: "سهمیه رایگان Gemini تمام شده یا تعداد درخواست‌ها بیش از حد مجاز است. بعداً دوباره تلاش کن."
+            error: "سهمیه یا محدودیت درخواست Gemini برای هر دو مدل فعال شده است. بعداً دوباره تلاش کن."
           },
           { status: 429 }
         );
@@ -260,7 +345,7 @@ ad: متن تبلیغاتی
       if (aiResponse.status === 503) {
         return NextResponse.json(
           {
-            error: "سرور Gemini پس از سه بار تلاش هنوز شلوغ است. چند دقیقه دیگر دوباره امتحان کن."
+            error: "هر دو مدل Gemini در حال حاضر با مشکل ظرفیت مواجه هستند. چند دقیقه دیگر دوباره تلاش کن."
           },
           { status: 503 }
         );
@@ -269,13 +354,16 @@ ad: متن تبلیغاتی
       if ([500, 502, 504].includes(aiResponse.status)) {
         return NextResponse.json(
           {
-            error: "سرور Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن."
+            error: "سرویس Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن."
           },
           { status: 502 }
         );
       }
 
-      if (aiResponse.status === 400 || aiResponse.status === 404) {
+      if (
+        aiResponse.status === 400 ||
+        aiResponse.status === 404
+      ) {
         return NextResponse.json(
           {
             error: "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن."
@@ -305,9 +393,9 @@ ad: متن تبلیغاتی
     }
 
     // Read Gemini response.
-    const result = await aiResponse.json();
+    const resultData = await aiResponse.json();
 
-    const raw = result.candidates?.[0]?.content?.parts
+    const raw = resultData.candidates?.[0]?.content?.parts
       ?.map((part: { text?: string }) => part.text || "")
       .join("")
       .trim();
@@ -315,11 +403,13 @@ ad: متن تبلیغاتی
     if (!raw) {
       console.error(
         "Gemini returned an empty response:",
-        JSON.stringify(result)
+        JSON.stringify(resultData)
       );
 
       return NextResponse.json(
-        { error: "پاسخ مدل خالی بود. دوباره تلاش کن." },
+        {
+          error: "پاسخ مدل خالی بود. دوباره تلاش کن."
+        },
         { status: 502 }
       );
     }
@@ -327,8 +417,13 @@ ad: متن تبلیغاتی
     // Validate generated content.
     const content = extractJson(raw);
 
+    console.log(
+      `Content successfully generated using ${result.model}`
+    );
+
     return NextResponse.json({
       mode: "ai",
+      model: result.model,
       content
     });
 
@@ -343,3 +438,4 @@ ad: متن تبلیغاتی
     );
   }
 }
+
