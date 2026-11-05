@@ -476,6 +476,9 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [authMessage, setAuthMessage] = useState("");
+  const [showAccountDeletion, setShowAccountDeletion] = useState(false);
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
+  const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
   const [dataProcessingNoticeAccepted, setDataProcessingNoticeAccepted] = useState(false);
   const [dataNoticeSaving, setDataNoticeSaving] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -1149,6 +1152,43 @@ export default function Home() {
       );
     } finally {
       setBrandProfileSaving(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!deleteAccountPassword) {
+      showNotice("برای حذف حساب، رمز عبور فعلی را وارد کن.", "error");
+      return;
+    }
+    if (!window.confirm("حذف حساب کاربری و تمام محتواها، کمپین‌ها و داده‌های مرتبط دائمی است و قابل بازگشت نیست. ادامه می‌دهی؟")) {
+      return;
+    }
+
+    setDeleteAccountLoading(true);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error("نشست معتبر نیست. دوباره وارد حساب شو.");
+      }
+
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        body: { password: deleteAccountPassword },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (error || data?.deleted !== true) {
+        throw new Error("حذف حساب انجام نشد. رمز عبور فعلی و وضعیت سرویس را بررسی کن.");
+      }
+
+      await supabase.auth.signOut({ scope: "local" });
+      setDeleteAccountPassword("");
+      setShowAccountDeletion(false);
+      setAuthMode("login");
+      setAuthMessage("حساب کاربری و داده‌های مرتبط با موفقیت حذف شدند.");
+      setUser(null);
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : "حذف حساب انجام نشد.", "error");
+    } finally {
+      setDeleteAccountLoading(false);
     }
   }
 
@@ -2070,12 +2110,42 @@ const response = await fetch("/api/generate", {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 
           <span className="top-tag" dir="ltr">{user.email}</span>
-
+          <button className="campaign-delete" onClick={() => setShowAccountDeletion((value) => !value)}>
+            {showAccountDeletion ? "بستن" : "حذف حساب"}
+          </button>
           <button className="history-backup" onClick={logout}>خروج</button>
 
         </div>
 
       </header>
+
+      {showAccountDeletion && (
+        <section className="account-delete-panel" role="dialog" aria-modal="false" aria-labelledby="delete-account-title">
+          <div>
+            <strong id="delete-account-title">حذف دائمی حساب کاربری</strong>
+            <p>با این کار حساب، تاریخچه محتوا، نسخه‌ها، کمپین‌ها و آمار مصرف مرتبط حذف می‌شوند. این عملیات قابل بازگشت نیست.</p>
+          </div>
+          <label>
+            برای تأیید، رمز عبور فعلی را وارد کن
+            <input
+              type="password"
+              value={deleteAccountPassword}
+              onChange={(event) => setDeleteAccountPassword(event.target.value)}
+              autoComplete="current-password"
+              minLength={6}
+              maxLength={256}
+            />
+          </label>
+          <div className="account-delete-actions">
+            <button type="button" className="campaign-delete" disabled={deleteAccountLoading} onClick={() => void deleteAccount()}>
+              {deleteAccountLoading ? "در حال حذف..." : "حذف دائمی حساب و داده‌ها"}
+            </button>
+            <button type="button" className="secondary-button" disabled={deleteAccountLoading} onClick={() => { setShowAccountDeletion(false); setDeleteAccountPassword(""); }}>
+              انصراف
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="hero">
 
