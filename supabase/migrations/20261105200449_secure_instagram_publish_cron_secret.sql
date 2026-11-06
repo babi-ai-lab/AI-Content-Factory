@@ -1,0 +1,6 @@
+-- This version was applied remotely as a follow-up hardening step.
+-- The final scheduler definition, including Vault-backed HMAC signing and the
+-- restricted worker-secret accessor, is already included in the immediately
+-- preceding 20261105200354_add_instagram_scheduled_publishing migration so a
+-- fresh database receives the same secure final state in one pass.
+-- This marker preserves the exact remote migration history version.
