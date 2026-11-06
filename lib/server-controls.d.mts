@@ -9,6 +9,10 @@ export interface BrandProfileInput {
   preferredTerms: string;
   avoidTerms: string;
   cta: string;
+  verifiedFacts: string;
+  proofPoints: string;
+  faq: string;
+  prohibitedClaims: string;
 }
 
 export interface BusinessInput {

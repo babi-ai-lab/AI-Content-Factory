@@ -106,11 +106,19 @@ test("normalizes an optional brand profile and preserves its fields", () => {
       brandName: "  آکادمی زبان  ",
       voice: "  حرفه‌ای  ",
       cta: "ثبت‌نام",
+      verifiedFacts: "  ۷ سال سابقه آموزش  ",
+      proofPoints: "نمونه کارهای تأییدشده",
+      faq: "پرسش: زمان کلاس؟ پاسخ: طبق برنامه.",
+      prohibitedClaims: "تضمین نمره",
     },
   });
   assert.equal(value.brandProfile.brandName, "آکادمی زبان");
   assert.equal(value.brandProfile.voice, "حرفه‌ای");
   assert.equal(value.brandProfile.cta, "ثبت‌نام");
+  assert.equal(value.brandProfile.verifiedFacts, "۷ سال سابقه آموزش");
+  assert.equal(value.brandProfile.proofPoints, "نمونه کارهای تأییدشده");
+  assert.equal(value.brandProfile.faq, "پرسش: زمان کلاس؟ پاسخ: طبق برنامه.");
+  assert.equal(value.brandProfile.prohibitedClaims, "تضمین نمره");
   assert.equal(value.brandProfile.tagline, "");
 });
 
@@ -119,6 +127,7 @@ test("defaults missing brand profile and rejects invalid profile fields", () => 
   assert.equal(value.brandProfile.brandName, "");
   assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: "invalid" }), null);
   assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: { tagline: "x".repeat(161) } }), null);
+  assert.equal(validateBusinessInput({ name: "دوره زبان", features: "آموزش تخصصی", brandProfile: { verifiedFacts: "x".repeat(2001) } }), null);
 });
 
 
