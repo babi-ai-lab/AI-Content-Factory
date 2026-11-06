@@ -20,6 +20,26 @@ test("build generates raster launcher and Play Store icons", async () => {
   assert.match(generator, /app-icon-maskable-512\.png/);
   assert.match(generator, /play-store-icon\.png/);
 });
+test("Android TWA configuration uses the owner-confirmed permanent application ID", async () => {
+  const config = JSON.parse(await readFile(new URL("../android/twa-manifest.json", import.meta.url), "utf8"));
+  assert.equal(config.packageId, "ir.eltbabak.contentfactory");
+  assert.equal(config.host, "app.eltbabak.ir");
+  assert.equal(config.startUrl, "/?source=android");
+  assert.equal(config.webManifestUrl, "https://app.eltbabak.ir/manifest.webmanifest");
+  assert.equal(config.iconUrl, "https://app.eltbabak.ir/icons/app-icon-512.png");
+  assert.equal(config.maskableIconUrl, "https://app.eltbabak.ir/icons/app-icon-maskable-512.png");
+  assert.equal(config.appVersionCode, 1);
+  assert.equal(config.signingKey.path, "./release-keystore.jks");
+});
+test("Android workflow validates PWA and builds unsigned artifacts without secrets", async () => {
+  const workflow = await readFile(new URL("../.github/workflows/android-twa.yml", import.meta.url), "utf8");
+  assert.match(workflow, /bubblewrap validate --url=https:\/\/app\.eltbabak\.ir/);
+  assert.match(workflow, /platforms;android-36/);
+  assert.match(workflow, /bubblewrap update --skipVersionUpgrade/);
+  assert.match(workflow, /bubblewrap build --skipSigning/);
+  assert.match(workflow, /actions\/upload-artifact@v4/);
+  assert.doesNotMatch(workflow, /BUBBLEWRAP_KEYSTORE_PASSWORD|BUBBLEWRAP_KEY_PASSWORD/);
+});
 test("service worker never caches private pages, API responses, or media", async () => {
   const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /request\.mode !== "navigate"/);
