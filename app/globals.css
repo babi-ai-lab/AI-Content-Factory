@@ -312,6 +312,7 @@ footer span { padding: 0 6px; }
 .version-row b { font-size: 10px; }
 .version-row small { color: var(--muted); font-size: 9px; }
 .version-row p { margin: 0; color: #68736c; font-size: 9px; line-height: 1.7; overflow-wrap: anywhere; }
+.version-row .version-note { color: #4f6b55; font-size: 9px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .version-row button { flex: none; padding: 7px 10px; }
 @media (max-width: 480px) { .versions-toolbar { align-items: flex-start; flex-direction: column; } .version-row { align-items: flex-start; flex-direction: column; } .version-row-actions { width: 100%; } .version-row-actions button { flex: 1; } .version-compare-grid { grid-template-columns: 1fr; } .version-compare-heading { align-items: flex-start; flex-direction: column; } }
 
