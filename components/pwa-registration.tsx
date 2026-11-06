@@ -21,6 +21,7 @@ export default function PwaRegistration() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
+    let loadHandler: (() => void) | undefined;
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       const register = () => {
         navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
@@ -28,13 +29,16 @@ export default function PwaRegistration() {
         });
       };
       if (document.readyState === "complete") register();
-      else window.addEventListener("load", register, { once: true });
+      else {
+        loadHandler = register;
+        window.addEventListener("load", register, { once: true });
+      }
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
-      window.removeEventListener("load", () => {});
+      if (loadHandler) window.removeEventListener("load", loadHandler);
     };
   }, []);
 
