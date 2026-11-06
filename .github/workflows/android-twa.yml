@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - "android/**"
+      - "scripts/validate-android-pwa.mjs"
       - ".github/workflows/android-twa.yml"
 
 permissions:
@@ -56,8 +57,8 @@ jobs:
           cat "$HOME/.bubblewrap/config.json"
           bubblewrap doctor
 
-      - name: Validate production PWA for Trusted Web Activity
-        run: bubblewrap validate --url=https://app.eltbabak.ir
+      - name: Validate production PWA resources and install contract
+        run: node scripts/validate-android-pwa.mjs
 
       - name: Generate Android project from the reviewed TWA manifest
         working-directory: android
@@ -65,7 +66,7 @@ jobs:
 
       - name: Build unsigned Android App Bundle for internal testing
         working-directory: android
-        run: bubblewrap build --skipSigning --manifest=./twa-manifest.json
+        run: bubblewrap build --skipSigning --skipPwaValidation --manifest=./twa-manifest.json
 
       - name: Upload Android build artifacts
         uses: actions/upload-artifact@v4
