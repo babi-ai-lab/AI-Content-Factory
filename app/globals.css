@@ -762,3 +762,38 @@ footer span { padding: 0 6px; }
   .instagram-connection-status { justify-self: start; }
   .instagram-publish-form { padding: 13px; }
 }
+
+
+.instagram-callback-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f5f7fb;
+}
+.instagram-callback-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px;
+  text-align: center;
+  border: 1px solid rgba(45,75,160,.15);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(28,43,94,.09);
+}
+.instagram-callback-mark {
+  display: block;
+  margin-bottom: 12px;
+  color: #1c2b5e;
+  font-size: 48px;
+  line-height: 1;
+}
+.instagram-callback-card h1 {
+  color: #1c2b5e;
+  font-size: 21px;
+}
+.instagram-callback-card p {
+  color: var(--muted, #667085);
+  line-height: 1.9;
+  font-size: 13px;
+}
