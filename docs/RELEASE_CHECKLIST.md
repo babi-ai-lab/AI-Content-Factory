@@ -16,6 +16,12 @@
 - [x] endpoint سلامت `/api/health`
 - [x] جلوگیری از نمایش محتوای demo به‌عنوان تولید واقعی در محیط Production
 - [x] اطلاع‌رسانی درباره پردازش داده در سرویس تولید محتوا و ثبت تأیید کاربر قبل از تولید
+- [x] بازبینی ساختاری دیتابیس در 2026-11-06: هر ۱۰ جدول public دارای RLS و سیاست‌های مالکیت‌محور هستند؛ چهار تابع SECURITY DEFINER فقط برای postgres و service_role قابل اجرا هستند و view عمومی وجود ندارد.
+- [x] اجرای موفق آزمون smoke Production برای دامنه سفارشی و دامنه Render؛ سلامت API، رد درخواست‌های بدون ورود، پوسته عمومی و فایل‌های JavaScript بررسی شدند.
+- [x] خروجی ICS تقویم شمسی: زمان UTC، مدت پیش‌فرض ۳۰ دقیقه، escape متن و شکستن خطوط UTF-8؛ تست واحد، typecheck و build موفق.
+- [x] نگاشت نسبت تصویر و اندازه خروجی تصویر به مقادیر معتبر در تست‌های خودکار.
+- [x] تشخیص سهمیه صفر در سرویس تصویر و پیام خنثی اختصاصی؛ نام پردازشگر در رابط نمایش داده نمی‌شود.
+- [x] خروجی JSON داده‌های حساب با نشست معتبر، RLS، allowlist فیلدها، سقف اندازه و حذف توکن‌ها/اطلاعات محرمانه؛ فایل‌های باینری رسانه جداگانه دانلود می‌شوند.
 
 ## اقداماتی که به حضور مالک نیاز دارند
 
@@ -80,6 +86,7 @@
 - [ ] آزمون حذف حساب فقط با یک حساب آزمایشی؛ بررسی حذف محتوا، کمپین‌ها و داده‌های مصرف
 - [ ] اجرای health check و اطمینان از پاسخ 200 در مسیر `/api/health`
 - [ ] بررسی اینکه پس از خروج، داده‌های حساب در دسترس نیستند
+- [ ] آزمون عملی جداسازی داده با دو حساب مستقل؛ بازبینی ساختاری RLS جایگزین این آزمون نیست.
 
 ### ۵. تصمیم‌های مالک محصول
 
@@ -98,9 +105,17 @@
 
 
 ## Media studio regression checks
+- [x] تست خودکار نگاشت نسبت تصویر/اندازه و طبقه‌بندی پیام‌های خطا.
+- [ ] ظرفیت حساب سرویس تصویر صفر است؛ پس از فعال‌سازی ظرفیت توسط مالک، تولید واقعی تصویر و کاروسل را آزمایش کن.
 - [ ] Resolve the zero-capacity account configuration before attempting authenticated generation.
 - [ ] Generate one 4:5 image with an authenticated account and verify the returned private asset.
 - [ ] Generate a five-slide carousel and verify all five images are stored under the requesting user.
 - [ ] Edit Persian copy on each slide and export 1080×1350 PNG files.
 - [ ] Verify a sixth image request in the same hour is rejected and no cross-user asset can be listed or deleted.
 - [ ] Verify expired signed URLs refresh after reloading the media library.
+
+## یافته‌های امنیت و عملکرد دیتابیس
+- [ ] هشدار `pg_net` در schema عمومی باقی است؛ قبل از انتقال extension وابستگی‌های cron و worker باید بررسی شوند.
+- [ ] محافظت رمزهای افشاشده هنوز فعال نیست؛ فقط در صورت پشتیبانی طرح فعلی و بدون ارتقای خودکار بررسی شود.
+- [x] index کلید خارجی `generated_media.content_history_id` با migration نسخه‌دار ایجاد و در Production تأیید شد.
+- [ ] هفت index در گزارش advisor استفاده‌نشده‌اند؛ حذف آن‌ها تا زمان مشاهده workload واقعی توصیه نمی‌شود.
