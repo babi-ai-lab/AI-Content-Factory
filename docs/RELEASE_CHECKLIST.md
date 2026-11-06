@@ -159,7 +159,8 @@
 
 ### Still blocked — do not mark Play-ready
 - [ ] Legal review by a qualified lawyer for the operator's country and intended user markets.
-- [ ] Owner confirms the Gemini API billing tier and project logging settings. Do not assume Paid Services or zero data retention.
+- [x] Owner confirmed Gemini API Free / Unpaid Services on 2026-11-06. Public privacy policy updated to disclose Google's potential product improvement use and human review of prompts/responses.
+- [ ] Reconfirm that billing is not enabled on the exact Google Cloud project used by the production API key; Free/Unpaid terms permit Google to use submitted content and generated responses to improve products, and human reviewers may process them. Never promise zero data retention or no training use.
 - [ ] Confirm Google Gemini and Cloudflare Workers AI inference geography; no region pinning evidence has been verified.
 - [ ] Confirm Supabase Free backup lifecycle and Render log retention from account-specific settings.
 - [ ] Owner reviews and accepts current DPA/subprocessor terms for all providers.
