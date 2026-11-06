@@ -1957,7 +1957,7 @@ const response = await fetch("/api/generate", {
 
       <main className="shell" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
 
-        <section className="panel" role="status" aria-live="polite" style={{ width: "100%", maxWidth: 460, padding: 32, textAlign: "center" }}>
+        <section id="auth-loading-state" className="panel" role="status" aria-live="polite" style={{ width: "100%", maxWidth: 460, padding: 32, textAlign: "center" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
             <span className="spinner" aria-hidden="true" />
           </div>
