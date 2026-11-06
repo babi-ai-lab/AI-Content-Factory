@@ -25,10 +25,11 @@ gradle = gradle.replace(
   `$1versionCode ${expectedCode}\n$1versionName "${expectedName}"`,
 );
 
-if (!new RegExp(`^\\s*versionName\\s+"${expectedName.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}"\\s*$`, "m").test(gradle)) {
+const lines = gradle.split(/\r?\n/).map((line) => line.trim());
+if (!lines.includes(`versionName "${expectedName}"`)) {
   throw new Error("Could not enforce expected Android versionName");
 }
-if (!new RegExp(`^\\s*versionCode\\s+${expectedCode}\\s*$`, "m").test(gradle)) {
+if (!lines.includes(`versionCode ${expectedCode}`)) {
   throw new Error("Could not enforce expected Android versionCode");
 }
 
