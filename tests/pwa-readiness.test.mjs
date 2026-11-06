@@ -129,5 +129,6 @@ test("public Android download page exposes the verified release and install comp
   assert.match(page, /AI-Content-Factory-1\.0\.0\.apk/);
   assert.match(page, /ir\.eltbabak\.contentfactory/);
   assert.match(page, /1C46E2EC8119768AF320A796B8824318BB99E5A77D97676637965B8FD3A4A0EC/);
-  assert.match(page, /افزودن به صفحه اصلی/);
+  const install = await readFile(new URL("../app/download/add-to-home-screen.tsx", import.meta.url), "utf8");
+  assert.match(install, /افزودن به صفحه اصلی/);
 });
