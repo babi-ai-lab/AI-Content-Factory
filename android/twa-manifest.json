@@ -1,0 +1,30 @@
+{
+  "packageId": "ir.eltbabak.contentfactory",
+  "host": "app.eltbabak.ir",
+  "name": "AI Content Factory",
+  "launcherName": "Content Factory",
+  "display": "standalone",
+  "startUrl": "/?source=android",
+  "webManifestUrl": "https://app.eltbabak.ir/manifest.webmanifest",
+  "iconUrl": "https://app.eltbabak.ir/icons/app-icon-512.png",
+  "maskableIconUrl": "https://app.eltbabak.ir/icons/app-icon-maskable-512.png",
+  "themeColor": "#1c2b5e",
+  "themeColorDark": "#1c2b5e",
+  "navigationColor": "#1c2b5e",
+  "navigationColorDark": "#1c2b5e",
+  "navigationDividerColor": "#1c2b5e",
+  "navigationDividerColorDark": "#1c2b5e",
+  "backgroundColor": "#f7f8fc",
+  "orientation": "any",
+  "enableNotifications": false,
+  "enableSiteSettingsShortcut": true,
+  "fallbackType": "customtabs",
+  "minSdkVersion": 24,
+  "splashScreenFadeOutDuration": 300,
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./release-keystore.jks",
+    "alias": "contentfactory"
+  }
+}
