@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
+import { buildCalendarIcs } from "@/lib/ics-export.mjs";
 
 type CalendarItem = {
   id: string;
@@ -113,6 +114,20 @@ export default function MonthlyContentCalendar({ items, loading, error, onMonthC
     setSelectedDay(1);
   }
 
+  function downloadMonthCalendar() {
+    if (!monthItems.length) return;
+    const calendar = buildCalendarIcs(monthItems);
+    const blob = new Blob([calendar], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `content-calendar-${visibleYear}-${String(visibleMonth).padStart(2, "0")}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
   return (
     <div className="monthly-calendar" dir="rtl">
       <div className="monthly-calendar-toolbar">
@@ -128,6 +143,13 @@ export default function MonthlyContentCalendar({ items, loading, error, onMonthC
             setSelectedDay(today.day);
           }}>امروز</button>
           <button type="button" onClick={() => changeMonth(-1)} aria-label="ماه قبل">→ ماه قبل</button>
+          <button
+            type="button"
+            className="monthly-calendar-export"
+            disabled={monthItems.length === 0}
+            onClick={downloadMonthCalendar}
+            aria-label="دریافت فایل تقویم این ماه"
+          >دریافت تقویم</button>
         </div>
       </div>
 
