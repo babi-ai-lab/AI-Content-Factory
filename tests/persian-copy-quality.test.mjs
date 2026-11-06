@@ -17,5 +17,5 @@ test("uses channel-specific writing guidance", () => {
 });
 
 test("falls back safely for unknown channels", () => {
-  assert.match(buildPersianCopyQualityInstructions("unknown"), /قابل استفاده در کانال‌های مختلف/);
+  assert.match(buildPersianCopyQualityInstructions("unknown"), /در کانال‌های مختلف قابل استفاده/);
 });
