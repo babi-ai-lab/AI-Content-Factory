@@ -732,44 +732,47 @@ export default function Home() {
   }
 
   // بررسی نشست کاربر و گوش دادن به تغییر وضعیت ورود
-
   useEffect(() => {
-
     let mounted = true;
+    let authReadyTimeout: number | undefined;
 
-    supabase.auth.getSession().then(({ data, error }) => {
-
+    // جلوگیری از ماندن بی‌نهایت صفحه روی وضعیت بررسی حساب
+    authReadyTimeout = window.setTimeout(() => {
       if (!mounted) return;
-
-      if (error) {
-
-        setAuthMessage(error.message);
-
-      }
-
-      setUser(
-
-        data.session?.user
-
-          ? { id: data.session.user.id, email: data.session.user.email }
-
-          : null
-
-      );
-      setBrandProfile(normalizeBrandProfile(data.session?.user.user_metadata?.aiContentFactoryBrandProfile));
-      setDataProcessingNoticeAccepted(Boolean(data.session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
-
+      setAuthMessage("ارتباط با سرویس احراز هویت طول کشیده است. می‌توانی دوباره تلاش کنی.");
       setAuthReady(true);
+    }, 12000);
 
-    });
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
+
+        if (error) setAuthMessage(error.message);
+
+        setUser(
+          data.session?.user
+            ? { id: data.session.user.id, email: data.session.user.email }
+            : null
+        );
+        setBrandProfile(normalizeBrandProfile(data.session?.user.user_metadata?.aiContentFactoryBrandProfile));
+        setDataProcessingNoticeAccepted(Boolean(data.session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
+        setAuthReady(true);
+      })
+      .catch((error: unknown) => {
+        if (!mounted) return;
+        if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
+        setUser(null);
+        setAuthMessage(error instanceof Error ? error.message : "بررسی نشست کاربری ناموفق بود. دوباره تلاش کن.");
+        setAuthReady(true);
+      });
 
     const {
-
       data: { subscription },
-
     } = supabase.auth.onAuthStateChange((event, session) => {
-
       if (!mounted) return;
+      if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
+      setAuthReady(true);
 
       const nextUser = session?.user
         ? { id: session.user.id, email: session.user.email }
@@ -801,17 +804,13 @@ export default function Home() {
         setHistoryReady(false);
         setSelectedHistoryId("");
       }
-
     });
 
     return () => {
-
       mounted = false;
-
+      if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
       subscription.unsubscribe();
-
     };
-
   }, []);
 
   useEffect(() => {
