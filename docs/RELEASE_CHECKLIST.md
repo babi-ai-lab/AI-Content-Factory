@@ -144,3 +144,32 @@
 - [ ] تهیه Feature graphic 1024×500 و حداقل دو اسکرین‌شات واقعی
 - [ ] بررسی محدودیت‌های حساب Play Console و تکمیل الزامات testing/release در صورت اعمال
 - [ ] تأیید نهایی مالک و ارسال نسخه برای بررسی Google Play
+
+
+## Android / Play Console audit update — 2026-11-06
+
+### Confirmed by live account configuration
+- [x] Latest production deployment for commit `4825ec61748599410125d633b6b327878f816ef6` is reported `live` by Render.
+- [x] Supabase project primary region confirmed as AWS `us-east-1` (Northern Virginia); Supabase organization plan is Free.
+- [x] Render web service region confirmed as Oregon, USA; plan is Free.
+- [x] Resend's current public security/DPA materials describe US storage, 30-day email/log retention on Free/Pro/Scale, and deletion of remaining customer data within 90 days after account termination; account-specific terms still need owner confirmation.
+- [x] Public privacy and account-deletion routes are implemented in the production codebase: `/privacy` and `/account-deletion`. Render reports the last privacy-policy deployment as live. External HTTP verification was not possible from the current execution environment.
+- [x] Play listing draft now includes `info@eltbabak.ir`, the public privacy URL, and the account deletion URL.
+- [x] Internal privacy and Data safety drafts now record verified primary hosting regions and clearly mark unknowns.
+
+### Still blocked — do not mark Play-ready
+- [ ] Legal review by a qualified lawyer for the operator's country and intended user markets.
+- [ ] Owner confirms the Gemini API billing tier and project logging settings. Do not assume Paid Services or zero data retention.
+- [ ] Confirm Google Gemini and Cloudflare Workers AI inference geography; no region pinning evidence has been verified.
+- [ ] Confirm Supabase Free backup lifecycle and Render log retention from account-specific settings.
+- [ ] Owner reviews and accepts current DPA/subprocessor terms for all providers.
+- [ ] Public privacy policy must be finalized with accurate data transfer and retention disclosures after the above checks.
+- [ ] Play Console Data safety answers, data deletion questions, content rating, target audience, ads declaration, and app access must be completed against the final production build.
+- [ ] Generate the upload key locally under owner custody; never upload the keystore or passwords to GitHub or chat.
+- [ ] Enroll in Play App Signing, obtain the Play App Signing SHA-256 fingerprint, then publish `/.well-known/assetlinks.json`. No placeholder or debug fingerprint is acceptable.
+- [ ] Build and verify the signed release AAB, then upload to the internal testing track.
+- [ ] Create the 1024×500 feature graphic and real-device screenshots from the release candidate; approve all store claims.
+- [ ] Complete internal/closed testing requirements applicable to the actual Play developer account.
+
+### Important current target SDK check
+New Google Play apps and updates submitted from 31 August 2026 must target Android 16 / API 36 or higher. The current Android workflow was configured to verify target SDK 36; re-verify the generated release AAB before upload.
