@@ -72,9 +72,9 @@ npm run dev
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | آدرس پروژه Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | کلید عمومی anon/publishable برای کلاینت Supabase؛ امنیت داده باید با RLS تضمین شود |
-| `GEMINI_API_KEY` | کلید محرمانه سرویس پردازش محتوای متصل برای تولید واقعی |
-| `GEMINI_MODEL` | شناسه مدل اصلی پیکربندی‌شده |
-| `GEMINI_FALLBACK_MODEL` | شناسه مدل جایگزین پیکربندی‌شده |
+| `CONTENT_GENERATION_API_KEY` | کلید محرمانه سرویس پردازش محتوای متصل برای تولید واقعی |
+| `CONTENT_GENERATION_MODEL` | شناسه مدل اصلی پیکربندی‌شده |
+| `CONTENT_GENERATION_FALLBACK_MODEL` | شناسه مدل جایگزین پیکربندی‌شده |
 | `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` | اطلاعات محرمانه/شناسه Meta App برای Instagram Login |
 | `INSTAGRAM_REDIRECT_URI` | مسیر callback ثبت‌شده در Meta |
 | `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | کلید Base64 سی‌ودو بایتی برای رمزنگاری توکن‌ها |

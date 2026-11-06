@@ -546,7 +546,7 @@ export async function POST(request: NextRequest) {
 
     const businessType = p.businessType || "retail";
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.CONTENT_GENERATION_API_KEY || process.env.GEMINI_API_KEY;
 
     if (!apiKey && !shouldUseDemoGeneration(process.env.NODE_ENV, apiKey)) {
       console.error("Gemini provider is not configured in production.", { requestId });
@@ -570,9 +570,10 @@ export async function POST(request: NextRequest) {
     }
 
     const primaryModel =
-      process.env.GEMINI_MODEL || "gemini-3.8-flash";
+      process.env.CONTENT_GENERATION_MODEL || process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
     const fallbackModel =
+      process.env.CONTENT_GENERATION_FALLBACK_MODEL ||
       process.env.GEMINI_FALLBACK_MODEL ||
       "gemini-3.5-flash-lite";
 
