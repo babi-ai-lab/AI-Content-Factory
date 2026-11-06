@@ -60,3 +60,11 @@ test("account export API authenticates the caller and prevents caching", async (
   assert.match(source, /status: 413/);
   assert.doesNotMatch(source, /SERVICE_ROLE|service_role|SUPABASE_SERVICE_ROLE_KEY/);
 });
+
+test("workspace exposes a loading-aware account backup action", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /دریافت نسخه پشتیبان/);
+  assert.match(source, /fetch\("\/api\/account\/export"/);
+  assert.match(source, /accountExportLoading/);
+  assert.match(source, /URL\.createObjectURL/);
+});
