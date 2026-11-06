@@ -664,7 +664,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
           {
-            code: "GEMINI_QUOTA_EXCEEDED",
+            code: "CONTENT_GENERATION_QUOTA_EXCEEDED",
             quotaWindow: dailyQuotaExceeded ? "daily" : "short_term",
             error: dailyQuotaExceeded
               ? "ظرفیت روزانه تولید محتوا به پایان رسیده است. پس از تمدید ظرفیت دوباره تلاش کن."
