@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 1000;
 const MAX_ROWS_PER_TABLE = 20_000;
+const MAX_EXPORT_BYTES = 15 * 1024 * 1024;
 
 async function readAccountRows(client: ReturnType<typeof createClient>, descriptor: (typeof ACCOUNT_EXPORT_TABLES)[number]) {
   const rows: Record<string, unknown>[] = [];
@@ -66,9 +67,16 @@ export async function GET(request: NextRequest) {
     );
     const data = Object.fromEntries(entries);
     const payload = createAccountExportPayload(user, data);
+    const serialized = JSON.stringify(payload, null, 2);
+    if (Buffer.byteLength(serialized, "utf8") > MAX_EXPORT_BYTES) {
+      return NextResponse.json(
+        { error: "حجم نسخه پشتیبان از سقف امن یک‌باره بیشتر است. برای دریافت نسخه کامل با پشتیبانی تماس بگیر." },
+        { status: 413, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
     const date = new Date().toISOString().slice(0, 10);
 
-    return new NextResponse(JSON.stringify(payload, null, 2), {
+    return new NextResponse(serialized, {
       status: 200,
       headers: {
         "Content-Type": "application/json; charset=utf-8",
