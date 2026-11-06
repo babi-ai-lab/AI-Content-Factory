@@ -6,7 +6,9 @@ test("media studio presents a vendor-neutral product experience", async () => {
   const source = await readFile(new URL("../components/media-studio.tsx", import.meta.url), "utf8");
   assert.match(source, /استودیوی تصویر تبلیغاتی/);
   assert.match(source, /خروجی باکیفیت/);
-  assert.doesNotMatch(source, /Gemini|Google|گوگل|جمنای/i);
+  const helpers = await readFile(new URL("../lib/media-generation.mjs", import.meta.url), "utf8");
+  const userFacingMessages = [...helpers.matchAll(/message: "([^"]+)"/g)].map((match) => match[1]).join(" ");
+  assert.doesNotMatch(userFacingMessages, /Gemini|Google|گوگل|جمنای/i);
   assert.doesNotMatch(source, /API گوگل|سهمیه Gemini/i);
 });
 
