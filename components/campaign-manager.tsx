@@ -25,6 +25,11 @@ type Campaign = {
   created_at: string;
 };
 
+type CampaignComparisonEntry = {
+  campaign: Campaign;
+  metrics: ReturnType<typeof calculateCampaignMetrics>;
+};
+
 type CampaignMetricsDraft = {
   currency_label: string;
   budget_amount: string;
@@ -105,6 +110,7 @@ function getContentTitle(option: ContentOption) {
 
 export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 }: { userId: string; refreshKey?: number; onUseCampaign?: (campaign: Pick<Campaign, "id" | "name" | "goal" | "audience" | "channels">) => void }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedComparisonIds, setSelectedComparisonIds] = useState<string[]>([]);
   const [metricsDrafts, setMetricsDrafts] = useState<Record<string, CampaignMetricsDraft>>({});
   const [savingMetricsId, setSavingMetricsId] = useState<string | null>(null);
   const [contentOptions, setContentOptions] = useState<ContentOption[]>([]);
@@ -123,12 +129,50 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const loadedUserIdRef = useRef<string | null>(null);
 
+  const selectedCampaigns = campaigns.filter((campaign) => selectedComparisonIds.includes(campaign.id));
+  const comparisonData: CampaignComparisonEntry[] = selectedCampaigns.map((campaign) => ({
+    campaign,
+    metrics: calculateCampaignMetrics({
+      impressions: campaign.impressions,
+      clicks: campaign.clicks,
+      leads: campaign.leads,
+      conversions: campaign.conversions,
+      budget: campaign.budget_amount,
+      spend: campaign.spend_amount,
+      revenue: campaign.revenue_amount,
+    }),
+  }));
+  const comparisonRows: { label: string; value: (entry: CampaignComparisonEntry) => string }[] = [
+    { label: "وضعیت", value: (entry) => statusLabels[entry.campaign.status] },
+    { label: "بودجه", value: (entry) => formatMetricAmount(entry.campaign.budget_amount, entry.campaign.currency_label) },
+    { label: "هزینه واقعی", value: (entry) => formatMetricAmount(entry.campaign.spend_amount, entry.campaign.currency_label) },
+    { label: "درآمد", value: (entry) => formatMetricAmount(entry.campaign.revenue_amount, entry.campaign.currency_label) },
+    { label: "نرخ کلیک (CTR)", value: (entry) => formatMetricValue(entry.metrics.ctr, "٪") },
+    { label: "هزینه هر سرنخ (CPL)", value: (entry) => formatMetricAmount(entry.metrics.cpl, entry.campaign.currency_label) },
+    { label: "هزینه هر تبدیل (CPA)", value: (entry) => formatMetricAmount(entry.metrics.cpa, entry.campaign.currency_label) },
+    { label: "نرخ تبدیل", value: (entry) => formatMetricValue(entry.metrics.conversionRate, "٪") },
+    { label: "بازده هزینه تبلیغ (ROAS)", value: (entry) => formatMetricValue(entry.metrics.roas, "×") },
+  ];
+
+  function toggleCampaignComparison(campaignId: string, checked: boolean) {
+    if (checked && !selectedComparisonIds.includes(campaignId) && selectedComparisonIds.length >= 4) {
+      setNotice("برای مقایسه هم‌زمان حداکثر ۴ کمپین را انتخاب کن.");
+      return;
+    }
+    setSelectedComparisonIds((current) => checked
+      ? Array.from(new Set([...current, campaignId])).slice(0, 4)
+      : current.filter((id) => id !== campaignId));
+  }
+
+
+
   const loadCampaigns = useCallback(async () => {
     if (loadedUserIdRef.current !== userId) {
       loadedUserIdRef.current = userId;
       setMetricsDrafts({});
       setSelectedContentByCampaign({});
       setExpandedId(null);
+      setSelectedComparisonIds([]);
     }
     setLoading(true);
     setError("");
@@ -364,6 +408,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       return;
     }
     setCampaigns((current) => current.filter((item) => item.id !== campaign.id));
+    setSelectedComparisonIds((current) => current.filter((id) => id !== campaign.id));
     setMetricsDrafts((current) => {
       const next = { ...current };
       delete next[campaign.id];
@@ -405,6 +450,40 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       {error && <p className="campaign-message error" role="alert">{error}</p>}
       {notice && <p className="campaign-message success" role="status">{notice}</p>}
 
+      {selectedCampaigns.length > 0 && (
+        <section className="campaign-comparison" aria-label="مقایسه عملکرد کمپین‌ها">
+          <div className="campaign-comparison-heading">
+            <div>
+              <h3>مقایسه عملکرد کمپین‌ها</h3>
+              <p>{selectedCampaigns.length.toLocaleString("fa-IR")} از ۴ کمپین انتخاب شده</p>
+            </div>
+            <button type="button" className="history-backup" onClick={() => setSelectedComparisonIds([])}>پاک کردن انتخاب‌ها</button>
+          </div>
+          {selectedCampaigns.length < 2 ? (
+            <p className="campaign-comparison-hint">برای مشاهده گزارش مقایسه‌ای، حداقل یک کمپین دیگر را انتخاب کن.</p>
+          ) : (
+            <div className="campaign-comparison-scroll">
+              <table className="campaign-comparison-table">
+                <thead>
+                  <tr>
+                    <th scope="col">شاخص</th>
+                    {comparisonData.map((entry) => <th scope="col" key={entry.campaign.id}>{entry.campaign.name}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonRows.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row">{row.label}</th>
+                      {comparisonData.map((entry) => <td key={entry.campaign.id}>{row.value(entry)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
       {loading ? <div className="campaign-empty">در حال بارگذاری کمپین‌ها...</div> :
         campaigns.length === 0 ? (
           <div className="campaign-empty">هنوز کمپینی نساخته‌ای. اولین کمپین را از فرم بالا ایجاد کن.</div>
@@ -425,6 +504,15 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
                       <p>{campaign.goal}</p>
                       <small>مخاطب: {campaign.audience || "هنوز مشخص نشده"} · کانال‌ها: {campaign.channels.join("، ") || "مشخص نشده"}</small>
                     </div>
+                    <label className="campaign-compare-toggle">
+                      <input
+                        type="checkbox"
+                        checked={selectedComparisonIds.includes(campaign.id)}
+                        onChange={(event) => toggleCampaignComparison(campaign.id, event.target.checked)}
+                        aria-label={`افزودن ${campaign.name} به مقایسه`}
+                      />
+                      <span>مقایسه</span>
+                    </label>
                     <select aria-label={`وضعیت کمپین ${campaign.name}`} value={campaign.status} onChange={(event) => void updateCampaign(campaign.id, { status: event.target.value as CampaignStatus })}>
                       {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                     </select>
