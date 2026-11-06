@@ -3,6 +3,35 @@ const targets = [
   { label: 'render-origin', origin: 'https://ai-content-factory-6m32.onrender.com' },
 ];
 
+async function assertUnauthenticatedJson(origin, path) {
+  const response = await fetch(`${origin}${path}`, {
+    method: 'POST',
+    redirect: 'follow',
+    signal: AbortSignal.timeout(30000),
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'AI-Content-Factory-production-smoke/1.0',
+    },
+    body: '{}',
+  });
+  const responseText = await response.text();
+  if (response.status !== 401) {
+    throw new Error(`${path} should reject anonymous requests with HTTP 401, received ${response.status}`);
+  }
+  let payload;
+  try {
+    payload = JSON.parse(responseText);
+  } catch {
+    throw new Error(`${path} returned a non-JSON authentication response`);
+  }
+  if (typeof payload.error !== 'string' || !payload.error.trim()) {
+    throw new Error(`${path} did not return a useful authentication error`);
+  }
+  if (/Gemini|Google|گوگل|جمنای/i.test(responseText)) {
+    throw new Error(`${path} exposed an external processor name in a public error response`);
+  }
+}
+
 async function fetchWithRetry(url, attempts = 3) {
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -26,6 +55,9 @@ for (const target of targets) {
   const healthResponse = await fetchWithRetry(`${target.origin}/api/health`);
   const health = await healthResponse.json();
   if (health.status !== 'ok') throw new Error(`${target.label}: health endpoint did not report ok`);
+
+  await assertUnauthenticatedJson(target.origin, '/api/generate');
+  await assertUnauthenticatedJson(target.origin, '/api/media/generate');
 
   const pageResponse = await fetchWithRetry(`${target.origin}/`);
   const html = await pageResponse.text();
@@ -62,5 +94,5 @@ for (const target of targets) {
     }
   }
 
-  console.log(`PASS ${target.label}: health, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
+  console.log(`PASS ${target.label}: health, anonymous API rejection, vendor-neutral errors, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
 }
