@@ -21,12 +21,12 @@ type InstagramJob = {
   scheduled_at: string | null;
 };
 
-type Props = { userId: string };
+type Props = { userId: string; suggestedCaption?: string };
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
-export default function InstagramIntegration({ userId }: Props) {
+export default function InstagramIntegration({ userId, suggestedCaption = "" }: Props) {
   const [connection, setConnection] = useState<InstagramConnection | null>(null);
   const [configured, setConfigured] = useState(false);
   const [schedulerEnabled, setSchedulerEnabled] = useState(false);
@@ -297,6 +297,11 @@ export default function InstagramIntegration({ userId }: Props) {
           <JalaliDateTimePicker value={scheduleAt} onChange={setScheduleAt} label="زمان انتشار خودکار (اختیاری)" />
           <label>
             کپشن اینستاگرام
+            {suggestedCaption.trim() && (
+              <button type="button" className="instagram-fill-caption" onClick={() => setCaption(suggestedCaption.slice(0, 2200))} disabled={busy}>
+                استفاده از کپشن آخرین محتوای تولیدشده
+              </button>
+            )}
             <textarea rows={4} maxLength={2200} value={caption} onChange={(event) => setCaption(event.target.value)} placeholder="متن کپشن، هشتگ‌ها و دعوت به اقدام..." disabled={busy} />
             <small>{caption.length.toLocaleString("fa-IR")} / ۲۲۰۰ نویسه</small>
           </label>
