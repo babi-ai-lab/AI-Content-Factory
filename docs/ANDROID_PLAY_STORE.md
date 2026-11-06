@@ -1,6 +1,8 @@
 # Android and Google Play release
 
 ## Current approach
+
+Persian Google Play store listing draft and asset checklist: [PLAY_STORE_LISTING_DRAFT_FA.md](PLAY_STORE_LISTING_DRAFT_FA.md).
 The Android release uses a Trusted Web Activity (TWA) around the production PWA. The web application remains the source of truth; authentication, database access, content generation, and media storage stay on the existing backend.
 
 Production origin: https://app.eltbabak.ir  
