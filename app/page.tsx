@@ -7,7 +7,6 @@ import { analyzeContent } from "@/lib/content-quality.mjs";
 import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 import MonthlyContentCalendar from "@/components/monthly-content-calendar";
 import CampaignManager from "@/components/campaign-manager";
-import InstagramIntegration from "@/components/instagram-integration";
 import PublicLanding from "@/components/public-landing";
 
 type BusinessType =
@@ -2490,8 +2489,6 @@ const response = await fetch("/api/generate", {
           }}
         />
       )}
-
-      {user?.id && <InstagramIntegration userId={user.id} suggestedCaption={content?.caption || ""} />}
 
       <div className="workspace">
 
