@@ -73,3 +73,16 @@ test("returns an empty-state result when content is unavailable", () => {
   assert.equal(result.score, 0);
   assert.equal(result.checks.length, 0);
 });
+
+test("flags prohibited brand claims even when the rest of the content is strong", () => {
+  const result = analyzeContent({
+    ...strongContent,
+    caption: strongContent.caption + " ما نتیجه را تضمین می‌کنیم.",
+  }, {
+    prohibitedClaims: "تضمین نتیجه، بهترین در ایران",
+  });
+  const audit = result.checks.find((check) => check.id === "prohibited-claims");
+  assert.equal(audit.passed, false);
+  assert.match(audit.detail, /تضمین نتیجه/);
+});
+
