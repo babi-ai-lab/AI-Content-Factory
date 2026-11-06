@@ -17,5 +17,6 @@ export function analyzeContent(
     cta?: string;
     preferredTerms?: string;
     avoidTerms?: string;
-  }
+  },
+  channel?: string
 ): ContentQualityResult;
