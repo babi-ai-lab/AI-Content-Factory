@@ -15,6 +15,16 @@ export async function DELETE(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
 
+  const { error: cancelError } = await supabase
+    .from("instagram_publish_jobs")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("status", "queued");
+  if (cancelError) {
+    console.error("Could not cancel queued Instagram jobs:", cancelError);
+    return NextResponse.json({ error: "لغو انتشارهای زمان‌بندی‌شده ناموفق بود؛ اتصال قطع نشد." }, { status: 503 });
+  }
+
   const { error } = await supabase.from("instagram_connections").delete().eq("user_id", user.id);
   if (error) {
     console.error("Instagram disconnect failed:", error);
