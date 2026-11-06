@@ -89,6 +89,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
 
 
   async function generateCarousel() {
+    setCarouselLoading(true);
     setError("");
     setNotice("");
     setCarouselAssets([]);
@@ -112,7 +113,6 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
         throw new Error(`برای ساخت کاروسل کامل به ۵ تصویر نیاز است؛ سهمیه باقی‌مانده این ساعت ${remainingAllowance.toLocaleString("fa-IR")} تصویر است. پس از بازنشانی سهمیه دوباره تلاش کن.`);
       }
 
-      setCarouselLoading(true);
       for (let index = 0; index < prompts.length; index += 1) {
         const response = await fetch("/api/media/generate", {
           method: "POST",
