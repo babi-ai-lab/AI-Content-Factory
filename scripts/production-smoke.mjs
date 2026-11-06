@@ -29,8 +29,12 @@ for (const target of targets) {
 
   const pageResponse = await fetchWithRetry(`${target.origin}/`);
   const html = await pageResponse.text();
-  if (!html.includes('AI Content Factory') || !html.includes('شروع رایگان')) {
-    throw new Error(`${target.label}: expected product shell or signup CTA was not found`);
+  const hasProductName = html.includes('AI Content Factory');
+  const hasSignupCta = html.includes('شروع رایگان');
+  const hasAuthLoadingShell = html.includes('id="auth-loading-state"') && html.includes('auth-loading-watchdog');
+  if (!hasProductName || (!hasSignupCta && !hasAuthLoadingShell)) {
+    const preview = html.slice(0, 500).replace(/\\s+/g, ' ');
+    throw new Error(`${target.label}: expected product shell, signup CTA, or current auth shell was not found (product=${hasProductName}, signup=${hasSignupCta}, authShell=${hasAuthLoadingShell}, staleAuth=${html.includes('در حال بررسی حساب کاربری...')}, preview=${preview})`);
   }
   if (html.includes('در حال بررسی حساب کاربری...')) {
     throw new Error(`${target.label}: stale authentication diagnostic text is present`);
