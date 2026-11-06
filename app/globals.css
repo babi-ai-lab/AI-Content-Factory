@@ -110,6 +110,7 @@ textarea { resize: vertical; line-height: 1.9; }
 .history-info span, .history-info small { font-size: 10px; color: var(--muted); line-height: 1.7; }
 .history-item-actions { display: flex; align-items: center; gap: 7px; flex: none; }
 .history-review-select { min-height: 34px; max-width: 165px; border: 1px solid #d9e2d6; border-radius: 8px; background: #f8faf6; color: #405b45; padding: 7px 9px; font: inherit; font-size: 10px; font-weight: 700; }
+.history-review-note { max-width: 680px; color: #536b58 !important; white-space: pre-wrap; overflow-wrap: anywhere; }
 .history-open { border: 1px solid #dce4da; background: #f2f6ef; color: var(--green); padding: 8px 11px; border-radius: 8px; font-size: 10px; font-weight: 700; }
 .history-delete { border: 1px solid #f0d9d9; background: #fff; color: #a14c4c; padding: 8px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
 .history-open:hover, .history-backup:hover { background: #e8f0e5; }
