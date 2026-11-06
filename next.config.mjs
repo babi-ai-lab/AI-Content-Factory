@@ -10,6 +10,10 @@ const securityHeaders = [
 
 const nextConfig = {
   poweredByHeader: false,
+  // Serve versioned JS/CSS from the stable Render origin so browsers that
+  // have trouble fetching static assets through the custom-domain route can
+  // still hydrate the app. The app itself remains on app.eltbabak.ir.
+  assetPrefix: "https://ai-content-factory-6m32.onrender.com",
   async headers() {
     return [
       {
