@@ -13,7 +13,7 @@ test("production smoke runs on schedule or manual dispatch, not before auto-depl
 test("production smoke checks the public Android download and installation page", async () => {
   const source = await readFile(new URL("../scripts/production-smoke.mjs", import.meta.url), "utf8");
   assert.match(source, /\/download/);
-  assert.match(source, /دانلود رسمی اندروید/);
+  assert.match(source, /نسخه رسمی اندروید/);
   assert.match(source, /افزودن به صفحه اصلی/);
   assert.match(source, /SHA-256/);
   assert.match(source, /AI-Content-Factory-1\.0\.0\.apk/);
