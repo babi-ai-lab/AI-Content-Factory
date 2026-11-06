@@ -1,0 +1,18 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+test("media studio presents a vendor-neutral product experience", async () => {
+  const source = await readFile(new URL("../components/media-studio.tsx", import.meta.url), "utf8");
+  assert.match(source, /استودیوی تصویر تبلیغاتی/);
+  assert.match(source, /خروجی باکیفیت/);
+  assert.doesNotMatch(source, /Gemini|Google|گوگل|جمنای/i);
+  assert.doesNotMatch(source, /API گوگل|سهمیه Gemini/i);
+});
+
+test("image generation failures are explained without exposing provider names", async () => {
+  const source = await readFile(new URL("../app/api/media/generate/route.ts", import.meta.url), "utf8");
+  assert.match(source, /در حال حاضر امکان تولید تصویر وجود ندارد/);
+  assert.match(source, /دسترسی سرویس تولید تصویر موقتاً برقرار نیست/);
+  assert.doesNotMatch(source, /بررسی کن.*Gemini|Gemini.*بررسی کن/i);
+});
