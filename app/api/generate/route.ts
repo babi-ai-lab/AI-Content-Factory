@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { BrandProfileInput } from "@/lib/server-controls.mjs";
+import { parseGeneratedContent } from "@/lib/generated-content.mjs";
 export const runtime = "nodejs";
 import {
   shouldFallbackGeminiStatus,
