@@ -38,7 +38,7 @@ test("Android workflow validates PWA and builds unsigned artifacts without secre
   assert.match(workflow, /npm install --global @bubblewrap\/cli@1\.27\.0/);
   assert.match(workflow, /targetSdkVersion 36/);
   assert.match(workflow, /minSdkVersion 24/);
-  assert.ok(workflow.includes('applicationId "ir\\.eltbabak\\.contentfactory"'));
+  assert.ok(workflow.includes('applicationId "ir.eltbabak.contentfactory"'));
   assert.match(workflow, /bubblewrap build --skipSigning --skipPwaValidation/);
   assert.match(workflow, /\.\/gradlew --no-daemon assembleDebug/);
   assert.match(workflow, /outputs\/apk\/debug\/\*\.apk/);
