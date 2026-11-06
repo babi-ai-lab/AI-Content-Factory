@@ -96,3 +96,21 @@ test("offline page explains private data is not available offline", async () => 
   const page = await readFile(new URL("../app/offline/page.tsx", import.meta.url), "utf8");
   assert.match(page, /اطلاعات خصوصی/);
 });
+
+test("download-page install flow handles prompt acceptance, dismissal, and browser errors", async () => {
+  const component = await readFile(new URL("../app/download/add-to-home-screen.tsx", import.meta.url), "utf8");
+  assert.match(component, /beforeinstallprompt/);
+  assert.match(component, /event\.preventDefault\(\)/);
+  assert.match(component, /await installPrompt\.prompt\(\)/);
+  assert.match(component, /await installPrompt\.userChoice/);
+  assert.match(component, /choice\.outcome === "accepted"/);
+  assert.match(component, /setShowHelp\(true\)/);
+  assert.match(component, /catch \{/);
+  assert.match(component, /finally \{/);
+  assert.match(component, /appinstalled/);
+  assert.match(component, /removeEventListener\("beforeinstallprompt"/);
+  assert.match(component, /removeEventListener\("appinstalled"/);
+  assert.match(component, /aria-expanded=\{showHelp\}/);
+  assert.match(component, /aria-live="polite"/);
+  assert.match(component, /disabled=\{isInstalling\}/);
+});
