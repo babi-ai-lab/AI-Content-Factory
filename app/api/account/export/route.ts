@@ -5,12 +5,17 @@ import { ACCOUNT_EXPORT_TABLES, createAccountExportPayload } from "@/lib/account
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 1000;
-const MAX_ROWS_PER_TABLE = 20_000;
+const PAGE_SIZE = 250;
+const MAX_ROWS_PER_TABLE = 5_000;
 const MAX_EXPORT_BYTES = 15 * 1024 * 1024;
 
-async function readAccountRows(client: ReturnType<typeof createClient>, descriptor: (typeof ACCOUNT_EXPORT_TABLES)[number]) {
+async function readAccountRows(
+  client: ReturnType<typeof createClient>,
+  descriptor: (typeof ACCOUNT_EXPORT_TABLES)[number],
+  remainingBytes: number,
+) {
   const rows: Record<string, unknown>[] = [];
+  let estimatedBytes = 0;
 
   for (let offset = 0; offset <= MAX_ROWS_PER_TABLE; offset += PAGE_SIZE) {
     const { data, error } = await client
@@ -28,8 +33,13 @@ async function readAccountRows(client: ReturnType<typeof createClient>, descript
       throw new RangeError("Account export exceeds the safe per-table row limit.");
     }
 
+    estimatedBytes += Buffer.byteLength(JSON.stringify(page), "utf8");
+    if (estimatedBytes > remainingBytes) {
+      throw new RangeError("Account export exceeds the safe response size.");
+    }
+
     rows.push(...page);
-    if (page.length < PAGE_SIZE) return rows;
+    if (page.length < PAGE_SIZE) return { rows, estimatedBytes };
   }
 
   throw new RangeError("Account export exceeds the safe per-table row limit.");
@@ -59,13 +69,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const entries = await Promise.all(
-      ACCOUNT_EXPORT_TABLES.map(async (descriptor) => [
-        descriptor.key,
-        await readAccountRows(client, descriptor),
-      ] as const),
-    );
-    const data = Object.fromEntries(entries);
+    const data: Record<string, Record<string, unknown>[]> = {};
+    let estimatedBytes = 0;
+    for (const descriptor of ACCOUNT_EXPORT_TABLES) {
+      const result = await readAccountRows(client, descriptor, MAX_EXPORT_BYTES - estimatedBytes);
+      data[descriptor.key] = result.rows;
+      estimatedBytes += result.estimatedBytes;
+    }
     const payload = createAccountExportPayload(user, data);
     const serialized = JSON.stringify(payload, null, 2);
     if (Buffer.byteLength(serialized, "utf8") > MAX_EXPORT_BYTES) {
