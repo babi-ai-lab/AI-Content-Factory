@@ -161,3 +161,94 @@ export async function POST(request: NextRequest) {
     remainingHourlyAllowance: Math.max(0, 5 - reserved),
   });
 }
+
+
+export async function GET(request: NextRequest) {
+  const authorization = request.headers.get("authorization") || "";
+  const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!accessToken || !supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: "ابتدا وارد حساب کاربری شو." }, { status: 401 });
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+  if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
+
+  const { data: assets, error } = await supabase
+    .from("generated_media")
+    .select("id,prompt,aspect_ratio,mime_type,byte_size,content_history_id,created_at,storage_path")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(40);
+  if (error) {
+    console.error("Could not load generated media library:", error);
+    return NextResponse.json({ error: "بارگذاری کتابخانه رسانه ناموفق بود." }, { status: 503 });
+  }
+  if (!assets?.length) return NextResponse.json({ assets: [] });
+
+  const { data: signedUrls, error: signedError } = await supabase.storage
+    .from("generated-media")
+    .createSignedUrls(assets.map((asset) => asset.storage_path), 60 * 60);
+  if (signedError || !signedUrls) {
+    return NextResponse.json({ error: "ساخت لینک امن فایل‌های رسانه ناموفق بود." }, { status: 503 });
+  }
+  const signedByPath = new Map(signedUrls.map((item) => [item.path, item.signedUrl]));
+  return NextResponse.json({
+    assets: assets.map((asset) => ({ ...asset, imageUrl: signedByPath.get(asset.storage_path) || null })),
+  });
+}
+
+export async function DELETE(request: NextRequest) {
+  const authorization = request.headers.get("authorization") || "";
+  const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!accessToken || !supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: "ابتدا وارد حساب کاربری شو." }, { status: 401 });
+  }
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+  });
+  const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+  if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
+
+  const parsed = await readBoundedJsonBody(request.body, 2 * 1024);
+  if ("error" in parsed || !parsed.value || typeof parsed.value !== "object") {
+    return NextResponse.json({ error: "درخواست حذف معتبر نیست." }, { status: 400 });
+  }
+  const id = (parsed.value as { id?: unknown }).id;
+  if (typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    return NextResponse.json({ error: "شناسه فایل معتبر نیست." }, { status: 400 });
+  }
+
+  const { data: asset, error: lookupError } = await supabase
+    .from("generated_media")
+    .select("id,storage_path")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (lookupError || !asset) return NextResponse.json({ error: "فایل پیدا نشد یا متعلق به این حساب نیست." }, { status: 404 });
+
+  const { error: storageError } = await supabase.storage
+    .from("generated-media")
+    .remove([asset.storage_path]);
+  if (storageError) {
+    console.error("Could not delete generated media file:", storageError);
+    return NextResponse.json({ error: "حذف فایل از فضای خصوصی ناموفق بود." }, { status: 503 });
+  }
+  const { error: rowError } = await supabase
+    .from("generated_media")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (rowError) {
+    console.error("Could not delete generated media metadata:", rowError);
+    return NextResponse.json({ error: "فایل حذف شد اما ثبت مشخصات آن پاک نشد؛ دوباره تلاش کن." }, { status: 503 });
+  }
+  return NextResponse.json({ deleted: true, id });
+}
