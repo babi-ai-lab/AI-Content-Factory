@@ -10,7 +10,7 @@ const MAX_ROWS_PER_TABLE = 5_000;
 const MAX_EXPORT_BYTES = 15 * 1024 * 1024;
 
 async function readAccountRows(
-  client: ReturnType<typeof createClient>,
+  client: any,
   descriptor: (typeof ACCOUNT_EXPORT_TABLES)[number],
   remainingBytes: number,
 ) {
