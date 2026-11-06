@@ -98,6 +98,7 @@ type Product = {
     reviewStatus?: ContentReviewStatus;
     reviewUpdatedAt?: string;
     reviewNote?: string;
+    versionNotes?: Record<string, string>;
   };
 };
 
@@ -1772,6 +1773,27 @@ const response = await fetch("/api/generate", {
     setVersionsLoading(false);
   }
 
+  function editContentVersionNote(version: ContentVersion) {
+    const currentItem = history.find((item) => item.id === version.historyId)
+      || calendarHistory.find((item) => item.id === version.historyId);
+    if (!currentItem) {
+      showNotice("محتوای مرتبط با این نسخه پیدا نشد.", "error");
+      return;
+    }
+    const currentNotes = currentItem.product._factoryMeta?.versionNotes || {};
+    const note = window.prompt(
+      "یادداشت این نسخه (حداکثر ۵۰۰ نویسه):",
+      currentNotes[version.id] || "",
+    );
+    if (note === null) return;
+    const nextNotes = { ...currentNotes };
+    const normalized = note.trim().slice(0, 500);
+    if (normalized) nextNotes[version.id] = normalized;
+    else delete nextNotes[version.id];
+    const boundedNotes = Object.fromEntries(Object.entries(nextNotes).slice(-10));
+    void updateHistoryMeta(currentItem, { versionNotes: boundedNotes });
+  }
+
   async function restoreContentVersion(version: ContentVersion) {
     if (!selectedHistoryId || !user?.id) return;
 
@@ -1898,7 +1920,7 @@ const response = await fetch("/api/generate", {
 
   }
 
-  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus; reviewNote: string }>) {
+  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus; reviewNote: string; versionNotes: Record<string, string> }>) {
     const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" as ContentReviewStatus, reviewUpdatedAt: undefined };
     const nextMeta = { ...current, ...patch };
     if (patch.reviewStatus || patch.reviewNote !== undefined) nextMeta.reviewUpdatedAt = new Date().toISOString();
@@ -2882,8 +2904,12 @@ const response = await fetch("/api/generate", {
                               <b>نسخه قبلی {contentVersions.length - index}</b>
                               <small>{formatDate(version.createdAt)}</small>
                               <p>{(version.content.caption || "").slice(0, 110)}{(version.content.caption || "").length > 110 ? "…" : ""}</p>
+                              {product._factoryMeta?.versionNotes?.[version.id] ? (
+                                <small className="version-note">یادداشت: {product._factoryMeta.versionNotes[version.id]}</small>
+                              ) : null}
                             </div>
                             <div className="version-row-actions">
+                              <button className="history-backup" onClick={() => editContentVersionNote(version)}>یادداشت</button>
                               <button className="history-backup" onClick={() => setCompareVersionId(version.id)}>مقایسه</button>
                               <button className="history-open" onClick={() => restoreContentVersion(version)}>بازگردانی</button>
                             </div>
