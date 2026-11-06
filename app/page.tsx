@@ -10,6 +10,8 @@ import CampaignManager from "@/components/campaign-manager";
 import PublicLanding from "@/components/public-landing";
 import MediaStudio from "@/components/media-studio";
 import { canAddBrandProfile, createBrandProfileEntry, normalizeBrandProfileEntries } from "@/lib/brand-profiles.mjs";
+import { CONTENT_REVIEW_STATUSES, getContentReviewStatusLabel, normalizeContentReviewStatus } from "@/lib/content-approval.mjs";
+import type { ContentReviewStatus } from "@/lib/content-approval.mjs";
 
 type BusinessType =
   | "retail"
@@ -88,7 +90,14 @@ type Product = {
   offer: string;
   differentiators: string;
   additionalInfo: string;
-  _factoryMeta?: { tags: string[]; folder: string; favorite: boolean; scheduledAt?: string };
+  _factoryMeta?: {
+    tags: string[];
+    folder: string;
+    favorite: boolean;
+    scheduledAt?: string;
+    reviewStatus?: ContentReviewStatus;
+    reviewUpdatedAt?: string;
+  };
 };
 
 type BrandProfile = {
@@ -590,6 +599,7 @@ export default function Home() {
 
   const [historySearch, setHistorySearch] = useState("");
   const [historyFolderFilter, setHistoryFolderFilter] = useState("همه پوشه‌ها");
+  const [historyReviewFilter, setHistoryReviewFilter] = useState<ContentReviewStatus | "all">("all");
   const [historyFavoritesOnly, setHistoryFavoritesOnly] = useState(false);
   const [selectedBulkIds, setSelectedBulkIds] = useState<string[]>([]);
 
@@ -1402,14 +1412,16 @@ export default function Home() {
     const term = historySearch.trim().toLowerCase();
 
     return history.filter((item) => {
-      const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
+      const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, reviewStatus: "draft" as ContentReviewStatus };
       const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.channel, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
       const matchesFavorite = !historyFavoritesOnly || meta.favorite;
-      return matchesSearch && matchesFolder && matchesFavorite;
+      const matchesReviewStatus = historyReviewFilter === "all"
+        || normalizeContentReviewStatus(meta.reviewStatus) === historyReviewFilter;
+      return matchesSearch && matchesFolder && matchesFavorite && matchesReviewStatus;
     });
-  }, [history, historySearch, historyFolderFilter, historyFavoritesOnly]);
+  }, [history, historySearch, historyFolderFilter, historyReviewFilter, historyFavoritesOnly]);
 
   const qualityAnalysis = useMemo(() => {
     if (!content) return null;
@@ -1860,9 +1872,11 @@ const response = await fetch("/api/generate", {
 
   }
 
-  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string }>) {
-    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "" };
-    const nextProduct = { ...item.product, _factoryMeta: { ...current, ...patch } };
+  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus }>) {
+    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" as ContentReviewStatus, reviewUpdatedAt: undefined };
+    const nextMeta = { ...current, ...patch };
+    if (patch.reviewStatus) nextMeta.reviewUpdatedAt = new Date().toISOString();
+    const nextProduct = { ...item.product, _factoryMeta: nextMeta };
     const { error } = await supabase.from("content_history").update({ product: nextProduct }).eq("id", item.id);
     if (error) return showNotice("ذخیره مشخصات کتابخانه ناموفق بود: " + error.message, "error");
     setHistory((old) => old.map((entry) => entry.id === item.id ? { ...entry, product: nextProduct } : entry));
@@ -2991,6 +3005,10 @@ const response = await fetch("/api/generate", {
               <option>همه پوشه‌ها</option>
               {Array.from(new Set(history.map((item) => item.product._factoryMeta?.folder || "عمومی"))).sort().map((folder) => <option key={folder}>{folder}</option>)}
             </select>
+            <select value={historyReviewFilter} onChange={(e) => setHistoryReviewFilter(e.target.value as ContentReviewStatus | "all")} aria-label="فیلتر وضعیت بازبینی">
+              <option value="all">همه وضعیت‌ها</option>
+              {CONTENT_REVIEW_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+            </select>
             <button className={historyFavoritesOnly ? "history-open" : "history-backup"} onClick={() => setHistoryFavoritesOnly((value) => !value)}>★ منتخب‌ها</button>
             <button className="history-backup" onClick={() => setSelectedBulkIds(filteredHistory.map((item) => item.id))} disabled={!filteredHistory.length}>انتخاب نتایج</button>
             <button className="history-backup" onClick={() => setSelectedBulkIds([])} disabled={!selectedBulkIds.length}>لغو انتخاب</button>
@@ -3026,10 +3044,21 @@ const response = await fetch("/api/generate", {
 
                   <small>{formatDate(item.createdAt)}</small>
                   <small>پوشه: {item.product._factoryMeta?.folder || "عمومی"} · برچسب‌ها: {(item.product._factoryMeta?.tags || []).join("، ") || "ندارد"}</small>
+                  <small>وضعیت بازبینی: {getContentReviewStatusLabel(item.product._factoryMeta?.reviewStatus)}
+                    {item.product._factoryMeta?.reviewUpdatedAt ? ` · آخرین تغییر: ${formatDate(item.product._factoryMeta.reviewUpdatedAt)}` : ""}
+                  </small>
                   </div>
                 </div>
 
                 <div className="history-item-actions">
+                  <select
+                    className="history-review-select"
+                    value={normalizeContentReviewStatus(item.product._factoryMeta?.reviewStatus)}
+                    onChange={(e) => updateHistoryMeta(item, { reviewStatus: normalizeContentReviewStatus(e.target.value) })}
+                    aria-label={`وضعیت بازبینی — ${item.product.name || "محتوا"}`}
+                  >
+                    {CONTENT_REVIEW_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                  </select>
                   <button className="history-backup" title="علاقه‌مندی" onClick={() => updateHistoryMeta(item, { favorite: !(item.product._factoryMeta?.favorite || false) })}>{item.product._factoryMeta?.favorite ? "★" : "☆"}</button>
                   <button className="history-backup" onClick={() => {
                     const raw = window.prompt("برچسب‌ها را با ویرگول جدا کن:", (item.product._factoryMeta?.tags || []).join(", "));
