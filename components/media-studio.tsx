@@ -203,7 +203,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
     context.fillRect(120, 1270, 90, 5);
     context.fillStyle = "#ffffff";
     context.font = '600 25px "Vazirmatn", Tahoma, sans-serif';
-    context.fillText(`اسلاید ${(index + 1).toLocaleString("fa-IR")} از ${carouselAssets.length.toLocaleString("fa-IR")}`, 960, 1300);
+    context.fillText(`اسلاید ${(index + 1).toLocaleString("fa-IR")} از ۵`, 960, 1300);
 
     return new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((value) => value ? resolve(value) : reject(new Error("ساخت فایل PNG ناموفق بود.")), "image/png");
@@ -346,6 +346,9 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
               </button>
             </div>
           </div>
+          {carouselAssets.some((asset) => !asset.imageUrl) && (
+            <small className="carousel-zip-hint">برای دریافت ZIP، لینک امن همه تصاویر باید فعال باشد؛ کتابخانه را تازه‌سازی کن.</small>
+          )}
           <div className="carousel-studio-grid">
             {carouselAssets.map((asset, index) => (
               <article className="carousel-studio-card" key={asset.id}>
