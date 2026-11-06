@@ -119,3 +119,26 @@
 - [ ] محافظت رمزهای افشاشده هنوز فعال نیست؛ فقط در صورت پشتیبانی طرح فعلی و بدون ارتقای خودکار بررسی شود.
 - [x] index کلید خارجی `generated_media.content_history_id` با migration نسخه‌دار ایجاد و در Production تأیید شد.
 - [ ] هفت index در گزارش advisor استفاده‌نشده‌اند؛ حذف آن‌ها تا زمان مشاهده workload واقعی توصیه نمی‌شود.
+
+
+## Android و Google Play
+
+- [x] Web App Manifest با شناسه پایدار، زبان فارسی، RTL و حالت standalone
+- [x] آیکون‌های vector با ابعاد اعلام‌شده 192 و 512 و نسخه maskable
+- [x] Service Worker با مسیر شبکه‌اول و صفحه آفلاین عمومی؛ بدون cache کردن محتوای خصوصی
+- [x] پیشنهاد نصب درون‌برنامه‌ای فقط در مرورگرهایی که رویداد نصب را پشتیبانی می‌کنند
+- [x] تست‌های واحد PWA و کنترل کیفیت build
+- [x] چک‌لیست خودکار Production برای manifest، آیکون‌ها، service worker و صفحه offline
+- [x] پیش‌نویس فارسی صفحه فروشگاه: [PLAY_STORE_LISTING_DRAFT_FA.md](PLAY_STORE_LISTING_DRAFT_FA.md)
+- [ ] اجرای smoke test واقعی روی هر دو origin پس از انتشار آخرین نسخه PWA
+- [ ] اجرای Bubblewrap validation روی PWA نهایی
+- [ ] تأیید شناسه دائمی Android package توسط مالک
+- [ ] ساخت پروژه TWA و تنظیم target SDK برابر API 36 یا بالاتر
+- [ ] تولید و نگهداری امن upload key تحت کنترل مالک
+- [ ] تنظیم Digital Asset Links با fingerprint گواهی Play App Signing
+- [ ] نصب و آزمون نسخه داخلی روی گوشی واقعی Android
+- [ ] تکمیل و انتشار سیاست حریم خصوصی و شرایط استفاده؛ پیش‌نویس فعلی قابل انتشار نیست
+- [ ] تکمیل Data safety، Content rating، Target audience، Ads declaration و App access در Play Console
+- [ ] تهیه آیکون PNG فروشگاه 512×512، Feature graphic 1024×500 و حداقل دو اسکرین‌شات واقعی
+- [ ] بررسی محدودیت‌های حساب Play Console و تکمیل الزامات testing/release در صورت اعمال
+- [ ] تأیید نهایی مالک و ارسال نسخه برای بررسی Google Play
