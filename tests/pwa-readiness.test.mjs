@@ -17,6 +17,13 @@ test("service worker never caches private pages, API responses, or media", async
   assert.match(worker, /Never cache authenticated HTML/);
   assert.doesNotMatch(worker, /caches\.put\(request/);
 });
+test("supported browsers receive an explicit, dismissible install action", async () => {
+  const component = await readFile(new URL("../components/pwa-registration.tsx", import.meta.url), "utf8");
+  assert.match(component, /beforeinstallprompt/);
+  assert.match(component, /installPrompt\.prompt\(\)/);
+  assert.match(component, /appinstalled/);
+  assert.match(component, /aria-label="نصب اپلیکیشن"/);
+});
 test("offline page explains private data is not available offline", async () => {
   const page = await readFile(new URL("../app/offline/page.tsx", import.meta.url), "utf8");
   assert.match(page, /اطلاعات خصوصی/);
