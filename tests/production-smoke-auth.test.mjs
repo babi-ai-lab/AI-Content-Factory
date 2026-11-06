@@ -28,3 +28,12 @@ test("production smoke verifies baseline browser security and cache headers", as
   assert.match(source, /public app shell must not be cached/);
   assert.match(source, /no-store/i);
 });
+
+test("production smoke verifies public privacy and account deletion resources", async () => {
+  const source = await readFile(new URL("../scripts/production-smoke.mjs", import.meta.url), "utf8");
+  assert.match(source, /path:\s*'\/privacy'/);
+  assert.match(source, /path:\s*'\/account-deletion'/);
+  assert.match(source, /Unpaid Services/);
+  assert.match(source, /info@eltbabak\.ir/);
+  assert.match(source, /حذف دائمی حساب و داده‌ها/);
+});
