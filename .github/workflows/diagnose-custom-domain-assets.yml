@@ -12,7 +12,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Compare root HTML and Next.js assets across Render edge IPs
         shell: bash
@@ -54,3 +54,31 @@ jobs:
               done < /tmp/probe/assets.txt
             fi
           done
+
+      - name: Run a real Chromium browser against the custom domain
+        shell: bash
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright >/dev/null 2>&1
+          npx playwright install chromium >/dev/null 2>&1
+          cat > probe.cjs <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+            const page = await browser.newPage();
+            page.on('pageerror', e => console.log('PAGE_ERROR=' + e.message));
+            page.on('console', m => { if (m.type() === 'error') console.log('CONSOLE_ERROR=' + m.text()); });
+            page.on('requestfailed', r => console.log('REQUEST_FAILED=' + r.url() + ' :: ' + (r.failure()?.errorText || '')));
+            page.on('response', r => { if (r.url().includes('/_next/')) console.log('NEXT_RESPONSE=' + r.status() + ' ' + r.url()); });
+            try {
+              const response = await page.goto('https://app.eltbabak.ir/', { waitUntil: 'domcontentloaded', timeout: 45000 });
+              console.log('NAVIGATION_STATUS=' + (response?.status() ?? 'none'));
+              await page.waitForTimeout(20000);
+              console.log('FINAL_URL=' + page.url());
+              console.log('BODY_TEXT=' + (await page.locator('body').innerText()).slice(0, 1400).replace(/\\s+/g, ' '));
+            } catch (e) { console.log('NAVIGATION_ERROR=' + e.message); }
+            await browser.close();
+          })();
+          JS
+          node probe.cjs
