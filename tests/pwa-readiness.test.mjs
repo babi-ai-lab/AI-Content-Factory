@@ -122,3 +122,12 @@ test("accepting the install prompt does not claim installation before appinstall
   assert.doesNotMatch(acceptedBranch[1], /setInstalled\(true\)/);
   assert.match(component, /const handleInstalled = \(\) => \{[\s\S]*?setInstalled\(true\)/);
 });
+
+test("public Android download page exposes the verified release and install component", async () => {
+  const page = await readFile(new URL("../app/download/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /AddToHomeScreen/);
+  assert.match(page, /AI-Content-Factory-1\.0\.0\.apk/);
+  assert.match(page, /ir\.eltbabak\.contentfactory/);
+  assert.match(page, /1C46E2EC8119768AF320A796B8824318BB99E5A77D97676637965B8FD3A4A0EC/);
+  assert.match(page, /افزودن به صفحه اصلی/);
+});
