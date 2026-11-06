@@ -35,6 +35,9 @@ test("Android workflow validates PWA and builds unsigned artifacts without secre
   const workflow = await readFile(new URL("../.github/workflows/android-twa.yml", import.meta.url), "utf8");
   assert.match(workflow, /bubblewrap validate --url=https:\/\/app\.eltbabak\.ir/);
   assert.match(workflow, /platforms;android-36/);
+  assert.match(workflow, /\.bubblewrap\/config\.json/);
+  assert.match(workflow, /bubblewrap doctor/);
+  assert.doesNotMatch(workflow, /bubblewrap updateConfig/);
   assert.match(workflow, /bubblewrap update --skipVersionUpgrade/);
   assert.match(workflow, /bubblewrap build --skipSigning/);
   assert.match(workflow, /actions\/upload-artifact@v4/);
