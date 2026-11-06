@@ -637,7 +637,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "ارتباط با مدل‌های Gemini برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن.",
+            "سرویس تولید محتوا موقتاً پاسخ‌گو نیست. لطفاً چند دقیقه دیگر دوباره تلاش کن.",
         },
         { status: 502 }
       );
@@ -663,8 +663,8 @@ export async function POST(request: NextRequest) {
             code: "GEMINI_QUOTA_EXCEEDED",
             quotaWindow: dailyQuotaExceeded ? "daily" : "short_term",
             error: dailyQuotaExceeded
-              ? "سهمیه روزانه رایگان Gemini به پایان رسیده است. پس از تمدید سهمیه دوباره تلاش کن یا محدودیت طرح Gemini را بررسی کن."
-              : "محدودیت تعداد درخواست Gemini فعال شده است. چند دقیقه بعد دوباره تلاش کن.",
+              ? "ظرفیت روزانه تولید محتوا به پایان رسیده است. پس از تمدید ظرفیت دوباره تلاش کن."
+              : "محدودیت موقت تعداد درخواست‌ها فعال شده است. چند دقیقه بعد دوباره تلاش کن.",
           },
           {
             status: 429,
@@ -677,7 +677,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "هر دو مدل Gemini در حال حاضر با مشکل ظرفیت مواجه هستند. چند دقیقه دیگر دوباره تلاش کن.",
+              "سرویس تولید محتوا در حال حاضر با محدودیت ظرفیت مواجه است. چند دقیقه دیگر دوباره تلاش کن.",
           },
           { status: 503 }
         );
@@ -687,7 +687,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "سرویس Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن.",
+              "سرویس تولید محتوا موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن.",
           },
           { status: 502 }
         );
@@ -700,7 +700,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن.",
+              "ساختار درخواست تولید محتوا معتبر نیست. تنظیمات سرویس را بررسی کن.",
           },
           { status: 502 }
         );
@@ -713,7 +713,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "کلید Gemini معتبر نیست یا دسترسی API برای آن فعال نشده است.",
+              "دسترسی سرویس تولید محتوا معتبر نیست یا هنوز فعال نشده است.",
           },
           { status: 502 }
         );
@@ -722,7 +722,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "ارتباط با Gemini برقرار نشد. تنظیمات API را بررسی کن.",
+            "ارتباط با سرویس تولید محتوا برقرار نشد. تنظیمات سرویس را بررسی کن.",
         },
         { status: 502 }
       );
