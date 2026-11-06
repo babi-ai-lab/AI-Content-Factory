@@ -1,0 +1,56 @@
+name: Diagnose custom-domain asset delivery
+
+on:
+  push:
+    branches:
+      - "diagnostic/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compare root HTML and Next.js assets across Render edge IPs
+        shell: bash
+        run: |
+          set -u
+          mkdir -p /tmp/probe
+          for target in "216.24.57.16" "216.24.57.18" "default"; do
+            echo "===== TARGET $target ====="
+            if [ "$target" = "default" ]; then
+              resolve_args=()
+            else
+              resolve_args=(--resolve "app.eltbabak.ir:443:$target")
+            fi
+            root="/tmp/probe/root-$target.html"
+            headers="/tmp/probe/headers-$target.txt"
+            code=$(curl -sS -L "${resolve_args[@]}" --connect-timeout 12 --max-time 35 -D "$headers" -o "$root" -w '%{http_code}' https://app.eltbabak.ir/ || true)
+            echo "ROOT_HTTP=$code ROOT_BYTES=$(wc -c < "$root" 2>/dev/null || echo 0)"
+            if [ -f "$headers" ]; then
+              grep -iE '^(HTTP/|content-type:|cache-control:|server:|cf-ray:|location:|content-length:)' "$headers" | tail -12 || true
+            fi
+            if [ -s "$root" ]; then
+              python - "$root" <<'PY'
+          import re,sys
+          s=open(sys.argv[1],encoding='utf-8',errors='replace').read()
+          print("RELEASE_MARKER_PRESENT=", "06-11-2026-A" in s)
+          assets=list(dict.fromkeys(re.findall(r'''(?:src|href)=["']([^"']*/_next/static/[^"']+\.js(?:\?[^"']*)?)["']''',s)))
+          print("JS_ASSETS=",len(assets))
+          for x in assets[:8]: print("ASSET="+x)
+          open('/tmp/probe/assets.txt','w').write('\n'.join(assets[:8]))
+          PY
+              while IFS= read -r asset; do
+                [ -n "$asset" ] || continue
+                if [[ "$asset" = http* ]]; then url="$asset"; else url="https://app.eltbabak.ir$asset"; fi
+                assetfile="/tmp/probe/asset-$target-$(echo "$asset" | md5sum | cut -c1-8).js"
+                ah="/tmp/probe/asset-h-$target-$(echo "$asset" | md5sum | cut -c1-8).txt"
+                acode=$(curl -sS -L "${resolve_args[@]}" --connect-timeout 12 --max-time 35 -D "$ah" -o "$assetfile" -w '%{http_code}' "$url" || true)
+                echo "ASSET_HTTP=$acode BYTES=$(wc -c < "$assetfile" 2>/dev/null || echo 0) URL=$asset"
+                grep -iE '^(HTTP/|content-type:|cache-control:|content-length:)' "$ah" | tail -4 || true
+              done < /tmp/probe/assets.txt
+            fi
+          done
