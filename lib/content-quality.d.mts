@@ -17,6 +17,7 @@ export function analyzeContent(
     cta?: string;
     preferredTerms?: string;
     avoidTerms?: string;
+    prohibitedClaims?: string;
   },
   channel?: string
 ): ContentQualityResult;
