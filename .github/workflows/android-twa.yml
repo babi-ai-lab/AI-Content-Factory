@@ -5,6 +5,10 @@ on:
   pull_request:
     paths:
       - "android/**"
+      - "public/icons/**"
+      - "app/manifest.ts"
+      - "app/layout.tsx"
+      - "scripts/generate-pwa-icons.mjs"
       - "scripts/validate-android-pwa.mjs"
       - ".github/workflows/android-twa.yml"
 
