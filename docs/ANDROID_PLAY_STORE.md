@@ -15,6 +15,8 @@ Service worker: https://app.eltbabak.ir/sw.js
 - Offline notice explicitly avoids promising offline access to private data.
 
 ## TWA packaging requirements
+
+- Google Play policy as of 31 August 2026 requires new apps and updates to target Android 16 (API level 36) or higher. Set and verify the generated Android project's target SDK accordingly at release time.
 1. Confirm the manifest and service worker are reachable over HTTPS.
 2. Confirm Android Chrome installs the PWA and reports no manifest/service-worker errors.
 3. Produce production PNG launcher assets (at least 512x512 and 192x192) from the approved icon artwork.
