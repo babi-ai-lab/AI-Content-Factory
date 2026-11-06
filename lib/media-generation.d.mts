@@ -18,3 +18,5 @@ export type ImageResponseImageSize =
   | "IMAGE_SIZE_TWO_K"
   | "IMAGE_SIZE_FOUR_K";
 export function toImageResponseImageSize(imageSize: string): ImageResponseImageSize | null;
+
+export function getImageServiceFailure(status: number): { status: number; message: string };
