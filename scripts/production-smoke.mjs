@@ -3,16 +3,16 @@ const targets = [
   { label: 'render-origin', origin: 'https://ai-content-factory-6m32.onrender.com' },
 ];
 
-async function assertUnauthenticatedJson(origin, path) {
+async function assertUnauthenticatedJson(origin, path, method = 'POST') {
   const response = await fetch(`${origin}${path}`, {
-    method: 'POST',
+    method,
     redirect: 'follow',
     signal: AbortSignal.timeout(30000),
     headers: {
-      'Content-Type': 'application/json',
+      ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
       'User-Agent': 'AI-Content-Factory-production-smoke/1.0',
     },
-    body: '{}',
+    ...(method === 'POST' ? { body: '{}' } : {}),
   });
   const responseText = await response.text();
   if (response.status !== 401) {
@@ -58,6 +58,7 @@ for (const target of targets) {
 
   await assertUnauthenticatedJson(target.origin, '/api/generate');
   await assertUnauthenticatedJson(target.origin, '/api/media/generate');
+  await assertUnauthenticatedJson(target.origin, '/api/account/export', 'GET');
 
   const pageResponse = await fetchWithRetry(`${target.origin}/`);
   const html = await pageResponse.text();
@@ -98,5 +99,5 @@ for (const target of targets) {
     }
   }
 
-  console.log(`PASS ${target.label}: health, anonymous API rejection, vendor-neutral errors, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
+  console.log(`PASS ${target.label}: health, anonymous API rejection including account export, vendor-neutral errors, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
 }
