@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.CONTENT_GENERATION_API_KEY || process.env.GEMINI_API_KEY;
 
   if (!accessToken || !supabaseUrl || !supabaseKey) {
     return NextResponse.json({ error: "ابتدا وارد حساب کاربری شو." }, { status: 401 });
