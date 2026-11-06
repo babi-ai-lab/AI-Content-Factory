@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
       storage_path: storagePath,
       prompt: input.prompt,
-      aspect_ratio: input.aspectRatio,
+      aspect_ratio: provider === "cloudflare" ? "1:1" : input.aspectRatio,
       mime_type: normalizedMimeType,
       byte_size: imageBuffer.length,
       content_history_id: input.contentHistoryId,
