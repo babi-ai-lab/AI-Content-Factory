@@ -169,6 +169,27 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
       : current.filter((id) => id !== campaignId));
   }
 
+  function exportCampaignComparisonCsv() {
+    if (comparisonData.length < 2) return;
+    const rows = [
+      ["شاخص", ...comparisonData.map((entry) => entry.campaign.name)],
+      ...comparisonRows.map((row) => [row.label, ...comparisonData.map((entry) => row.value(entry))]),
+    ];
+    const csv = "\uFEFF" + rows
+      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
+      .join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `campaign-comparison-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setNotice("گزارش مقایسه‌ای کمپین‌ها آماده دریافت است.");
+  }
+
 
 
   const loadCampaigns = useCallback(async () => {
@@ -462,7 +483,12 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
               <h3>مقایسه عملکرد کمپین‌ها</h3>
               <p>{selectedCampaigns.length.toLocaleString("fa-IR")} از ۴ کمپین انتخاب شده</p>
             </div>
-            <button type="button" className="history-backup" onClick={() => setSelectedComparisonIds([])}>پاک کردن انتخاب‌ها</button>
+            <div className="campaign-comparison-actions">
+              {selectedCampaigns.length >= 2 && (
+                <button type="button" className="primary-button" onClick={exportCampaignComparisonCsv}>دریافت فایل CSV</button>
+              )}
+              <button type="button" className="history-backup" onClick={() => setSelectedComparisonIds([])}>پاک کردن انتخاب‌ها</button>
+            </div>
           </div>
           {selectedCampaigns.length < 2 ? (
             <p className="campaign-comparison-hint">برای مشاهده گزارش مقایسه‌ای، حداقل یک کمپین دیگر را انتخاب کن.</p>
