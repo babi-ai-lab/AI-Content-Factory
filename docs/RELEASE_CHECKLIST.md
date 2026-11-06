@@ -34,8 +34,8 @@
 ### ۲. Meta / Instagram (مرحله بعدی اتصال انتشار)
 
 - [ ] اپلیکیشن Meta Developer بساز و Instagram API with Instagram Login را اضافه کن.
-- [ ] Redirect URI دقیق `https://app.eltbabak.ir/api/instagram/callback` را در تنظیمات Meta ثبت کن.
-- [ ] دسترسی‌های لازم برای حساب حرفه‌ای و انتشار محتوا را اضافه و آزمون کن.
+- [ ] Redirect URI دقیق `https://app.eltbabak.ir/integrations/instagram/callback` را در تنظیمات Meta ثبت کن.
+- [ ] دسترسی‌های `instagram_business_basic` و `instagram_business_content_publish` را اضافه کن؛ حساب خودت را به‌عنوان Instagram Tester ثبت و دعوت را بپذیر.
 - [ ] App ID و App Secret را فقط در متغیرهای محیطی امن Render ثبت کن؛ Secret را در GitHub یا چت قرار نده.
 - [ ] اتصال حساب حرفه‌ای، انتشار تصویر/ریلز و زمان‌بندی را با حساب آزمایشی end-to-end تأیید کن.
 
