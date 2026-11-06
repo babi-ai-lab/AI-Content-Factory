@@ -1518,8 +1518,8 @@ const response = await fetch("/api/generate", {
 
       showNotice(
         data.mode === "demo"
-          ? `خروجی نمونه ساخته و در حساب تو ذخیره شد. برای تولید واقعی، تنظیمات Gemini را بررسی کن.${campaignLinkMessage}`
-          : `محتوا با موفقیت تولید و آنلاین ذخیره شد${data.model ? ` (${data.model})` : ""}.${campaignLinkMessage}`,
+          ? `خروجی نمونه ساخته و در حساب تو ذخیره شد. برای تولید واقعی، تنظیمات سرویس تولید محتوا را بررسی کن.${campaignLinkMessage}`
+          : `محتوا با موفقیت تولید و آنلاین ذخیره شد.${campaignLinkMessage}`,
         campaignLinkFailed || data.mode === "demo" ? "info" : "success"
       );
 
@@ -2284,7 +2284,7 @@ const response = await fetch("/api/generate", {
               <b>۱</b><span><strong>هویت برند را ثبت کن</strong><small>هویت، دانش معتبر، لحن و دعوت به اقدام</small></span><span>←</span>
             </button>
             <button type="button" onClick={() => document.getElementById("content-generator")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-              <b>۲</b><span><strong>محتوای کانال‌محور بساز</strong><small>اطلاعیه Gemini را تأیید کن و خروجی را بررسی کن</small></span><span>←</span>
+              <b>۲</b><span><strong>محتوای کانال‌محور بساز</strong><small>اطلاعیه پردازش داده را مطالعه کن و خروجی را بررسی کن</small></span><span>←</span>
             </button>
             <button type="button" onClick={() => document.getElementById("campaign-manager")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
               <b>۳</b><span><strong>کمپین را مدیریت کن</strong><small>هدف، کانال و محتواهای مرتبط را کنار هم نگه دار</small></span><span>←</span>
@@ -2655,11 +2655,10 @@ const response = await fetch("/api/generate", {
           <div className="provider-disclosure" role="note">
             <strong>شفافیت پردازش داده‌ها</strong>
             <p>
-              اطلاعات کسب‌وکار، مخاطب و پروفایل برند برای تولید به Google Gemini ارسال می‌شود.
-              در تنظیم فعلی از Free Tier استفاده می‌شود و طبق شرایط Google، داده‌های ارسالی ممکن است برای بهبود محصولات استفاده شوند.
+              اطلاعات کسب‌وکار، مخاطب و پروفایل برند برای تولید محتوا از طریق زیرساخت پردازش هوشمند و پردازشگرهای فنی مورد استفاده این سرویس پردازش می‌شوند. داده‌های ارسالی ممکن است مطابق شرایط و سیاست‌های پردازش این زیرساخت‌ها نگهداری یا برای ارائه، ایمن‌سازی و بهبود خدمات استفاده شوند.
               اطلاعات محرمانه مشتریان، رمزها یا داده‌های شخصی حساس را وارد نکن.
             </p>
-            <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer">مشاهده شرایط پردازش داده Gemini</a>
+            <span className="provider-disclosure-link-note">با تأیید این اطلاعیه، پردازش داده‌ها برای تولید محتوا را می‌پذیری.</span>
             {dataProcessingNoticeAccepted ? (
               <div className="provider-disclosure-accepted-row">
                 <span className="provider-disclosure-accepted">اطلاعیه را تأیید کرده‌ای.</span>
