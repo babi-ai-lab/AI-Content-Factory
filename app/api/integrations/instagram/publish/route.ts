@@ -36,6 +36,15 @@ export async function POST(request: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
 
+  const rateLimitSince = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentJobs, error: rateLimitError } = await supabase
+    .from("instagram_publish_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", rateLimitSince);
+  if (rateLimitError) return NextResponse.json({ error: "بررسی محدودیت انتشار ناموفق بود." }, { status: 503 });
+  if ((recentJobs || 0) >= 20) return NextResponse.json({ error: "برای جلوگیری از انتشار ناخواسته، حداکثر ۲۰ درخواست انتشار در هر ساعت مجاز است." }, { status: 429 });
+
   const parsedBody = await readBoundedJsonBody(request.body, 12 * 1024);
   if ("error" in parsedBody) {
     if (parsedBody.error === "too_large") {
