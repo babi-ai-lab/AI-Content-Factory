@@ -141,7 +141,7 @@ for (const target of targets) {
     throw new Error(`${target.label}: offline fallback page is missing`);
   }
 
-  const assets = [...html.matchAll(/(?:src|href)=["']([^"']*_next\\/static\\/[^"']+)["']/g)]
+  const assets = [...html.matchAll(/(?:src|href)=["']([^"']*_next\/static\/[^"']+)["']/g)]
     .map((match) => new URL(match[1], target.origin).toString());
   const scripts = [...new Set(assets.filter((asset) => /\.js(?:\?|$)/.test(asset)))].slice(0, 3);
   if (scripts.length === 0) throw new Error(`${target.label}: no production JavaScript assets were found`);
