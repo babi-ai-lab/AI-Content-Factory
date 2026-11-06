@@ -2281,7 +2281,7 @@ const response = await fetch("/api/generate", {
               if (section) section.open = true;
               section?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}>
-              <b>۱</b><span><strong>هویت برند را ثبت کن</strong><small>نام، مخاطب، لحن و دعوت به اقدام</small></span><span>←</span>
+              <b>۱</b><span><strong>هویت برند را ثبت کن</strong><small>هویت، دانش معتبر، لحن و دعوت به اقدام</small></span><span>←</span>
             </button>
             <button type="button" onClick={() => document.getElementById("content-generator")?.scrollIntoView({ behavior: "smooth", block: "start" })}>
               <b>۲</b><span><strong>محتوای کانال‌محور بساز</strong><small>اطلاعیه Gemini را تأیید کن و خروجی را بررسی کن</small></span><span>←</span>
@@ -2298,7 +2298,7 @@ const response = await fetch("/api/generate", {
           <div>
             <span className="step">پروفایل برند</span>
             <h2>هویت ثابت کسب‌وکار</h2>
-            <p>یک‌بار مشخصات برند را ثبت کن تا در تولیدهای بعدی به‌صورت خودکار رعایت شود.</p>
+            <p>یک‌بار هویت، واقعیت‌های تأییدشده، شواهد و ادعاهای ممنوع را ثبت کن تا در تولیدهای بعدی رعایت شوند.</p>
           </div>
           <span className="brand-profile-toggle">ویرایش پروفایل <span>⌄</span></span>
         </summary>
