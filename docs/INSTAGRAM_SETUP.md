@@ -16,11 +16,11 @@
 3. یک App جدید بساز و نوع **Business** را انتخاب کن.
 4. در Use cases یا Products، گزینه **Instagram API with Instagram Login** را راه‌اندازی کن. اگر رابط جدید Meta گزینه «Manage messaging & content on Instagram» را نشان داد، همان مسیر Instagram را انتخاب کن.
 5. در بخش API setup with Instagram Login، دسترسی‌های زیر را اضافه کن:
-   - \`instagram_business_basic\`
-   - \`instagram_business_content_publish\`
+   - `instagram_business_basic`
+   - `instagram_business_content_publish`
 6. در تنظیمات Business Login / OAuth، این Redirect URI را دقیقاً ثبت کن:
 
-   \`https://app.eltbabak.ir/integrations/instagram/callback\`
+   `https://app.eltbabak.ir/integrations/instagram/callback`
 
    دقت کن که اسلش پایانی اضافه یا مسیر متفاوت نباشد.
 7. حساب اینستاگرام خودت را به‌عنوان **Instagram Tester** اضافه کن و دعوت را در خود Instagram بپذیر:
@@ -34,54 +34,54 @@
 
 | Key | Value |
 |---|---|
-| \`INSTAGRAM_APP_ID\` | App ID بخش Instagram API with Instagram Login |
-| \`INSTAGRAM_APP_SECRET\` | App Secret همان بخش |
+| `INSTAGRAM_APP_ID` | App ID بخش Instagram API with Instagram Login |
+| `INSTAGRAM_APP_SECRET` | App Secret همان بخش |
 
 **App Secret را در چت، GitHub، کد یا فایل عمومی قرار نده.** فقط در Environment امن Render ثبت کن.
 
 این دو مقدار از قبل در سرویس تنظیم شده‌اند و لازم نیست تغییرشان بدهی:
 
-- \`INSTAGRAM_REDIRECT_URI=https://app.eltbabak.ir/integrations/instagram/callback\`
-- \`INSTAGRAM_GRAPH_API_VERSION=v26.0\`
+- `INSTAGRAM_REDIRECT_URI=https://app.eltbabak.ir/integrations/instagram/callback`
+- `INSTAGRAM_GRAPH_API_VERSION=v26.0`
 
 ## ۴. ساخت کلید رمزنگاری توکن
 
 برای نگهداری امن Access Token، یک کلید تصادفی ۳۲ بایتی لازم است. در PowerShell ویندوز این دستورات را اجرا کن:
 
-\`\`\`powershell
+```powershell
 $bytes = New-Object byte[] 32
 $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
 $rng.GetBytes($bytes)
 $key = [Convert]::ToBase64String($bytes)
 $key
-\`\`\`
+```
 
 خروجی را کپی کن و **همان مقدار** را در دو محل قرار بده:
 
 1. Render → AI-Content-Factory → Environment:
-   - Key: \`INSTAGRAM_TOKEN_ENCRYPTION_KEY\`
+   - Key: `INSTAGRAM_TOKEN_ENCRYPTION_KEY`
    - Value: خروجی PowerShell
 
 2. Supabase → SQL Editor، این دستور را اجرا کن و به‌جای مقدار نمونه، همان کلید را قرار بده:
 
-\`\`\`sql
+```sql
 select vault.create_secret(
   'PASTE_THE_SAME_BASE64_KEY_HERE',
   'instagram_token_encryption_key',
   'AES-256-GCM key for Instagram access tokens'
 );
-\`\`\`
+```
 
 این کلید را در چت ارسال نکن. اگر کلید گم یا عوض شود، توکن‌های ذخیره‌شده قبلی قابل رمزگشایی نخواهند بود و حساب باید دوباره متصل شود.
 
 ## ۵. فعال‌سازی انتشار زمان‌بندی‌شده
 
-زیرساخت worker و Edge Function آماده و مستقر شده‌اند. دو مقدار زیر نیز در Supabase Vault ثبت شده‌اند:
+Edge Function مربوط به worker در Supabase مستقر است. این دو مقدار در Supabase Vault ثبت شده‌اند:
 
-- \`supabase_project_url\`
-- \`instagram_publish_cron_secret\`
+- `supabase_project_url`
+- `instagram_publish_cron_secret`
 
-فعلاً \`INSTAGRAM_SCHEDULER_ENABLED\` روی \`false\` باقی بماند. بعد از ثبت App ID، App Secret و کلید رمزنگاری، به من اطلاع بده؛ سپس cron را فعال می‌کنم، متغیر زمان‌بندی را روشن می‌کنم و تست واقعی انتشار را انجام می‌دهم.
+در حال حاضر هیچ job زمان‌بندی‌شده‌ای در pg_cron ثبت نشده است. پس از ثبت App ID، App Secret و کلید رمزنگاری، باید job زمان‌بندی‌شده با امضای HMAC ساخته و فعال شود؛ سپس متغیر زمان‌بندی در Render روشن و تست واقعی انتشار انجام می‌شود. تا آن زمان زمان‌بندی را آماده بهره‌برداری اعلام نمی‌کنیم.
 
 ## ۶. آزمون نهایی
 
