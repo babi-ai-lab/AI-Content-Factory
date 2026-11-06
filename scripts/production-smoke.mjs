@@ -131,6 +131,26 @@ for (const target of targets) {
     }
   }
 
+  // The public Android download page is part of the install journey and must remain complete.
+  const downloadResponse = await fetchWithRetry(`${target.origin}/download`);
+  const downloadHtml = await downloadResponse.text();
+  const requiredDownloadContent = [
+    "نسخه رسمی اندروید",
+    "افزودن به صفحه اصلی",
+    "SHA-256",
+    "AI-Content-Factory-1.0.0.apk",
+    "ir.eltbabak.contentfactory",
+  ];
+  for (const phrase of requiredDownloadContent) {
+    if (!downloadHtml.includes(phrase)) {
+      throw new Error(`${target.label}: download page is missing required content: ${phrase}`);
+    }
+  }
+  const apkReleaseUrl = "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.0/AI-Content-Factory-1.0.0.apk";
+  if (!downloadHtml.includes(apkReleaseUrl)) {
+    throw new Error(`${target.label}: download page does not point to the official APK release asset`);
+  }
+
   const manifestResponse = await fetchWithRetry(`${target.origin}/manifest.webmanifest`);
   const manifest = await manifestResponse.json();
   if (!manifest.name || !manifest.short_name || !manifest.start_url || manifest.display !== 'standalone' || manifest.prefer_related_applications !== false) {
