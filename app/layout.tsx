@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [{ url: "/icons/app-icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/app-icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/app-icon-512.png", type: "image/png" }],
   },
   openGraph: {
     title: "AI Content Factory | فضای کاری بازاریابی کسب‌وکارها",
