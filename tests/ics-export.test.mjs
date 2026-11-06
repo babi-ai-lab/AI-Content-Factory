@@ -4,7 +4,7 @@ import { buildCalendarIcs } from "../lib/ics-export.mjs";
 
 test("exports scheduled content as a standards-based UTC calendar", () => {
   const calendar = buildCalendarIcs([
-    { id: "item-1", name: "کمپین، ویژه; پاییز", scheduledAt: "2026-11-07T12:30:00+03:30" },
+    { id: "item-1", name: "کمپین, ویژه; پاییز", scheduledAt: "2026-11-07T12:30:00+03:30" },
   ], new Date("2026-11-06T10:00:00Z"));
 
   assert.match(calendar, /BEGIN:VCALENDAR/);
