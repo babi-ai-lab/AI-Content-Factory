@@ -454,7 +454,7 @@ function buildTextExport(product: Product, content: Content) {
     const heading = String(index + 1) + ". " + tab.label;
     const body = tab.id === "stories"
       ? content.stories.map((story, storyIndex) => "استوری " + String(storyIndex + 1) + "\n" + story).join("\n\n")
-      : content[tab.id];
+      : String(content[tab.id] ?? "");
     return heading + "\n----------------------------------------\n" + body;
   });
 
