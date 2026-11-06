@@ -38,7 +38,7 @@ jobs:
       - name: Install Android SDK 36 build components
         run: |
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
       - name: Install Bubblewrap CLI
         run: npm install --global @bubblewrap/cli
@@ -46,6 +46,11 @@ jobs:
       - name: Configure Bubblewrap toolchain without interactive prompts
         working-directory: android
         run: |
+          CMDLINE_TOOLS_BIN="$(find "$ANDROID_HOME/cmdline-tools" -mindepth 2 -maxdepth 2 -type d -name bin | sort -V | tail -n 1)"
+          test -n "$CMDLINE_TOOLS_BIN"
+          if [ ! -e "$ANDROID_HOME/bin" ]; then
+            ln -s "$CMDLINE_TOOLS_BIN" "$ANDROID_HOME/bin"
+          fi
           mkdir -p "$HOME/.bubblewrap"
           printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
