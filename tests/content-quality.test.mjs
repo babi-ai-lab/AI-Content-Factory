@@ -77,7 +77,7 @@ test("returns an empty-state result when content is unavailable", () => {
 test("flags prohibited brand claims even when the rest of the content is strong", () => {
   const result = analyzeContent({
     ...strongContent,
-    caption: strongContent.caption + " ما نتیجه را تضمین می‌کنیم.",
+    caption: strongContent.caption + " تضمین نتیجه",
   }, {
     prohibitedClaims: "تضمین نتیجه، بهترین در ایران",
   });
