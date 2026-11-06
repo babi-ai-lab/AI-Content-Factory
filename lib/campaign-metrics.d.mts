@@ -17,3 +17,9 @@ export type CampaignMetricResults = {
 };
 export function parseCampaignMetric(value: string | number | null | undefined, options?: { integer?: boolean }): number | null;
 export function calculateCampaignMetrics(input?: CampaignMetricInput): CampaignMetricResults;
+
+export type CampaignCsvCell = string | number | null | undefined;
+export function buildCampaignComparisonCsv(
+  headers: readonly CampaignCsvCell[],
+  rows: readonly (readonly CampaignCsvCell[])[],
+): string;

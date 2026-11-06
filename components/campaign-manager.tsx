@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { calculateCampaignMetrics, parseCampaignMetric } from "@/lib/campaign-metrics.mjs";
+import { buildCampaignComparisonCsv, calculateCampaignMetrics, parseCampaignMetric } from "@/lib/campaign-metrics.mjs";
 
 type CampaignStatus = "draft" | "active" | "paused" | "completed";
 type CampaignStage = { id: string; title: string; done: boolean };
@@ -171,13 +171,10 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
 
   function exportCampaignComparisonCsv() {
     if (comparisonData.length < 2) return;
-    const rows = [
+    const csv = buildCampaignComparisonCsv(
       ["شاخص", ...comparisonData.map((entry) => entry.campaign.name)],
-      ...comparisonRows.map((row) => [row.label, ...comparisonData.map((entry) => row.value(entry))]),
-    ];
-    const csv = "\uFEFF" + rows
-      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(","))
-      .join("\r\n");
+      comparisonRows.map((row) => [row.label, ...comparisonData.map((entry) => row.value(entry))]),
+    );
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
