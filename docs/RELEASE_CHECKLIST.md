@@ -146,6 +146,14 @@
 - [ ] تأیید نهایی مالک و ارسال نسخه برای بررسی Google Play
 
 
+## Account deletion and legal-page release update — 2026-11-06
+
+- [x] PR #118 isolates account-deletion reauthentication in a non-persistent Supabase client; the shared signed-in app session is not modified.
+- [x] Regression test covers the isolated auth client and guards against signing out the shared client.
+- [x] Production smoke script now checks `/privacy` and `/account-deletion` for required disclosure text; CI validates the smoke assertions.
+- [x] Render reports deployment `dep-dbn1o0mc6qcc73cajh20` for commit `b756563240f2f1f05faee808dfe13a03c4f9c1cb` as `live`.
+- [ ] Direct external HTTP verification of both legal routes remains outstanding: this execution environment could not resolve the custom domain, so deployment status is not treated as proof of public route reachability.
+
 ## Android / Play Console audit update — 2026-11-06
 
 ### Confirmed by live account configuration
