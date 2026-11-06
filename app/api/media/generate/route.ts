@@ -95,7 +95,12 @@ export async function POST(request: NextRequest) {
       if (response.status === 429) {
         return NextResponse.json({ error: "ظرفیت سرویس تولید تصویر موقتاً به پایان رسیده است. بعداً دوباره تلاش کن." }, { status: 429 });
       }
-      if (response.status === 401 || response.status === 403) {\n        return NextResponse.json({ error: "دسترسی سرویس تولید تصویر موقتاً برقرار نیست. لطفاً کمی بعد دوباره تلاش کن." }, { status: 503 });\n      }\n      if (response.status === 400 || response.status === 404) {\n        return NextResponse.json({ error: "درخواست تولید تصویر با تنظیمات فعلی سازگار نیست. شرح تصویر را ساده‌تر کن یا بعداً دوباره تلاش کن." }, { status: 502 });\n      }\n      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
+      if (response.status === 401 || response.status === 403) {
+        return NextResponse.json({ error: "دسترسی سرویس تولید تصویر موقتاً برقرار نیست. لطفاً کمی بعد دوباره تلاش کن." }, { status: 503 });
+      }
+      if (response.status === 400 || response.status === 404) {
+        return NextResponse.json({ error: "درخواست تولید تصویر با تنظیمات فعلی سازگار نیست. شرح تصویر را ساده‌تر کن یا بعداً دوباره تلاش کن." }, { status: 502 });
+      }\n      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
     }
   } catch (error) {
     console.error("Image generation provider request failed:", error);
