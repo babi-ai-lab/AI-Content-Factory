@@ -147,10 +147,15 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
     { label: "بودجه", value: (entry) => formatMetricAmount(entry.campaign.budget_amount, entry.campaign.currency_label) },
     { label: "هزینه واقعی", value: (entry) => formatMetricAmount(entry.campaign.spend_amount, entry.campaign.currency_label) },
     { label: "درآمد", value: (entry) => formatMetricAmount(entry.campaign.revenue_amount, entry.campaign.currency_label) },
+    { label: "نمایش", value: (entry) => formatMetricValue(entry.campaign.impressions) },
+    { label: "کلیک", value: (entry) => formatMetricValue(entry.campaign.clicks) },
+    { label: "سرنخ", value: (entry) => formatMetricValue(entry.campaign.leads) },
+    { label: "تبدیل", value: (entry) => formatMetricValue(entry.campaign.conversions) },
     { label: "نرخ کلیک (CTR)", value: (entry) => formatMetricValue(entry.metrics.ctr, "٪") },
     { label: "هزینه هر سرنخ (CPL)", value: (entry) => formatMetricAmount(entry.metrics.cpl, entry.campaign.currency_label) },
     { label: "هزینه هر تبدیل (CPA)", value: (entry) => formatMetricAmount(entry.metrics.cpa, entry.campaign.currency_label) },
     { label: "نرخ تبدیل", value: (entry) => formatMetricValue(entry.metrics.conversionRate, "٪") },
+    { label: "مصرف بودجه", value: (entry) => formatMetricValue(entry.metrics.budgetUtilization, "٪") },
     { label: "بازده هزینه تبلیغ (ROAS)", value: (entry) => formatMetricValue(entry.metrics.roas, "×") },
   ];
 
@@ -463,7 +468,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
             <p className="campaign-comparison-hint">برای مشاهده گزارش مقایسه‌ای، حداقل یک کمپین دیگر را انتخاب کن.</p>
           ) : (
             <div className="campaign-comparison-scroll">
-              <table className="campaign-comparison-table">
+              <table className="campaign-comparison-table" aria-label="مقایسه شاخص‌های عملکرد کمپین‌ها">
                 <thead>
                   <tr>
                     <th scope="col">شاخص</th>
