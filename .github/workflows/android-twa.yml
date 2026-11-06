@@ -42,7 +42,7 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
       - name: Install Bubblewrap CLI
-        run: npm install --global @bubblewrap/cli
+        run: npm install --global @bubblewrap/cli@1.27.0
 
       - name: Configure Bubblewrap toolchain without interactive prompts
         working-directory: android
@@ -63,6 +63,13 @@ jobs:
       - name: Generate Android project from the reviewed TWA manifest
         working-directory: android
         run: bubblewrap update --skipVersionUpgrade --manifest=./twa-manifest.json
+
+      - name: Verify generated Android package and Play target API
+        working-directory: android
+        run: |
+          grep -Fq 'applicationId "ir.eltbabak.contentfactory"' app/build.gradle
+          grep -Eq 'minSdkVersion 24' app/build.gradle
+          grep -Eq 'targetSdkVersion 36' app/build.gradle
 
       - name: Build unsigned Android App Bundle for internal testing
         working-directory: android

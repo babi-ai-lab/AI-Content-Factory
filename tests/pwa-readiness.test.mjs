@@ -35,6 +35,10 @@ test("Android TWA configuration uses the owner-confirmed permanent application I
 test("Android workflow validates PWA and builds unsigned artifacts without secrets", async () => {
   const workflow = await readFile(new URL("../.github/workflows/android-twa.yml", import.meta.url), "utf8");
   assert.match(workflow, /node scripts\/validate-android-pwa\.mjs/);
+  assert.match(workflow, /npm install --global @bubblewrap\/cli@1\.27\.0/);
+  assert.match(workflow, /targetSdkVersion 36/);
+  assert.match(workflow, /minSdkVersion 24/);
+  assert.ok(workflow.includes('applicationId "ir.eltbabak.contentfactory"'));
   assert.match(workflow, /bubblewrap build --skipSigning --skipPwaValidation/);
   assert.match(workflow, /\.\/gradlew --no-daemon assembleDebug/);
   assert.match(workflow, /outputs\/apk\/debug\/\*\.apk/);
