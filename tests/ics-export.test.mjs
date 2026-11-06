@@ -11,7 +11,8 @@ test("exports scheduled content as a standards-based UTC calendar", () => {
   assert.match(calendar, /VERSION:2\.0/);
   assert.match(calendar, /DTSTART:20261107T090000Z/);
   assert.match(calendar, /DTEND:20261107T093000Z/);
-  assert.ok(calendar.includes("SUMMARY:کمپین\\, ویژه\\; پاییز"));
+  const unfolded = calendar.replace(/\\r\\n[ \\t]/g, "");
+  assert.ok(unfolded.includes("SUMMARY:کمپین\\, ویژه\\; پاییز"));
   assert.match(calendar, /STATUS:CONFIRMED/);
   assert.match(calendar, /END:VCALENDAR/);
 });
