@@ -769,7 +769,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const content = extractJson(raw);
+    const content = parseGeneratedContent(raw);
     console.log(
       `Content successfully generated using ${result.model}`
     );
