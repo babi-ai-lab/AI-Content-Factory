@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { BrandProfileInput } from "@/lib/server-controls.mjs";
 import { parseGeneratedContent } from "@/lib/generated-content.mjs";
+import { buildPersianCopyQualityInstructions } from "@/lib/persian-copy-quality.mjs";
 export const runtime = "nodejs";
 import {
   shouldFallbackGeminiStatus,
@@ -351,6 +352,8 @@ ${channelLabel}
 
 راهنمای اختصاصی کانال:
 ${selectedChannelGuidance}
+
+${buildPersianCopyQualityInstructions(channel)}
 
 قوانین مهم:
 

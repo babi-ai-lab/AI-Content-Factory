@@ -8,6 +8,7 @@ import JalaliDateTimePicker from "@/components/jalali-date-time-picker";
 import MonthlyContentCalendar from "@/components/monthly-content-calendar";
 import CampaignManager from "@/components/campaign-manager";
 import PublicLanding from "@/components/public-landing";
+import MediaStudio from "@/components/media-studio";
 
 type BusinessType =
   | "retail"
@@ -2837,6 +2838,12 @@ const response = await fetch("/api/generate", {
                 </div>
 
               </div>
+
+              <MediaStudio
+                key={`${selectedHistoryId || "draft"}-${(content.caption || "").slice(0, 48)}`}
+                contentHistoryId={selectedHistoryId || null}
+                initialPrompt={`یک تصویر تبلیغاتی حرفه‌ای برای برند ${product.businessName || brandProfile.brandName || "کسب‌وکار"} بساز. موضوع: ${product.name}. حوزه: ${product.category}. ویژگی‌های تأییدشده: ${product.features}. مخاطب: ${product.audience || brandProfile.audience}. هدف: ${product.goal}. لحن بصری: ${brandProfile.voice || product.tone}. ارزش پیشنهادی: ${brandProfile.valueProposition}. پیام اصلی محتوا: ${(content.caption || "").slice(0, 1000)}. از ساختن نوشته، قیمت، لوگو یا ادعای جدید خودداری کن.`.slice(0, 3000)}
+              />
 
               <button className="secondary-button regenerate" onClick={generate} disabled={loading}>
 
