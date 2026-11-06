@@ -29,7 +29,7 @@ Jasper روی Brand Voice، دانش محصول و مخاطب، راهنمای �
 Buffer دستیار AI را به فضای ساخت محتوا و صف انتشار متصل می‌کند و زمان‌بندی، مدیریت چند کانال و مشاهده عملکرد را در یک جریان ارائه می‌دهد.
 
 - مزیت رقابتی: انتشار و مدیریت کانال‌ها.
-- وضعیت فعلی: کد OAuth، انتشار مستقیم تصویر/ریلز و worker زمان‌بندی در مخزن پیاده‌سازی شده است؛ اما تا ثبت Meta App ID/Secret، کلید رمزنگاری در Render و Vault، فعال‌سازی cron و آزمون واقعی، این قابلیت در Production فعال محسوب نمی‌شود.
+- وضعیت فعلی: کد OAuth، انتشار مستقیم تصویر/ریلز و worker زمان‌بندی در مخزن پیاده‌سازی شده است؛ اما کلید رمزنگاری در Render/Vault ثبت و cron به‌صورت غیرفعال آماده شده است؛ تا ثبت Meta App ID/Secret، اتصال حساب واقعی و آزمون end-to-end، این قابلیت در Production فعال محسوب نمی‌شود.
 
 منابع: [Buffer AI Assistant](https://support.buffer.com/en-us/articles/using-buffers-ai-assistant-qbBulfw9sn)، [Buffer MCP](https://buffer.com/mcp)
 
