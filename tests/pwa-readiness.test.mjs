@@ -57,6 +57,18 @@ test("Android workflow validates PWA and builds unsigned artifacts without secre
   assert.match(workflow, /actions\/upload-artifact@v4/);
   assert.doesNotMatch(workflow, /BUBBLEWRAP_KEYSTORE_PASSWORD|BUBBLEWRAP_KEY_PASSWORD/);
 });
+test("public account deletion resource verifies the owner and calls the existing deletion function", async () => {
+  const page = await readFile(new URL("../app/account-deletion/page.tsx", import.meta.url), "utf8");
+  const form = await readFile(new URL("../components/account-deletion-form.tsx", import.meta.url), "utf8");
+  const landing = await readFile(new URL("../components/public-landing.tsx", import.meta.url), "utf8");
+  assert.match(page, /درخواست حذف حساب کاربری/);
+  assert.match(page, /robots: \{ index: true/);
+  assert.match(form, /signInWithPassword/);
+  assert.match(form, /functions\.invoke\("delete-account"/);
+  assert.match(form, /window\.confirm/);
+  assert.match(form, /data\?\.deleted !== true/);
+  assert.match(landing, /href="\/account-deletion"/);
+});
 test("service worker never caches private pages, API responses, or media", async () => {
   const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /request\.mode !== "navigate"/);
