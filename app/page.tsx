@@ -2491,7 +2491,7 @@ const response = await fetch("/api/generate", {
         />
       )}
 
-      {user?.id && <InstagramIntegration userId={user.id} />}
+      {user?.id && <InstagramIntegration userId={user.id} suggestedCaption={content?.caption || ""} />}
 
       <div className="workspace">
 
