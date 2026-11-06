@@ -109,6 +109,10 @@ jobs:
                   console.log('AUTH_EMAIL_INPUT_VISIBLE=' + await page.locator('input[type="email"]').first().isVisible().catch(() => false));
                   console.log('AUTH_PASSWORD_INPUT_VISIBLE=' + await page.locator('input[type="password"]').first().isVisible().catch(() => false));
                 }
+                const apiPage = await browser.newPage();
+                const apiResponse = await apiPage.goto(url + '/api/integrations/instagram/status');
+                console.log('INSTAGRAM_STATUS_UNAUTH=' + (apiResponse ? apiResponse.status() : 'NO_RESPONSE'));
+                await apiPage.close();
               } catch (e) { console.log('COMPARE_NAV_ERROR=' + url + ' :: ' + e.message); }
               await page.close();
             }
