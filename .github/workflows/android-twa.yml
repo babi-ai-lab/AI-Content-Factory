@@ -64,6 +64,9 @@ jobs:
         working-directory: android
         run: bubblewrap update --skipVersionUpgrade --manifest=./twa-manifest.json
 
+      - name: Enforce and verify Android release version metadata
+        run: node scripts/ensure-android-version.mjs
+
       - name: Verify generated Android package and Play target API
         working-directory: android
         run: |
