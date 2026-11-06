@@ -97,6 +97,7 @@ type Product = {
     scheduledAt?: string;
     reviewStatus?: ContentReviewStatus;
     reviewUpdatedAt?: string;
+    reviewNote?: string;
   };
 };
 
@@ -1437,7 +1438,7 @@ export default function Home() {
 
     return history.filter((item) => {
       const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, reviewStatus: "draft" as ContentReviewStatus };
-      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.channel, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
+      const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.channel, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", meta.reviewNote || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
       const matchesFavorite = !historyFavoritesOnly || meta.favorite;
@@ -1897,10 +1898,10 @@ const response = await fetch("/api/generate", {
 
   }
 
-  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus }>) {
+  async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus; reviewNote: string }>) {
     const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" as ContentReviewStatus, reviewUpdatedAt: undefined };
     const nextMeta = { ...current, ...patch };
-    if (patch.reviewStatus) nextMeta.reviewUpdatedAt = new Date().toISOString();
+    if (patch.reviewStatus || patch.reviewNote !== undefined) nextMeta.reviewUpdatedAt = new Date().toISOString();
     const nextProduct = { ...item.product, _factoryMeta: nextMeta };
     const { error } = await supabase.from("content_history").update({ product: nextProduct }).eq("id", item.id);
     if (error) return showNotice("ذخیره مشخصات کتابخانه ناموفق بود: " + error.message, "error");
@@ -3103,6 +3104,11 @@ const response = await fetch("/api/generate", {
                   <small>وضعیت بازبینی: {getContentReviewStatusLabel(item.product._factoryMeta?.reviewStatus)}
                     {item.product._factoryMeta?.reviewUpdatedAt ? ` · آخرین تغییر: ${formatDate(item.product._factoryMeta.reviewUpdatedAt)}` : ""}
                   </small>
+                  {item.product._factoryMeta?.reviewNote ? (
+                    <small className="history-review-note" title={item.product._factoryMeta.reviewNote}>
+                      یادداشت بازبینی: {item.product._factoryMeta.reviewNote}
+                    </small>
+                  ) : null}
                   </div>
                 </div>
 
@@ -3110,12 +3116,25 @@ const response = await fetch("/api/generate", {
                   <select
                     className="history-review-select"
                     value={normalizeContentReviewStatus(item.product._factoryMeta?.reviewStatus)}
-                    onChange={(e) => updateHistoryMeta(item, { reviewStatus: normalizeContentReviewStatus(e.target.value) })}
+                    onChange={(e) => {
+                      const reviewStatus = normalizeContentReviewStatus(e.target.value);
+                      if (reviewStatus === "changes_requested") {
+                        const note = window.prompt("توضیح اصلاحات لازم (حداکثر ۵۰۰ نویسه):", item.product._factoryMeta?.reviewNote || "");
+                        if (note === null) return;
+                        updateHistoryMeta(item, { reviewStatus, reviewNote: note.trim().slice(0, 500) });
+                      } else {
+                        updateHistoryMeta(item, { reviewStatus });
+                      }
+                    }}
                     aria-label={`وضعیت بازبینی — ${item.product.name || "محتوا"}`}
                   >
                     {CONTENT_REVIEW_STATUSES.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
                   </select>
                   <button className="history-backup" title="علاقه‌مندی" onClick={() => updateHistoryMeta(item, { favorite: !(item.product._factoryMeta?.favorite || false) })}>{item.product._factoryMeta?.favorite ? "★" : "☆"}</button>
+                  <button className="history-backup" onClick={() => {
+                    const note = window.prompt("یادداشت بازبینی (حداکثر ۵۰۰ نویسه):", item.product._factoryMeta?.reviewNote || "");
+                    if (note !== null) updateHistoryMeta(item, { reviewNote: note.trim().slice(0, 500) });
+                  }}>یادداشت</button>
                   <button className="history-backup" onClick={() => {
                     const raw = window.prompt("برچسب‌ها را با ویرگول جدا کن:", (item.product._factoryMeta?.tags || []).join(", "));
                     if (raw !== null) updateHistoryMeta(item, { tags: Array.from(new Set(raw.split(",").map((tag) => tag.trim()).filter(Boolean))).slice(0, 12) });
