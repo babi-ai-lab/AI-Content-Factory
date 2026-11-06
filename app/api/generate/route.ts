@@ -541,7 +541,7 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey && !shouldUseDemoGeneration(process.env.NODE_ENV, apiKey)) {
-      console.error("Gemini provider is not configured in production.", { requestId });
+      console.error("AI generation service is not configured in production.", { requestId });
       return NextResponse.json(
         {
           code: "AI_PROVIDER_NOT_CONFIGURED",
@@ -633,7 +633,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "ارتباط با مدل‌های Gemini برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن.",
+            "ارتباط با سرویس تولید محتوا برقرار نشد. لطفاً چند دقیقه دیگر دوباره تلاش کن.",
         },
         { status: 502 }
       );
@@ -645,7 +645,7 @@ export async function POST(request: NextRequest) {
       const detail = await aiResponse.text();
 
       console.error(
-        `Gemini API error (${result.model}):`,
+        "AI generation service error:",
         aiResponse.status,
         detail
       );
@@ -656,11 +656,11 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
           {
-            code: "GEMINI_QUOTA_EXCEEDED",
+            code: "AI_GENERATION_QUOTA_EXCEEDED",
             quotaWindow: dailyQuotaExceeded ? "daily" : "short_term",
             error: dailyQuotaExceeded
-              ? "سهمیه روزانه رایگان Gemini به پایان رسیده است. پس از تمدید سهمیه دوباره تلاش کن یا محدودیت طرح Gemini را بررسی کن."
-              : "محدودیت تعداد درخواست Gemini فعال شده است. چند دقیقه بعد دوباره تلاش کن.",
+              ? "سهمیه روزانه سرویس تولید محتوا به پایان رسیده است. پس از تمدید سهمیه دوباره تلاش کن."
+              : "محدودیت تعداد درخواست‌های سرویس تولید محتوا فعال شده است. چند دقیقه بعد دوباره تلاش کن.",
           },
           {
             status: 429,
@@ -673,7 +673,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "هر دو مدل Gemini در حال حاضر با مشکل ظرفیت مواجه هستند. چند دقیقه دیگر دوباره تلاش کن.",
+              "سرویس تولید محتوا در حال حاضر با مشکل ظرفیت مواجه است. چند دقیقه دیگر دوباره تلاش کن.",
           },
           { status: 503 }
         );
@@ -683,7 +683,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "سرویس Gemini موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن.",
+              "سرویس تولید محتوا موقتاً در دسترس نیست. کمی بعد دوباره تلاش کن.",
           },
           { status: 502 }
         );
@@ -696,7 +696,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "مدل یا ساختار درخواست Gemini معتبر نیست. نام مدل و تنظیمات API را بررسی کن.",
+              "ساختار درخواست تولید محتوا معتبر نیست. تنظیمات سرویس را بررسی کن.",
           },
           { status: 502 }
         );
@@ -709,7 +709,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error:
-              "کلید Gemini معتبر نیست یا دسترسی API برای آن فعال نشده است.",
+              "تنظیمات دسترسی سرویس تولید محتوا معتبر نیست. پیکربندی سرور را بررسی کن.",
           },
           { status: 502 }
         );
@@ -718,7 +718,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "ارتباط با Gemini برقرار نشد. تنظیمات API را بررسی کن.",
+            "ارتباط با سرویس تولید محتوا برقرار نشد. تنظیمات سرور را بررسی کن.",
         },
         { status: 502 }
       );
@@ -752,7 +752,7 @@ export async function POST(request: NextRequest) {
 
     if (!raw) {
       console.error(
-        "Gemini returned an empty response:",
+        "AI generation service returned an empty response:",
         JSON.stringify(resultData)
       );
 
@@ -766,12 +766,11 @@ export async function POST(request: NextRequest) {
 
     const content = extractJson(raw);
     console.log(
-      `Content successfully generated using ${result.model}`
+      "Content successfully generated."
     );
 
     return NextResponse.json({
       mode: "ai",
-      model: result.model,
       content,
       usage,
     });
