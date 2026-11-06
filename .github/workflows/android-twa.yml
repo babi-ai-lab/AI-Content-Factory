@@ -42,7 +42,7 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
 
       - name: Install Bubblewrap CLI
-        run: npm install --global @bubblewrap/cli
+        run: npm install --global @bubblewrap/cli@1.27.0
 
       - name: Configure Bubblewrap toolchain without interactive prompts
         working-directory: android
