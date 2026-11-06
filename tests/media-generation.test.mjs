@@ -62,3 +62,20 @@ test("maps supported image sizes to provider enum values", () => {
   assert.equal(toImageResponseImageSize("1k"), null);
   assert.equal(toImageResponseImageSize("8K"), null);
 });
+
+test("maps upstream image failures to accurate vendor-neutral user messages", async () => {
+  assert.deepEqual(getImageServiceFailure(429), {
+    status: 429,
+    message: "ظرفیت سرویس تولید تصویر موقتاً به پایان رسیده است. بعداً دوباره تلاش کن.",
+  });
+  assert.equal(getImageServiceFailure(401).status, 503);
+  assert.equal(getImageServiceFailure(403).status, 503);
+  assert.equal(getImageServiceFailure(404).status, 503);
+  assert.equal(getImageServiceFailure(400).status, 422);
+  assert.match(getImageServiceFailure(400).message, /درخواست تصویر قابل پردازش نیست/);
+  assert.equal(getImageServiceFailure(500).status, 502);
+  assert.doesNotMatch(
+    Object.values([400, 401, 403, 404, 429, 500]).map((status) => getImageServiceFailure(status).message).join(" "),
+    /Gemini|Google|گوگل|جمنای/i,
+  );
+});
