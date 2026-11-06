@@ -4,6 +4,7 @@ import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
   toImageResponseAspectRatio,
+  toImageResponseSize,
   validateMediaGenerationInput,
 } from "../lib/media-generation.mjs";
 
@@ -51,4 +52,17 @@ test("maps supported UI aspect ratios to the image API enum values", () => {
     ],
   );
   assert.equal(toImageResponseAspectRatio("7:5"), null);
+});
+
+test("maps supported image sizes to the image API enum values", () => {
+  assert.deepEqual(
+    ["512", "1K", "2K", "4K"].map(toImageResponseSize),
+    [
+      "IMAGE_SIZE_FIVE_TWELVE",
+      "IMAGE_SIZE_ONE_K",
+      "IMAGE_SIZE_TWO_K",
+      "IMAGE_SIZE_FOUR_K",
+    ],
+  );
+  assert.equal(toImageResponseSize("8K"), null);
 });
