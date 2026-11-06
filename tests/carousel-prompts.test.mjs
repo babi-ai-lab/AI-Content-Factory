@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildCarouselSlidePrompts } from "../lib/carousel-prompts.mjs";
+import { buildCarouselSlidePrompts, compactCarouselCopy } from "../lib/carousel-prompts.mjs";
 
 test("creates five distinct visual briefs from the five approved story texts", () => {
   const stories = ["اسلاید اول", "اسلاید دوم", "اسلاید سوم", "اسلاید چهارم", "اسلاید پنجم"];
@@ -20,4 +20,13 @@ test("rejects incomplete or oversized carousel copy", () => {
   assert.throws(() => buildCarouselSlidePrompts("شرح معتبر برای تصویر برند", ["فقط یک اسلاید"]));
   assert.throws(() => buildCarouselSlidePrompts("شرح معتبر برای تصویر برند", ["a", "b", "c", "d", "e"]));
   assert.throws(() => buildCarouselSlidePrompts("short", ["a", "b", "c", "d", "e"]));
+});
+
+test("compacts slide copy at word boundaries for readable image overlays", () => {
+  const text = "این یک متن بسیار طولانی برای نمایش روی تصویر کاروسل است که باید در اندازه مناسب خلاصه شود و در انتها کلمه نصفه نماند.";
+  const compact = compactCarouselCopy(text, 60);
+  assert.ok(compact.length <= 60);
+  assert.ok(compact.endsWith("…"));
+  assert.equal(compact.includes(" "), true);
+  assert.throws(() => compactCarouselCopy("متن", 20));
 });

@@ -895,3 +895,9 @@ footer span { padding: 0 6px; }
 .carousel-studio-card p{margin:0;color:#4c5873;font-size:.8rem;line-height:1.8;white-space:pre-wrap}
 .carousel-studio-card a{color:#2d4ba0;font-size:.75rem;text-decoration:none;font-weight:700}
 @media(max-width:640px){.media-studio-actions{display:grid}.media-studio-actions>*{width:100%}.carousel-studio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+.carousel-slide-copy{width:100%;min-height:96px;resize:vertical;border:1px solid #d9e0ed;border-radius:8px;padding:9px;background:#fff;color:#303b58;font:inherit;font-size:.78rem;line-height:1.8;direction:rtl}
+.carousel-copy-count{color:#7a8499;font-size:.68rem;text-align:left}
+.carousel-download{min-height:36px;border:1px solid #d4dced;border-radius:8px;background:#f7f9ff;color:#2d4ba0;font:inherit;font-size:.76rem;font-weight:700;cursor:pointer;padding:7px}
+.carousel-download:disabled{opacity:.55;cursor:wait}
