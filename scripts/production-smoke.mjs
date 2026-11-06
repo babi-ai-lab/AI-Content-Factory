@@ -72,7 +72,7 @@ for (const target of targets) {
     ['x-content-type-options', /^nosniff$/i],
     ['x-frame-options', /^DENY$/i],
     ['referrer-policy', /^strict-origin-when-cross-origin$/i],
-    ['permissions-policy', /camera=\\(\\), microphone=\\(\\), geolocation=\\(\\)/i],
+    ['permissions-policy', /camera=\(\), microphone=\(\), geolocation=\(\)/i],
     ['strict-transport-security', /max-age=31536000/i],
   ];
   for (const [header, expected] of securityHeaderExpectations) {
