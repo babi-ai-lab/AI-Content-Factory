@@ -1,7 +1,21 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+const deletionSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      // Account deletion must not replace or clear an unrelated app session
+      // in the browser's shared local storage.
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  }
+);
 
 export default function AccountDeletionForm() {
   const [email, setEmail] = useState("");
@@ -16,18 +30,16 @@ export default function AccountDeletionForm() {
 
     setBusy(true);
     setMessage("");
-    let authenticated = false;
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await deletionSupabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       if (authError || !authData.session?.access_token) {
         throw new Error("ورود تأیید نشد. ایمیل و رمز عبور فعلی را بررسی کن.");
       }
-      authenticated = true;
 
-      const { data, error } = await supabase.functions.invoke("delete-account", {
+      const { data, error } = await deletionSupabase.functions.invoke("delete-account", {
         body: { password },
         headers: { Authorization: `Bearer ${authData.session.access_token}` },
       });
@@ -35,13 +47,14 @@ export default function AccountDeletionForm() {
         throw new Error("حذف حساب تأیید نشد. حساب حذف نشده است؛ کمی بعد دوباره تلاش کن.");
       }
 
-      await supabase.auth.signOut({ scope: "local" });
       setPassword("");
       setMessage("درخواست با موفقیت انجام شد. حساب کاربری و داده‌های وابسته حذف شدند.");
     } catch (error) {
-      if (authenticated) await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       setMessage(error instanceof Error ? error.message : "حذف حساب انجام نشد.");
     } finally {
+      // Clear only the isolated deletion client; never sign out the app's
+      // shared Supabase client or disturb another account's active session.
+      await deletionSupabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       setBusy(false);
     }
   }
