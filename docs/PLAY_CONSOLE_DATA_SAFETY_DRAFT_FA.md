@@ -11,7 +11,7 @@
 - ایمیل‌های تأیید/بازیابی از مسیر SMTP متصل به Supabase و Resend ارسال می‌شوند.
 - برنامه روی Render میزبانی می‌شود.
 - پرداخت درون‌برنامه‌ای، اشتراک، تبلیغات، دسترسی به موقعیت مکانی، مخاطبان، پیامک/تماس، دوربین یا میکروفون در نسخه فعلی شناسایی نشده‌اند.
-- کاربر می‌تواند حساب را از داخل برنامه حذف کند و داده حساب را خروجی بگیرد.
+- کاربر می‌تواند حساب را از داخل برنامه حذف کند و داده حساب را خروجی بگیرد؛ صفحه عمومی درخواست حذف حساب نیز در مسیر `https://app.eltbabak.ir/account-deletion` پیاده‌سازی شده است.
 
 ## دسته‌های داده‌ای که باید در Play Console بررسی شوند
 
@@ -43,7 +43,7 @@
 - آیا حذف حساب همه داده‌های مرتبط و نسخه‌های پشتیبان را در بازه مشخص حذف می‌کند؟ مدت واقعی backup retention هنوز تعیین نشده است.
 - آیا داده‌های جمع‌آوری‌شده برای Analytics/Advertising استفاده می‌شوند؟ هیچ SDK تبلیغاتی یا تحلیل شخص ثالث در این بررسی شناسایی نشده، اما وابستگی‌های نهایی باید بازبینی شوند.
 - آیا ایجاد حساب اجباری است؟ بخش‌های خصوصی برنامه به حساب و تأیید ایمیل نیاز دارند.
-- آیا کاربران می‌توانند داده را حذف کنند؟ حذف درون‌برنامه‌ای وجود دارد؛ URL عمومی درخواست حذف حساب هنوز ایجاد نشده است.
+- آیا کاربران می‌توانند داده را حذف کنند؟ مسیر حذف درون‌برنامه‌ای و صفحه عمومی درخواست حذف حساب پیاده‌سازی شده‌اند؛ دسترسی عمومی و آزمون انتها‌به‌انتها باید پیش از ثبت فرم تأیید شود.
 - آیا کاربر زیر ۱۸ سال مخاطب هدف است؟ تصمیم نهایی Target audience باید توسط مالک ثبت شود.
 
 ## مواردی که نباید بدون شواهد انتخاب شوند
@@ -59,3 +59,15 @@
 3. تکمیل اطلاعات اپراتور، ایمیل حریم خصوصی/پشتیبانی، مناطق میزبانی و زمان‌های نگهداری.
 4. بازبینی شرایط و DPA ارائه‌دهندگان و SDKهای نهایی.
 5. تطبیق نهایی این برگه با فرم Data safety و سیاست حریم خصوصی؛ سپس ارسال در Play Console.
+
+
+## یافته‌های مناطق پردازش (۶ نوامبر ۲۰۲۶؛ برای تکمیل فرم، نه تأیید حقوقی)
+
+- Supabase project: `us-east-1` (AWS Northern Virginia); organization plan: Free. Region is the primary project location, not a guarantee that all ancillary processing stays there.
+- Render web service: Oregon, USA; Free plan.
+- Resend: its current security/DPA materials state stored data is in the United States; email and log retention is 30 days on Free/Pro/Scale, with remaining customer data deleted within 90 days after account termination. Confirm account-specific applicability.
+- Cloudflare Workers AI: standard inference Customer Content is processed only as needed and not retained after delivery; operational metadata may be retained. Logging/caching/stateful features are exceptions. Actual inference geography has not been verified.
+- Gemini API: the connected key's billing tier is not verified. Paid and unpaid service terms differ; do not answer the Play Console data-sharing/training questions until the actual tier and project settings are confirmed.
+- Render log retention and Supabase Free backup lifecycle remain unverified.
+
+**Blocking owner verification:** Gemini billing tier and logging settings; actual Cloudflare/Google inference geography; retention settings for Render logs and Supabase backups; final subprocessor/DPA review; and legal review for applicable jurisdictions. Do not mark the form final based on this draft.
