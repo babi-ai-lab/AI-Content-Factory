@@ -12,7 +12,7 @@ test("creates five distinct visual briefs from the five approved story texts", (
     assert.match(prompt, /No text, letters, numbers/);
   });
   assert.notEqual(prompts[0], prompts[4]);
-  const maxLengthPrompts = buildCarouselSlidePrompts("x".repeat(3000), ["y".repeat(1200), "b", "c", "d", "e"]);
+  const maxLengthPrompts = buildCarouselSlidePrompts("x".repeat(3000), ["y".repeat(1200), "bb", "cc", "dd", "ee"]);
   assert.ok(maxLengthPrompts.every((prompt) => prompt.length <= 3000));
 });
 
