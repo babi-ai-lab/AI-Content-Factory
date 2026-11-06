@@ -30,6 +30,7 @@ Service worker: https://app.eltbabak.ir/sw.js
 
 ## Release gates that require the owner
 - Google Play Console developer account and one-time registration fee, if not already enrolled.
+- If the account is a personal account created after 13 November 2023: closed testing with at least 12 opted-in testers continuously for 14 days, followed by a production-access application. Confirm applicability in the account dashboard: https://support.google.com/googleplay/android-developer/answer/14151465.
 - Final confirmation of the permanent Android application ID and public-facing app name.
 - Owner-controlled signing key custody and Play App Signing enrollment.
 - Accurate privacy policy URL, support contact, Data safety form, content rating, target audience, ads declaration, app access instructions, and any required testing declaration.
