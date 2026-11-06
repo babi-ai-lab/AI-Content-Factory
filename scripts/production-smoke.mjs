@@ -72,6 +72,10 @@ for (const target of targets) {
     throw new Error(`${target.label}: stale authentication diagnostic text is present`);
   }
 
+  if (/Gemini|Google|گوگل|جمنای/i.test(html)) {
+    throw new Error(`${target.label}: external processor branding is visible in the public product shell`);
+  }
+
   const retiredIntegrationLabels = [
     'مدیریت انتشار اینستاگرام',
     'اتصال حساب حرفه‌ای اینستاگرام',
