@@ -626,7 +626,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.response) {
       console.error(
-        "Both Gemini model attempts failed:",
+        "Both content-generation model attempts failed:",
         result.networkError
       );
 
