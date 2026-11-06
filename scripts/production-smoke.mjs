@@ -135,7 +135,7 @@ for (const target of targets) {
   const downloadResponse = await fetchWithRetry(`${target.origin}/download`);
   const downloadHtml = await downloadResponse.text();
   const requiredDownloadContent = [
-    "دانلود رسمی اندروید",
+    "نسخه رسمی اندروید",
     "افزودن به صفحه اصلی",
     "SHA-256",
     "AI-Content-Factory-1.0.0.apk",
