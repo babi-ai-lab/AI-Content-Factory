@@ -1412,7 +1412,7 @@ export default function Home() {
     const term = historySearch.trim().toLowerCase();
 
     return history.filter((item) => {
-      const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false };
+      const meta = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, reviewStatus: "draft" as ContentReviewStatus };
       const searchable = [item.product.name, item.product.category, item.product.goal, item.product.businessName, item.product.businessType, item.product.contentTemplate, item.product.channel, item.product.serviceArea, ...meta.tags, meta.folder, meta.scheduledAt || "", item.content.caption, item.content.reel, item.content.ad, ...item.content.stories].join(" ").toLowerCase();
       const matchesSearch = !term || searchable.includes(term);
       const matchesFolder = historyFolderFilter === "همه پوشه‌ها" || meta.folder === historyFolderFilter;
@@ -1873,7 +1873,7 @@ const response = await fetch("/api/generate", {
   }
 
   async function updateHistoryMeta(item: HistoryItem, patch: Partial<{ tags: string[]; folder: string; favorite: boolean; scheduledAt: string; reviewStatus: ContentReviewStatus }>) {
-    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" as ContentReviewStatus };
+    const current = item.product._factoryMeta || { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" as ContentReviewStatus, reviewUpdatedAt: undefined };
     const nextMeta = { ...current, ...patch };
     if (patch.reviewStatus) nextMeta.reviewUpdatedAt = new Date().toISOString();
     const nextProduct = { ...item.product, _factoryMeta: nextMeta };
