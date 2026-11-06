@@ -10,6 +10,16 @@ test("PWA manifest declares standalone identity and Chromium install icon sizes"
   assert.match(manifest, /purpose:\s*"maskable"/);
   assert.match(manifest, /theme_color:\s*"#1c2b5e"/);
 });
+test("build generates raster launcher and Play Store icons", async () => {
+  const packageJson = await readFile(new URL("../package.json", import.meta.url), "utf8");
+  const generator = await readFile(new URL("../scripts/generate-pwa-icons.mjs", import.meta.url), "utf8");
+  assert.match(packageJson, /generate-pwa-icons\.mjs/);
+  assert.match(packageJson, /"sharp":\s*"0\.35\.5"/);
+  assert.match(generator, /app-icon-192\.png/);
+  assert.match(generator, /app-icon-512\.png/);
+  assert.match(generator, /app-icon-maskable-512\.png/);
+  assert.match(generator, /play-store-icon\.png/);
+});
 test("service worker never caches private pages, API responses, or media", async () => {
   const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(worker, /request\.mode !== "navigate"/);
