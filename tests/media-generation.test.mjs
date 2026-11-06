@@ -4,6 +4,7 @@ import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
   toImageResponseAspectRatio,
+  toImageResponseImageSize,
   validateMediaGenerationInput,
 } from "../lib/media-generation.mjs";
 
