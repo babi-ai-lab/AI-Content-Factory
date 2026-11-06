@@ -31,6 +31,43 @@ function getDefaultKey(jsonEnvName: string, legacyEnvName: string) {
   return Deno.env.get(legacyEnvName) || "";
 }
 
+async function removeUserStorageFiles(
+  adminClient: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<void> {
+  for (const bucket of ["generated-media", "instagram-media"]) {
+    const paths: string[] = [];
+
+    async function walk(prefix: string): Promise<void> {
+      let offset = 0;
+      while (true) {
+        const { data, error } = await adminClient.storage.from(bucket).list(prefix, {
+          limit: 1000,
+          offset,
+          sortBy: { column: "name", order: "asc" },
+        });
+        if (error) throw new Error(`Storage listing failed for ${bucket}.`);
+
+        const entries = data || [];
+        for (const entry of entries) {
+          const path = `${prefix}/${entry.name}`;
+          if (entry.id !== null) paths.push(path);
+          else await walk(path);
+        }
+
+        if (entries.length < 1000) break;
+        offset += entries.length;
+      }
+    }
+
+    await walk(userId);
+    for (let offset = 0; offset < paths.length; offset += 100) {
+      const { error } = await adminClient.storage.from(bucket).remove(paths.slice(offset, offset + 100));
+      if (error) throw new Error(`Storage cleanup failed for ${bucket}.`);
+    }
+  }
+}
+
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -84,6 +121,15 @@ Deno.serve(async (request: Request) => {
   const adminClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
+  try {
+    await removeUserStorageFiles(adminClient, user.id);
+  } catch (storageCleanupError) {
+    console.error("Account deletion storage cleanup failed:", storageCleanupError);
+    return jsonResponse({
+      error: "Account files could not be fully removed. The account was not deleted; contact support.",
+    }, 503);
+  }
+
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
   if (deleteError) {
     console.error("Supabase account deletion failed:", {
