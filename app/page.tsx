@@ -451,11 +451,11 @@ function downloadFile(filename: string, text: string, mime: string) {
 
 function buildTextExport(product: Product, content: Content) {
   const sections = getTabsForChannel(product.channel).map((tab, index) => {
-    const heading = `${index + 1}. ${tab.label}`;
+    const heading = String(index + 1) + ". " + tab.label;
     const body = tab.id === "stories"
-      ? content.stories.map((story, storyIndex) => `استوری ${storyIndex + 1}\\n${story}`).join("\\n\\n")
+      ? content.stories.map((story, storyIndex) => "استوری " + String(storyIndex + 1) + "\n" + story).join("\n\n")
       : content[tab.id];
-    return `${heading}\\n----------------------------------------\\n${body}`;
+    return heading + "\n----------------------------------------\n" + body;
   });
 
   return [
@@ -465,29 +465,29 @@ function buildTextExport(product: Product, content: Content) {
     "",
     "مشخصات کسب‌وکار و موضوع",
     "----------------------------------------",
-    `نام محصول یا خدمت: ${product.name}`,
-    `قیمت: ${product.price || "ثبت نشده"}`,
-    `نوع کسب‌وکار: ${businessTypeLabel(product.businessType)}`,
-    `نام برند/کسب‌وکار: ${product.businessName || "ثبت نشده"}`,
-    `دسته‌بندی/موضوع: ${product.category || "ثبت نشده"}`,
-    `جنس: ${product.fabric || "ثبت نشده"}`,
-    `رنگ‌ها: ${product.colors || "ثبت نشده"}`,
-    `محدوده فعالیت: ${product.serviceArea || "ثبت نشده"}`,
-    `پیشنهاد ویژه: ${product.offer || "ثبت نشده"}`,
-    `مزیت رقابتی: ${product.differentiators || "ثبت نشده"}`,
-    `اطلاعات تکمیلی: ${product.additionalInfo || "ثبت نشده"}`,
-    `ویژگی‌ها: ${product.features}`,
-    `مخاطب هدف: ${product.audience || "ثبت نشده"}`,
-    `هدف محتوا: ${product.goal}`,
-    `قالب تولید: ${contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"}`,
-    `کانال اصلی: ${contentChannelLabel(product.channel)}`,
-    `لحن برند: ${product.tone}`,
+    "نام محصول یا خدمت: " + product.name,
+    "قیمت: " + (product.price || "ثبت نشده"),
+    "نوع کسب‌وکار: " + businessTypeLabel(product.businessType),
+    "نام برند/کسب‌وکار: " + (product.businessName || "ثبت نشده"),
+    "دسته‌بندی/موضوع: " + (product.category || "ثبت نشده"),
+    "جنس: " + (product.fabric || "ثبت نشده"),
+    "رنگ‌ها: " + (product.colors || "ثبت نشده"),
+    "محدوده فعالیت: " + (product.serviceArea || "ثبت نشده"),
+    "پیشنهاد ویژه: " + (product.offer || "ثبت نشده"),
+    "مزیت رقابتی: " + (product.differentiators || "ثبت نشده"),
+    "اطلاعات تکمیلی: " + (product.additionalInfo || "ثبت نشده"),
+    "ویژگی‌ها: " + product.features,
+    "مخاطب هدف: " + (product.audience || "ثبت نشده"),
+    "هدف محتوا: " + product.goal,
+    "قالب تولید: " + (contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"),
+    "کانال اصلی: " + contentChannelLabel(product.channel),
+    "لحن برند: " + product.tone,
     "",
     ...sections,
     "",
     "========================================",
     "ساخته‌شده با AI Content Factory",
-  ].join("\\n");
+  ].join("\n");
 }
 
 export default function Home() {
