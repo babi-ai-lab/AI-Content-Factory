@@ -13,6 +13,13 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/",
+        headers: [
+          ...securityHeaders,
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: securityHeaders,
       },
