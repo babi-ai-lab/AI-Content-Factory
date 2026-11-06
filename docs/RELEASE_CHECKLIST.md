@@ -41,10 +41,10 @@
 
 ### ۳. Render
 
-- [ ] در Settings → Health Checks مسیر `/api/health` را ثبت کن؛ مسیر کد آماده است اما در تنظیمات سرویس هنوز ثبت نشده است.
-- [ ] Build Command را از `npm install && npm run build` به `npm ci && npm run build` تغییر بده.
+- [x] مسیر Health Check برابر `/api/health` در تنظیمات Render ثبت و تأیید شده است.
+- [x] Build Command روی `npm ci && npm run build` تنظیم شده است.
 - [ ] در GitHub برای شاخه `main` محافظت فعال کن: فقط Pull Request، الزام موفقیت CI، و منع force-push.
-- [ ] Auto-Deploy را از On Commit به After CI Checks Pass تغییر بده تا استقرار فقط پس از موفقیت CI انجام شود.
+- [x] Auto-Deploy روی After CI Checks Pass تنظیم شده است؛ استقرار پس از موفقیت CI انجام می‌شود.
 
 - [ ] محدودیت پلن Free را در نظر بگیر: سرویس پس از بی‌کاری ممکن است متوقف شود و درخواست بعدی cold start داشته باشد. برای دسترس‌پذیری ۲۴/۷ نیاز به تصمیم جداگانه درباره زیرساخت و هزینه است.
 
