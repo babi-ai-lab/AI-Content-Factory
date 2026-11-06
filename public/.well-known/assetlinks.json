@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ir.eltbabak.contentfactory",
+      "sha256_cert_fingerprints": [
+        "2C:33:A7:E3:DF:0B:A0:E7:62:7B:0D:B1:C3:41:90:43:AB:24:A6:02:B3:90:68:F1:34:A6:51:23:7E:9A:F2:2B"
+      ]
+    }
+  }
+]
