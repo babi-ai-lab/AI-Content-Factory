@@ -18,6 +18,7 @@ test("account export includes owner data tables but excludes credentials and eph
   const columns = ACCOUNT_EXPORT_TABLES.map((entry) => entry.columns).join(",");
   assert.doesNotMatch(columns, /encrypted_access_token|access_token|state_hash|password|secret/i);
   assert.doesNotMatch(tables.join(","), /instagram_oauth_states|media_generation_allowance/);
+  assert.doesNotMatch(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "ai_usage_events").columns, /model/i);
   assert.match(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "instagram_connections").columns, /username/);
   assert.doesNotMatch(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "instagram_connections").columns, /encrypted_access_token/);
 });
@@ -58,6 +59,8 @@ test("account export API authenticates the caller and prevents caching", async (
   assert.match(source, /Cache-Control/);
   assert.match(source, /private, no-store/);
   assert.match(source, /status: 413/);
+  assert.match(source, /MAX_EXPORT_BYTES/);
+  assert.match(source, /Buffer\.byteLength/);
   assert.doesNotMatch(source, /SERVICE_ROLE|service_role|SUPABASE_SERVICE_ROLE_KEY/);
 });
 
