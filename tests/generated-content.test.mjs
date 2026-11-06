@@ -11,7 +11,7 @@ test('parses valid JSON and trims fields', () => {
 });
 
 test('accepts fenced JSON', () => {
-  assert.equal(parseGeneratedContent('```json\\n' + JSON.stringify(valid) + '\\n```').ad, valid.ad);
+  assert.equal(parseGeneratedContent('```json\n' + JSON.stringify(valid) + '\n```').ad, valid.ad);
 });
 
 test('rejects malformed JSON and non-object responses', () => {
