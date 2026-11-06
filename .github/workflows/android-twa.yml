@@ -2,6 +2,17 @@ name: Android TWA validation and build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "public/icons/**"
+      - "app/manifest.ts"
+      - "app/layout.tsx"
+      - "scripts/generate-pwa-icons.mjs"
+      - "scripts/validate-android-pwa.mjs"
+      - ".github/workflows/android-twa.yml"
   pull_request:
     paths:
       - "android/**"
