@@ -99,6 +99,10 @@ type BrandProfile = {
   preferredTerms: string;
   avoidTerms: string;
   cta: string;
+  verifiedFacts: string;
+  proofPoints: string;
+  faq: string;
+  prohibitedClaims: string;
 };
 
 const initialBrandProfile: BrandProfile = {
@@ -110,6 +114,10 @@ const initialBrandProfile: BrandProfile = {
   preferredTerms: "",
   avoidTerms: "",
   cta: "",
+  verifiedFacts: "",
+  proofPoints: "",
+  faq: "",
+  prohibitedClaims: "",
 };
 
 function normalizeBrandProfile(value: unknown): BrandProfile {
@@ -127,6 +135,10 @@ function normalizeBrandProfile(value: unknown): BrandProfile {
     preferredTerms: 300,
     avoidTerms: 300,
     cta: 180,
+    verifiedFacts: 2000,
+    proofPoints: 1200,
+    faq: 2000,
+    prohibitedClaims: 1200,
   };
 
   return Object.fromEntries(
@@ -2323,6 +2335,26 @@ const response = await fetch("/api/generate", {
           <label className="full">
             دعوت به اقدام پیش‌فرض (CTA)
             <input value={brandProfile.cta} onChange={(e) => updateBrandProfile("cta", e.target.value)} placeholder="مثلاً برای مشاوره با ما تماس بگیرید." maxLength={180} />
+          </label>
+          <div className="brand-knowledge-heading full">
+            <strong>دانش معتبر برند</strong>
+            <p>این اطلاعات به مدل کمک می‌کند محتوای دقیق‌تری بسازد و از ساختن آمار، مجوز، تضمین یا تجربه مشتری جلوگیری کند.</p>
+          </div>
+          <label className="full">
+            اطلاعات تأییدشده درباره برند، محصولات و خدمات
+            <textarea rows={4} value={brandProfile.verifiedFacts} onChange={(e) => updateBrandProfile("verifiedFacts", e.target.value)} placeholder="آدرس شعب، ساعات کاری، سال شروع فعالیت، محدوده خدمات، مشخصات قطعی محصولات و هر واقعیت قابل تأیید..." maxLength={2000} />
+          </label>
+          <label className="full">
+            شواهد و مزیت‌های قابل اثبات
+            <textarea rows={3} value={brandProfile.proofPoints} onChange={(e) => updateBrandProfile("proofPoints", e.target.value)} placeholder="گواهی‌های واقعی، نمونه‌کارهای قابل نمایش، نتایج مستند، ضمانت‌های واقعی یا مدارک معتبر..." maxLength={1200} />
+          </label>
+          <label className="full">
+            پرسش‌های متداول و پاسخ‌های تأییدشده
+            <textarea rows={4} value={brandProfile.faq} onChange={(e) => updateBrandProfile("faq", e.target.value)} placeholder="پرسش: ...\nپاسخ: ...\nپرسش: ...\nپاسخ: ..." maxLength={2000} />
+          </label>
+          <label className="full">
+            ادعاهای ممنوع یا نیازمند مدرک
+            <textarea rows={3} value={brandProfile.prohibitedClaims} onChange={(e) => updateBrandProfile("prohibitedClaims", e.target.value)} placeholder="مثلاً بهترین در ایران، تضمین نتیجه، رتبه رسمی، درصد رضایت مشتری یا هر ادعای بدون مدرک..." maxLength={1200} />
           </label>
         </div>
 
