@@ -554,6 +554,7 @@ export default function Home() {
   const [showAccountDeletion, setShowAccountDeletion] = useState(false);
   const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
   const [deleteAccountLoading, setDeleteAccountLoading] = useState(false);
+  const [accountExportLoading, setAccountExportLoading] = useState(false);
   const [dataProcessingNoticeAccepted, setDataProcessingNoticeAccepted] = useState(false);
   const [dataNoticeSaving, setDataNoticeSaving] = useState(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
@@ -1388,6 +1389,42 @@ export default function Home() {
       showNotice(error instanceof Error ? error.message : "حذف حساب انجام نشد.", "error");
     } finally {
       setDeleteAccountLoading(false);
+    }
+  }
+
+  async function downloadAccountData() {
+    if (accountExportLoading) return;
+    setAccountExportLoading(true);
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error("نشست معتبر نیست. دوباره وارد حساب شو.");
+      }
+
+      const response = await fetch("/api/account/export", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(typeof payload.error === "string" ? payload.error : "دریافت نسخه پشتیبان انجام نشد.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ai-content-factory-account-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      showNotice("نسخه پشتیبان اطلاعات حساب آماده و دانلود شد.", "success");
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : "دریافت نسخه پشتیبان انجام نشد.", "error");
+    } finally {
+      setAccountExportLoading(false);
     }
   }
 
@@ -2352,6 +2389,9 @@ const response = await fetch("/api/generate", {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
 
           <span className="top-tag" dir="ltr">{user.email}</span>
+          <button className="history-backup" disabled={accountExportLoading} onClick={() => void downloadAccountData()}>
+            {accountExportLoading ? "در حال آماده‌سازی..." : "دریافت نسخه پشتیبان"}
+          </button>
           <button className="campaign-delete" onClick={() => setShowAccountDeletion((value) => !value)}>
             {showAccountDeletion ? "بستن" : "حذف حساب"}
           </button>
