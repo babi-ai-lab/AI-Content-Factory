@@ -82,3 +82,37 @@ https://developers.cloudflare.com/workers-ai/
 کشور محل فعالیت اعلام‌شده: **ایران**  
 ایمیل: **info@eltbabak.ir**  
 نشانی پستی عمومی: **اعلام نشده**
+
+
+## پیوست بررسی فنی مناطق پردازش و نگهداری — ۶ نوامبر ۲۰۲۶
+
+این اطلاعات از تنظیمات زنده پروژه و اسناد رسمی ارائه‌دهندگان استخراج شده‌اند. این پیوست جایگزین بازبینی حقوقی یا تأیید نهایی مالک حساب‌ها نیست.
+
+### مناطق قابل تأیید از تنظیمات حساب
+
+- **Supabase:** منطقه اصلی پروژه `us-east-1` (AWS US East / Northern Virginia) است. سازمان Supabase در پلن Free گزارش شده است. این منطقه محل پایگاه داده اصلی و سرویس‌های اصلی پروژه است؛ به‌معنای تضمین اینکه هیچ فراداده یا پردازشی خارج از این منطقه انجام نمی‌شود نیست.
+- **Render:** سرویس وب در منطقه Oregon, USA و روی پلن Free اجرا می‌شود.
+- **Resend:** مستندات جاری Resend اعلام می‌کنند داده‌های ذخیره‌شده ایمیل در ایالات متحده نگهداری می‌شوند؛ retention ایمیل و لاگ‌ها در پلن‌های Free/Pro/Scale برابر ۳۰ روز و حذف داده باقی‌مانده پس از خاتمه حساب تا ۹۰ روز است. باید این موضوع با پلن و تنظیمات واقعی حساب مالک تطبیق داده شود.
+- **Cloudflare Workers AI:** برای درخواست‌های inference استاندارد، Cloudflare اعلام کرده محتوای ورودی/خروجی پس از نیاز پردازش نگهداری نمی‌شود و برای آموزش مدل استفاده نمی‌شود؛ فراداده عملیاتی می‌تواند نگهداری شود. هرگونه logging، caching یا قابلیت stateful می‌تواند این نتیجه را تغییر دهد. محل جغرافیایی اجرای inference در تنظیمات فعلی این پروژه هنوز تأیید نشده است.
+- **Google Gemini API:** نوع صورتحساب/سطح سرویس کلید متصل و تنظیمات retention پروژه هنوز از حساب مالک تأیید نشده‌اند. در Paid Services، Google اعلام می‌کند prompt و response برای بهبود محصولات استفاده نمی‌شوند، اما abuse monitoring logging محدودمدت می‌تواند اعمال شود. در Unpaid Services شرایط متفاوت است؛ تا زمان تأیید سطح واقعی، نباید ادعای عدم استفاده برای آموزش یا zero data retention مطرح شود.
+
+### موارد باز و ممنوع از حدس
+
+1. سطح صورتحساب Gemini API (Paid یا Unpaid) و تنظیمات prompt logging پروژه باید از حساب مالک تأیید شود.
+2. منطقه/مسیر جغرافیایی inference در Google Gemini و Cloudflare Workers AI باید از مستندات/تنظیمات همان سرویس تأیید شود؛ در حال حاضر region pinning اثبات نشده است.
+3. retention واقعی لاگ‌های Render و مدت چرخه backup در Supabase Free باید از تنظیمات/اسناد دقیق پلن و حساب بررسی شود.
+4. شرایط DPA و فهرست subprocessorهای جاری باید در حساب‌های Resend، Supabase، Render، Google و Cloudflare ذخیره/تأیید شود.
+5. باید مشخص شود کدام مقررات و کشورها به‌دلیل محل اپراتور، محل کاربران و بازار هدف قابل اعمال‌اند؛ این تصمیم نیازمند مشاور حقوقی واجد صلاحیت است.
+
+### منابع رسمی بررسی‌شده
+
+- Supabase regions: https://supabase.com/docs/guides/platform/regions
+- Supabase data residency FAQ: https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq
+- Render regions: https://render.com/docs/regions
+- Resend security and retention: https://resend.com/security
+- Resend DPA: https://resend.com/legal/dpa
+- Cloudflare Workers AI data usage: https://developers.cloudflare.com/workers-ai/platform/data-usage/
+- Gemini API logging and data use: https://ai.google.dev/gemini-api/docs/logs-policy
+- Gemini API zero data retention: https://ai.google.dev/gemini-api/docs/zdr
+
+**نتیجه:** مناطق اصلی Supabase و Render و ذخیره داده Resend تا حدی مشخص‌اند، اما وضعیت کامل انتقال بین‌المللی، سطح Gemini، منطقه inference و retention برخی لاگ‌ها/backupها هنوز برای انتشار نهایی تأیید نشده است.
