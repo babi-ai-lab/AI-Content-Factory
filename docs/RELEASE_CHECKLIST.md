@@ -89,3 +89,11 @@
 - اتصال و انتشار اینستاگرام در رابط فعلی پنهان و غیرفعال است؛ هیچ انتشار خودکاری در دسترس کاربر نیست.
 - آزمون smoke زمان‌بندی‌شده اضافه شده، اما تا ثبت اولین اجرای موفق، پایش Production تأییدشده محسوب نمی‌شود.
 - آماده‌بودن برای عرضه عمومی فقط پس از انجام آزمون پذیرش و تنظیمات بالا قابل تأیید است.
+
+
+## Media studio regression checks
+- [ ] Generate one 4:5 image with an authenticated account and verify the returned private asset.
+- [ ] Generate a five-slide carousel and verify all five images are stored under the requesting user.
+- [ ] Edit Persian copy on each slide and export 1080×1350 PNG files.
+- [ ] Verify a sixth image request in the same hour is rejected and no cross-user asset can be listed or deleted.
+- [ ] Verify expired signed URLs refresh after reloading the media library.
