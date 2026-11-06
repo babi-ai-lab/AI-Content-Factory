@@ -21,3 +21,9 @@ test("image generation failures are explained without exposing provider names", 
   const messages = [...helpers.matchAll(/message: "([^"]+)"/g)].map((match) => match[1]).join(" ");
   assert.doesNotMatch(messages, /Gemini|Google|گوگل|جمنای/i);
 });
+
+test("public content-generation API uses provider-neutral quota codes", async () => {
+  const source = await readFile(new URL("../app/api/generate/route.ts", import.meta.url), "utf8");
+  assert.match(source, /CONTENT_GENERATION_QUOTA_EXCEEDED/);
+  assert.doesNotMatch(source, /GEMINI_QUOTA_EXCEEDED/);
+});
