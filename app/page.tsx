@@ -321,18 +321,46 @@ const initialProduct: Product = {
 };
 
 const tabs = [
-
   { id: "caption", label: "متن اصلی کانال" },
-
   { id: "reel", label: "سناریوی ریلز" },
-
   { id: "stories", label: "استوری‌ها" },
-
   { id: "ad", label: "متن تبلیغاتی" },
-
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
+
+function getTabsForChannel(channel: ContentChannel) {
+  const ids: TabId[] =
+    channel === "general" || channel === "instagram"
+      ? ["caption", "reel", "stories", "ad"]
+      : channel === "youtube"
+        ? ["caption", "reel", "ad"]
+        : ["caption", "ad"];
+
+  const mainLabels: Partial<Record<ContentChannel, string>> = {
+    telegram: "متن کانال تلگرام",
+    bale: "متن کانال بله",
+    sms: "متن پیامک",
+    website: "متن وب‌سایت و سئو",
+    email: "متن ایمیل",
+    instagram: "کپشن اینستاگرام",
+    linkedin: "پست لینکدین",
+    youtube: "توضیحات یوتیوب",
+  };
+
+  return tabs.filter((tab) => ids.includes(tab.id)).map((tab) => ({
+    ...tab,
+    label: tab.id === "caption"
+      ? mainLabels[channel] || tab.label
+      : tab.id === "reel" && channel === "youtube"
+        ? "سناریوی ویدیو"
+        : tab.label,
+  }));
+}
+
+function getVisibleContent(content: Content, channel: ContentChannel) {
+  return Object.fromEntries(getTabsForChannel(channel).map((tab) => [tab.id, content[tab.id]]));
+}
 
 function createId() {
 
@@ -422,87 +450,44 @@ function downloadFile(filename: string, text: string, mime: string) {
 }
 
 function buildTextExport(product: Product, content: Content) {
+  const sections = getTabsForChannel(product.channel).map((tab, index) => {
+    const heading = String(index + 1) + ". " + tab.label;
+    const body = tab.id === "stories"
+      ? content.stories.map((story, storyIndex) => "استوری " + String(storyIndex + 1) + "\n" + story).join("\n\n")
+      : String(content[tab.id] ?? "");
+    return heading + "\n----------------------------------------\n" + body;
+  });
 
   return [
-
     "AI CONTENT FACTORY",
-
     "بسته محتوایی کسب‌وکار",
-
     "========================================",
-
     "",
-
     "مشخصات کسب‌وکار و موضوع",
-
     "----------------------------------------",
-
-    `نام محصول یا خدمت: ${product.name}`,
-
-    `قیمت: ${product.price || "ثبت نشده"}`,
-
-    `نوع کسب‌وکار: ${businessTypeLabel(product.businessType)}`,
-    `نام برند/کسب‌وکار: ${product.businessName || "ثبت نشده"}`,
-    `دسته‌بندی/موضوع: ${product.category || "ثبت نشده"}`,
-
-    `جنس: ${product.fabric || "ثبت نشده"}`,
-
-    `رنگ‌ها: ${product.colors || "ثبت نشده"}`,
-    `محدوده فعالیت: ${product.serviceArea || "ثبت نشده"}`,
-    `پیشنهاد ویژه: ${product.offer || "ثبت نشده"}`,
-    `مزیت رقابتی: ${product.differentiators || "ثبت نشده"}`,
-    `اطلاعات تکمیلی: ${product.additionalInfo || "ثبت نشده"}`,
-
-    `ویژگی‌ها: ${product.features}`,
-
-    `مخاطب هدف: ${product.audience || "ثبت نشده"}`,
-
-    `هدف محتوا: ${product.goal}`,
-    `قالب تولید: ${contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"}`,
-    `کانال اصلی: ${contentChannelLabel(product.channel)}`,
-
-    `لحن برند: ${product.tone}`,
-
+    "نام محصول یا خدمت: " + product.name,
+    "قیمت: " + (product.price || "ثبت نشده"),
+    "نوع کسب‌وکار: " + businessTypeLabel(product.businessType),
+    "نام برند/کسب‌وکار: " + (product.businessName || "ثبت نشده"),
+    "دسته‌بندی/موضوع: " + (product.category || "ثبت نشده"),
+    "جنس: " + (product.fabric || "ثبت نشده"),
+    "رنگ‌ها: " + (product.colors || "ثبت نشده"),
+    "محدوده فعالیت: " + (product.serviceArea || "ثبت نشده"),
+    "پیشنهاد ویژه: " + (product.offer || "ثبت نشده"),
+    "مزیت رقابتی: " + (product.differentiators || "ثبت نشده"),
+    "اطلاعات تکمیلی: " + (product.additionalInfo || "ثبت نشده"),
+    "ویژگی‌ها: " + product.features,
+    "مخاطب هدف: " + (product.audience || "ثبت نشده"),
+    "هدف محتوا: " + product.goal,
+    "قالب تولید: " + (contentTemplates.find((item) => item.value === product.contentTemplate)?.label || "متعادل و عمومی"),
+    "کانال اصلی: " + contentChannelLabel(product.channel),
+    "لحن برند: " + product.tone,
     "",
-
-    "۱. متن اصلی کانال",
-
-    "----------------------------------------",
-
-    content.caption,
-
+    ...sections,
     "",
-
-    "۲. سناریوی ریلز",
-
-    "----------------------------------------",
-
-    content.reel,
-
-    "",
-
-    "۳. استوری‌ها",
-
-    "----------------------------------------",
-
-    ...content.stories.map((story, i) => `استوری ${i + 1}\n${story}\n`),
-
-    "",
-
-    "۴. متن تبلیغاتی",
-
-    "----------------------------------------",
-
-    content.ad,
-
-    "",
-
     "========================================",
-
     "ساخته‌شده با AI Content Factory",
-
   ].join("\n");
-
 }
 
 export default function Home() {
@@ -1324,8 +1309,17 @@ export default function Home() {
   const qualityAnalysis = useMemo(() => {
     if (!content) return null;
     const editedContent = updateTabContent(content, activeTab, draftText);
-    return analyzeContent(editedContent, brandProfile);
-  }, [content, activeTab, draftText, brandProfile]);
+    return analyzeContent(editedContent, brandProfile, product.channel);
+  }, [content, activeTab, draftText, brandProfile, product.channel]);
+
+  const visibleTabs = useMemo(() => getTabsForChannel(product.channel), [product.channel]);
+
+  useEffect(() => {
+    if (visibleTabs.some((tab) => tab.id === activeTab)) return;
+    const nextTab = visibleTabs[0]?.id || "caption";
+    setActiveTab(nextTab);
+    if (content) setDraftText(getTabText(content, nextTab));
+  }, [visibleTabs, activeTab, content]);
 
 
   function update<K extends keyof Product>(key: K, value: Product[K]) {
@@ -1743,7 +1737,7 @@ const response = await fetch("/api/generate", {
 
           product,
 
-          content: working,
+          content: getVisibleContent(working, product.channel),
 
         },
 
@@ -2726,7 +2720,7 @@ const response = await fetch("/api/generate", {
                   <summary className="quality-summary">
                     <div>
                       <b>بررسی کیفیت ساختاری محتوا</b>
-                      <small>کپشن، CTA، استوری‌ها، ریلز و هماهنگی با برند</small>
+                      <small>بررسی متناسب با کانال، دعوت به اقدام و هماهنگی با برند</small>
                     </div>
                     <span className={qualityAnalysis.score >= 80 ? "quality-score good" : qualityAnalysis.score >= 60 ? "quality-score medium" : "quality-score low"}>
                       {qualityAnalysis.score.toLocaleString("fa-IR")} از ۱۰۰
@@ -2749,7 +2743,7 @@ const response = await fetch("/api/generate", {
 
               <nav className="tabs" aria-label="بخش‌های محتوا">
 
-                {tabs.map((tab) => (
+                {visibleTabs.map((tab) => (
 
                   <button key={tab.id} className={activeTab === tab.id ? "tab active" : "tab"} onClick={() => selectTab(tab.id)}>
 
@@ -2763,7 +2757,7 @@ const response = await fetch("/api/generate", {
 
               <div className="content-card">
 
-                <div className="content-label">{tabs.find((t) => t.id === activeTab)?.label}</div>
+                <div className="content-label">{visibleTabs.find((t) => t.id === activeTab)?.label || tabs.find((t) => t.id === activeTab)?.label}</div>
 
                 <textarea
 
