@@ -36,6 +36,16 @@ for (const target of targets) {
     throw new Error(`${target.label}: stale authentication diagnostic text is present`);
   }
 
+  const retiredIntegrationLabels = [
+    'مدیریت انتشار اینستاگرام',
+    'اتصال حساب حرفه‌ای اینستاگرام',
+    'اتصال حساب اینستاگرام',
+  ];
+  const visibleRetiredLabel = retiredIntegrationLabels.find((label) => html.includes(label));
+  if (visibleRetiredLabel) {
+    throw new Error(`${target.label}: retired Instagram integration UI is visible (${visibleRetiredLabel})`);
+  }
+
   const assets = [...html.matchAll(/(?:src|href)=["']([^"']*_next\/static\/[^"']+)["']/g)]
     .map((match) => new URL(match[1], target.origin).toString());
   const scripts = [...new Set(assets.filter((asset) => /\.js(?:\?|$)/.test(asset)))].slice(0, 3);
@@ -48,5 +58,5 @@ for (const target of targets) {
     }
   }
 
-  console.log(`PASS ${target.label}: health, page shell, signup CTA, and ${scripts.length} JavaScript asset(s)`);
+  console.log(`PASS ${target.label}: health, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
 }
