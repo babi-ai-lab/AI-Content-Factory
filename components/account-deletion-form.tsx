@@ -16,6 +16,7 @@ export default function AccountDeletionForm() {
 
     setBusy(true);
     setMessage("");
+    let authenticated = false;
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -24,6 +25,7 @@ export default function AccountDeletionForm() {
       if (authError || !authData.session?.access_token) {
         throw new Error("ورود تأیید نشد. ایمیل و رمز عبور فعلی را بررسی کن.");
       }
+      authenticated = true;
 
       const { data, error } = await supabase.functions.invoke("delete-account", {
         body: { password },
@@ -37,7 +39,7 @@ export default function AccountDeletionForm() {
       setPassword("");
       setMessage("درخواست با موفقیت انجام شد. حساب کاربری و داده‌های وابسته حذف شدند.");
     } catch (error) {
-      await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+      if (authenticated) await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       setMessage(error instanceof Error ? error.message : "حذف حساب انجام نشد.");
     } finally {
       setBusy(false);
