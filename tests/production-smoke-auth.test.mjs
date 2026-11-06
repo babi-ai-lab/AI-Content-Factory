@@ -12,3 +12,19 @@ test("production smoke verifies anonymous API rejection without leaking processo
   assert.match(source, /Gemini\|Google\|گوگل\|جمنای/);
   assert.match(source, /external processor branding is visible/);
 });
+
+
+test("production smoke verifies baseline browser security and cache headers", async () => {
+  const source = await readFile(new URL("../scripts/production-smoke.mjs", import.meta.url), "utf8");
+  for (const header of [
+    "x-content-type-options",
+    "x-frame-options",
+    "referrer-policy",
+    "permissions-policy",
+    "strict-transport-security",
+  ]) {
+    assert.ok(source.includes(header), "smoke test must assert " + header);
+  }
+  assert.match(source, /public app shell must not be cached/);
+  assert.match(source, /no-store/i);
+});
