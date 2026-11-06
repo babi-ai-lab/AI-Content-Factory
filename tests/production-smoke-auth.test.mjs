@@ -8,4 +8,5 @@ test("production smoke verifies anonymous API rejection without leaking processo
   assert.match(source, /assertUnauthenticatedJson\(target\.origin, '\/api\/media\/generate'\)/);
   assert.match(source, /response\.status !== 401/);
   assert.match(source, /Gemini\|Google\|گوگل\|جمنای/);
+  assert.match(source, /external processor branding is visible/);
 });
