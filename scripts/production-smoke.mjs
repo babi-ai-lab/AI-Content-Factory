@@ -89,7 +89,7 @@ for (const target of targets) {
   const hasSignupCta = html.includes('شروع رایگان');
   const hasAuthLoadingShell = html.includes('id="auth-loading-state"') && html.includes('auth-loading-watchdog');
   if (!hasProductName || (!hasSignupCta && !hasAuthLoadingShell)) {
-    const preview = html.slice(0, 500).replace(/\\s+/g, ' ');
+    const preview = html.slice(0, 500).replace(/\s+/g, ' ');
     throw new Error(`${target.label}: expected product shell, signup CTA, or current auth shell was not found (product=${hasProductName}, signup=${hasSignupCta}, authShell=${hasAuthLoadingShell}, staleAuth=${html.includes('در حال بررسی حساب کاربری...')}, preview=${preview})`);
   }
   if (html.includes('در حال بررسی حساب کاربری...')) {
@@ -108,6 +108,37 @@ for (const target of targets) {
   const visibleRetiredLabel = retiredIntegrationLabels.find((label) => html.includes(label));
   if (visibleRetiredLabel) {
     throw new Error(`${target.label}: retired Instagram integration UI is visible (${visibleRetiredLabel})`);
+  }
+
+  const manifestResponse = await fetchWithRetry(`${target.origin}/manifest.webmanifest`);
+  const manifest = await manifestResponse.json();
+  if (!manifest.name || !manifest.short_name || !manifest.start_url || manifest.display !== 'standalone' || manifest.prefer_related_applications !== false) {
+    throw new Error(`${target.label}: PWA manifest is missing required app identity or standalone settings`);
+  }
+  for (const requiredSize of ['192x192', '512x512']) {
+    const icon = (manifest.icons || []).find((entry) =>
+      (entry.sizes || '').split(/\s+/).includes(requiredSize) &&
+      (entry.purpose || 'any').split(/\s+/).includes('any')
+    );
+    if (!icon) throw new Error(`${target.label}: PWA manifest is missing the ${requiredSize} install icon`);
+  }
+  const maskableIcon = (manifest.icons || []).find((entry) => (entry.purpose || '').split(/\s+/).includes('maskable'));
+  if (!maskableIcon) throw new Error(`${target.label}: PWA manifest is missing a maskable icon`);
+  for (const icon of manifest.icons) {
+    const iconResponse = await fetchWithRetry(new URL(icon.src, target.origin).toString());
+    if (!iconResponse.headers.get('content-type')?.includes('image/')) {
+      throw new Error(`${target.label}: PWA icon has an invalid content type`);
+    }
+  }
+  const workerResponse = await fetchWithRetry(`${target.origin}/sw.js`);
+  const workerSource = await workerResponse.text();
+  if (!workerSource.includes('self.addEventListener("fetch"') || !workerSource.includes('Never cache authenticated HTML')) {
+    throw new Error(`${target.label}: service worker is missing its safe navigation handler`);
+  }
+  const offlineResponse = await fetchWithRetry(`${target.origin}/offline`);
+  const offlineHtml = await offlineResponse.text();
+  if (!offlineHtml.includes('اتصال اینترنت برقرار نیست')) {
+    throw new Error(`${target.label}: offline fallback page is missing`);
   }
 
   const assets = [...html.matchAll(/(?:src|href)=["']([^"']*_next\/static\/[^"']+)["']/g)]
