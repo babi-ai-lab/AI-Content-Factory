@@ -501,7 +501,9 @@ footer span { padding: 0 6px; }
 @media (max-width:640px) {
  .account-delete-panel { padding:14px; }
  .account-delete-actions { display:grid; grid-template-columns:1fr; }
- .topbar .campaign-delete { padding:7px 8px; font-size:9px; }
+ .topbar { height:auto; min-height:76px; padding:10px 0; gap:8px; flex-wrap:wrap; }
+ .topbar > div { flex-wrap:wrap; justify-content:flex-end; }
+ .topbar .campaign-delete, .topbar .history-backup { padding:7px 8px; font-size:9px; }
 }
 
 .provider-disclosure-accepted-row { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
