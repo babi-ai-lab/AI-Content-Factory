@@ -85,18 +85,27 @@ npm run dev
 app/
   api/generate/route.ts   # API سمت سرور، احراز هویت، اعتبارسنجی و تولید
   api/health/route.ts     # health check ساده برای میزبان
+  api/integrations/instagram/ # OAuth، وضعیت، انتشار و زمان‌بندی Instagram
+  integrations/instagram/callback/ # صفحه بازگشت OAuth
   globals.css             # طراحی و واکنش‌گرایی
   layout.tsx              # metadata، زبان فارسی و RTL
   page.tsx                # رابط اصلی
 components/
-  campaign-manager.tsx    # مدیریت کمپین و اتصال محتواهای ذخیره‌شده
+  campaign-manager.tsx       # مدیریت کمپین و اتصال محتواهای ذخیره‌شده
+  instagram-integration.tsx  # اتصال و انتشار مستقیم/زمان‌بندی‌شده اینستاگرام
 lib/
   supabase.ts             # کلاینت Supabase
   server-controls.mjs     # اعتبارسنجی، محدودیت بدنه و rate limit
   content-quality.mjs     # تحلیل ساختاری کیفیت محتوا
+  instagram-security.mjs  # رمزنگاری توکن و اعتبارسنجی OAuth
+  instagram-publishing.mjs # اعتبارسنجی مسیر رسانه و زمان‌بندی
 tests/                    # تست‌های خودکار
-supabase/functions/instagram-publish-scheduler/ # worker زمان‌بندی انتشار Instagram\nsupabase/migrations/      # migrationهای نسخه‌دار پایگاه داده
-docs/ROADMAP.md           # نقشه راه و وضعیت تحویل\ndocs/INSTAGRAM_SETUP.md   # راهنمای راه‌اندازی Meta App و اتصال Instagram
+supabase/
+  functions/instagram-publish-scheduler/index.ts # worker انتشار زمان‌بندی‌شده
+  migrations/             # migrationهای نسخه‌دار پایگاه داده
+docs/
+  ROADMAP.md              # نقشه راه و وضعیت تحویل
+  INSTAGRAM_SETUP.md      # راهنمای راه‌اندازی Meta App و اتصال Instagram
 .github/workflows/ci.yml  # کنترل کیفیت در Pull Request و main
 ```
 
