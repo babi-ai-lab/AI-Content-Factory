@@ -1,0 +1,1 @@
+Live verification only; isolated diagnostic branch.
