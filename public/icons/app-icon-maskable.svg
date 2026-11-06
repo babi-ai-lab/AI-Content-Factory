@@ -1,5 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1c2b5e"/>
-  <path d="M148 350V190h48l60 78 60-78h48v160h-54v-82l-54 70-54-70v82z" fill="#fff"/>
-  <circle cx="360" cy="160" r="24" fill="#ffd54f"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Content Factory</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7800ef"/><stop offset=".52" stop-color="#2410a7"/><stop offset="1" stop-color="#087cf5"/></linearGradient>
+    <linearGradient id="factory" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd8ff"/></linearGradient>
+    <linearGradient id="swoosh" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffb000"/><stop offset=".55" stop-color="#ff6b16"/><stop offset="1" stop-color="#ffe34d"/></linearGradient>
+    <linearGradient id="play" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9a00ff"/><stop offset="1" stop-color="#3b20d9"/></linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(0 18) scale(1)" >
+    <path d="M112 220c-35 0-59-24-59-55 0-29 22-52 51-55 8-48 49-83 99-83 29 0 55 12 73 33 13-10 29-15 46-15 43 0 78 32 82 74 31 5 55 31 55 63 0 36-29 65-65 65H112z" fill="#fff"/>
+    <g transform="rotate(-10 145 140)"><rect x="85" y="105" width="105" height="82" rx="17" fill="#1689ff"/><path d="M108 130h58M108 148h48M108 166h32" stroke="#fff" stroke-width="8" stroke-linecap="round"/></g>
+    <g transform="rotate(7 270 106)"><rect x="220" y="55" width="105" height="91" rx="18" fill="#7418e9"/><circle cx="248" cy="83" r="9" fill="#fff"/><path d="M236 126l23-25 17 16 15-19 20 28z" fill="#fff"/></g>
+    <g transform="rotate(10 365 150)"><rect x="330" y="112" width="105" height="82" rx="18" fill="#f04456"/><path d="M372 132l35 21-35 21z" fill="#fff"/></g>
+    <g transform="rotate(-8 270 202)"><rect x="236" y="164" width="75" height="70" rx="16" fill="#16b96b"/><path d="M276 181v31a12 12 0 1 1-8-11v-20z" fill="#fff"/></g>
+    <path d="M80 385V280l72-47v48l70-48v48l70-48v48h74v104z" fill="url(#factory)"/>
+    <path d="M103 286h37v-65h-37z" fill="#fff"/><path d="M104 247h35v13h-35z" fill="#ff8c00"/>
+    <path d="M178 328l44-25v50z" fill="url(#play)"/>
+    <g fill="#21127e"><rect x="254" y="304" width="25" height="34" rx="6"/><rect x="294" y="304" width="25" height="34" rx="6"/><rect x="334" y="304" width="25" height="34" rx="6"/></g>
+    <path d="M42 398c85 40 273 10 416-91-42 72-152 132-290 146-63 7-110-10-126-55z" fill="url(#swoosh)"/>
+    <path d="M430 67l8 19 19 8-19 8-8 19-8-19-19-8 19-8z" fill="#ffd52f"/>
+  </g>
 </svg>
