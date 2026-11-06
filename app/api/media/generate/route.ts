@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     generated = await response.json().catch(() => ({})) as ImageServiceResponse;
     if (!response.ok) {
       console.error("Image generation provider rejected request:", { status: response.status, providerCode: generated.error?.code, providerMessage: generated.error?.message?.slice(0, 500) });
-      const failure = getImageServiceFailure(response.status);
+      const failure = getImageServiceFailure(response.status, generated.error?.message || "");
       return NextResponse.json({ error: failure.message }, { status: failure.status });
     }
   } catch (error) {

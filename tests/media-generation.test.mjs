@@ -69,6 +69,13 @@ test("maps upstream image failures to accurate vendor-neutral user messages", as
     status: 429,
     message: "ظرفیت سرویس تولید تصویر موقتاً به پایان رسیده است. بعداً دوباره تلاش کن.",
   });
+  const disabledQuota = getImageServiceFailure(
+    429,
+    "Quota exceeded for metric; limit: 0, model image, Free Tier",
+  );
+  assert.equal(disabledQuota.status, 503);
+  assert.match(disabledQuota.message, /تنظیمات اعتبار و سطح دسترسی/);
+  assert.doesNotMatch(disabledQuota.message, /Gemini|Google|گوگل|جمنای/i);
   assert.equal(getImageServiceFailure(401).status, 503);
   assert.equal(getImageServiceFailure(403).status, 503);
   assert.equal(getImageServiceFailure(404).status, 503);
