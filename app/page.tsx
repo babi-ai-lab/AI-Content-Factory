@@ -2350,7 +2350,7 @@ const response = await fetch("/api/generate", {
           </label>
           <label className="full">
             پرسش‌های متداول و پاسخ‌های تأییدشده
-            <textarea rows={4} value={brandProfile.faq} onChange={(e) => updateBrandProfile("faq", e.target.value)} placeholder="پرسش: ...\nپاسخ: ...\nپرسش: ...\nپاسخ: ..." maxLength={2000} />
+            <textarea rows={4} value={brandProfile.faq} onChange={(e) => updateBrandProfile("faq", e.target.value)} placeholder={"پرسش: ...\nپاسخ: ...\nپرسش: ...\nپاسخ: ..."} maxLength={2000} />
           </label>
           <label className="full">
             ادعاهای ممنوع یا نیازمند مدرک
