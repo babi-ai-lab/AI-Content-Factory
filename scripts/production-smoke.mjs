@@ -27,6 +27,12 @@ async function assertUnauthenticatedJson(origin, path, method = 'POST') {
   if (typeof payload.error !== 'string' || !payload.error.trim()) {
     throw new Error(`${path} did not return a useful authentication error`);
   }
+  if (path === '/api/account/export') {
+    const cacheControl = response.headers.get('cache-control') || '';
+    if (!/private/i.test(cacheControl) || !/no-store/i.test(cacheControl)) {
+      throw new Error('Account export authentication response must be private and non-cacheable');
+    }
+  }
   if (/Gemini|Google|گوگل|جمنای/i.test(responseText)) {
     throw new Error(`${path} exposed an external processor name in a public error response`);
   }
