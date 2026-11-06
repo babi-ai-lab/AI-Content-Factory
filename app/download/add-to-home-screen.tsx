@@ -64,9 +64,9 @@ export default function AddToHomeScreen() {
       const choice = await installPrompt.userChoice;
       setInstallPrompt(null);
       if (choice.outcome === "accepted") {
-        setInstalled(true);
+        // The browser confirms installation separately through the appinstalled event.
         setShowHelp(false);
-        setInstallMessage("درخواست نصب پذیرفته شد. آیکون برنامه را در صفحه اصلی بررسی کن.");
+        setInstallMessage("درخواست نصب پذیرفته شد؛ پس از تکمیل نصب، آیکون برنامه در صفحه اصلی نمایش داده می‌شود.");
       } else {
         setShowHelp(true);
         setInstallMessage("درخواست نصب لغو شد؛ می‌توانی راهنمای افزودن دستی را دنبال کنی.");
