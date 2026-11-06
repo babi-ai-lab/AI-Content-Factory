@@ -1957,7 +1957,13 @@ const response = await fetch("/api/generate", {
 
       <main className="shell" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
 
-        <div className="panel">نسخه تشخیصی 06-11-2026-A · در حال بررسی حساب کاربری...</div>
+        <section className="panel" role="status" aria-live="polite" style={{ width: "100%", maxWidth: 460, padding: 32, textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+            <span className="spinner" aria-hidden="true" />
+          </div>
+          <strong style={{ display: "block", fontSize: 16 }}>در حال آماده‌سازی فضای کاری...</strong>
+          <p style={{ color: "var(--muted)", fontSize: 13, margin: "8px 0 0" }}>لطفاً چند لحظه صبر کن.</p>
+        </section>
 
       </main>
 
