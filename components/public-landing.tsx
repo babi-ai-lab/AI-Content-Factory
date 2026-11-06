@@ -69,7 +69,9 @@ export default function PublicLanding() {
       </section>
 
       <footer className="public-legal-footer">
+        <a href="/privacy">سیاست حریم خصوصی</a>
         <a href="/account-deletion">درخواست حذف حساب کاربری</a>
+        <a href="mailto:info@eltbabak.ir">پشتیبانی</a>
       </footer>
 
       <section className="public-bottom-cta">
