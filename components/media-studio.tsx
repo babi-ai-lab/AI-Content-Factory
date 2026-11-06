@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { buildCarouselSlidePrompts, compactCarouselCopy } from "@/lib/carousel-prompts.mjs";
+import { createZipStore } from "@/lib/zip-store.mjs";
 
 type MediaAsset = { id: string; prompt: string; aspect_ratio: string; mime_type: string; byte_size: number; created_at: string; imageUrl: string | null };
 
@@ -38,6 +39,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
   const [carouselAssets, setCarouselAssets] = useState<MediaAsset[]>([]);
   const [slideTexts, setSlideTexts] = useState<string[]>(() => stories.map((story) => compactCarouselCopy(story)));
   const [downloadingSlide, setDownloadingSlide] = useState(0);
+  const [downloadingZip, setDownloadingZip] = useState(false);
 
   useEffect(() => {
     setSlideTexts(stories.map((story) => compactCarouselCopy(story)));
@@ -139,91 +141,125 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
     }
   }
 
-  async function downloadCarouselSlide(asset: MediaAsset, index: number) {
-    if (!asset.imageUrl) {
-      setError("لینک امن تصویر منقضی شده است؛ صفحه را تازه‌سازی کن.");
-      return;
+  async function renderCarouselSlidePng(asset: MediaAsset, index: number): Promise<Blob> {
+    if (!asset.imageUrl) throw new Error("لینک امن تصویر منقضی شده است؛ صفحه را تازه‌سازی کن.");
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.src = asset.imageUrl;
+    await image.decode();
+    await document.fonts.ready;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1350;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("ساخت تصویر خروجی در این مرورگر پشتیبانی نمی‌شود.");
+
+    const scale = Math.max(canvas.width / image.width, canvas.height / image.height);
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
+    context.drawImage(image, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
+
+    const gradient = context.createLinearGradient(0, 560, 0, 1350);
+    gradient.addColorStop(0, "rgba(12, 20, 42, 0)");
+    gradient.addColorStop(0.35, "rgba(12, 20, 42, 0.42)");
+    gradient.addColorStop(1, "rgba(12, 20, 42, 0.92)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 1080, 1350);
+
+    const copy = (slideTexts[index] || "").trim();
+    context.direction = "rtl";
+    context.textAlign = "right";
+    context.textBaseline = "top";
+    context.font = 'bold 44px "Vazirmatn", Tahoma, sans-serif';
+    context.fillStyle = "#ffffff";
+    context.shadowColor = "rgba(0,0,0,.24)";
+    context.shadowBlur = 8;
+    context.shadowOffsetY = 2;
+
+    const lines: string[] = [];
+    let line = "";
+    for (const word of copy.split(/\s+/)) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (line && context.measureText(candidate).width > 900) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = candidate;
+      }
     }
+    if (line) lines.push(line);
+    if (lines.length > 7) {
+      lines.length = 7;
+      lines[6] = `${lines[6].slice(0, Math.max(8, lines[6].length - 2))}…`;
+    }
+    const lineHeight = 62;
+    const startY = Math.max(780, 1270 - lines.length * lineHeight);
+    lines.forEach((text, lineIndex) => context.fillText(text, 960, startY + lineIndex * lineHeight, 900));
+
+    context.shadowBlur = 0;
+    context.shadowOffsetY = 0;
+    context.fillStyle = "#FFD54F";
+    context.fillRect(120, 1270, 90, 5);
+    context.fillStyle = "#ffffff";
+    context.font = '600 25px "Vazirmatn", Tahoma, sans-serif';
+    context.fillText(`اسلاید ${(index + 1).toLocaleString("fa-IR")} از ${carouselAssets.length.toLocaleString("fa-IR")}`, 960, 1300);
+
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("ساخت فایل PNG ناموفق بود.")), "image/png");
+    });
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+  }
+
+  async function downloadCarouselSlide(asset: MediaAsset, index: number) {
     setDownloadingSlide(index + 1);
     setError("");
     try {
-      const image = new Image();
-      image.crossOrigin = "anonymous";
-      image.src = asset.imageUrl;
-      await image.decode();
-
-      const canvas = document.createElement("canvas");
-      canvas.width = 1080;
-      canvas.height = 1350;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("ساخت تصویر خروجی در این مرورگر پشتیبانی نمی‌شود.");
-
-      const scale = Math.max(canvas.width / image.width, canvas.height / image.height);
-      const drawWidth = image.width * scale;
-      const drawHeight = image.height * scale;
-      context.drawImage(image, (canvas.width - drawWidth) / 2, (canvas.height - drawHeight) / 2, drawWidth, drawHeight);
-
-      const gradient = context.createLinearGradient(0, 560, 0, 1350);
-      gradient.addColorStop(0, "rgba(12, 20, 42, 0)");
-      gradient.addColorStop(0.35, "rgba(12, 20, 42, 0.42)");
-      gradient.addColorStop(1, "rgba(12, 20, 42, 0.92)");
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, 1080, 1350);
-
-      const copy = (slideTexts[index] || "").trim();
-      context.direction = "rtl";
-      context.textAlign = "right";
-      context.textBaseline = "top";
-      context.font = 'bold 44px "Vazirmatn", Tahoma, sans-serif';
-      context.fillStyle = "#ffffff";
-      context.shadowColor = "rgba(0,0,0,.24)";
-      context.shadowBlur = 8;
-      context.shadowOffsetY = 2;
-
-      const lines: string[] = [];
-      let line = "";
-      for (const word of copy.split(/\s+/)) {
-        const candidate = line ? `${line} ${word}` : word;
-        if (line && context.measureText(candidate).width > 900) {
-          lines.push(line);
-          line = word;
-        } else {
-          line = candidate;
-        }
-      }
-      if (line) lines.push(line);
-      if (lines.length > 7) {
-        lines.length = 7;
-        lines[6] = `${lines[6].slice(0, Math.max(8, lines[6].length - 2))}…`;
-      }
-      const lineHeight = 62;
-      const startY = Math.max(780, 1270 - lines.length * lineHeight);
-      lines.forEach((text, lineIndex) => context.fillText(text, 960, startY + lineIndex * lineHeight, 900));
-
-      context.shadowBlur = 0;
-      context.shadowOffsetY = 0;
-      context.fillStyle = "#FFD54F";
-      context.fillRect(120, 1270, 90, 5);
-      context.fillStyle = "#ffffff";
-      context.font = '600 25px "Vazirmatn", Tahoma, sans-serif';
-      context.fillText(`اسلاید ${(index + 1).toLocaleString("fa-IR")} از ۵`, 960, 1300);
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob((value) => value ? resolve(value) : reject(new Error("ساخت فایل PNG ناموفق بود.")), "image/png");
-      });
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `ai-content-factory-carousel-${index + 1}.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+      const blob = await renderCarouselSlidePng(asset, index);
+      downloadBlob(blob, `ai-content-factory-carousel-${index + 1}.png`);
       setNotice(`فایل PNG اسلاید ${(index + 1).toLocaleString("fa-IR")} آماده شد.`);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ساخت فایل PNG ناموفق بود. لینک تصویر یا پشتیبانی مرورگر را بررسی کن.");
     } finally {
       setDownloadingSlide(0);
+    }
+  }
+
+  async function downloadCarouselZip() {
+    if (!carouselAssets.length || carouselAssets.some((asset) => !asset.imageUrl)) {
+      setError("برای ساخت فایل ZIP، لینک امن همه تصاویر باید معتبر باشد؛ صفحه را تازه‌سازی کن.");
+      return;
+    }
+    setDownloadingZip(true);
+    setError("");
+    try {
+      const entries = await Promise.all(carouselAssets.map(async (asset, index) => {
+        const blob = await renderCarouselSlidePng(asset, index);
+        return {
+          name: `slide-${String(index + 1).padStart(2, "0")}.png`,
+          data: new Uint8Array(await blob.arrayBuffer()),
+        };
+      }));
+      const archive = createZipStore(entries);
+      const archiveBlob = new Blob([new Uint8Array(archive).buffer as ArrayBuffer], { type: "application/zip" });
+      downloadBlob(archiveBlob, `ai-content-factory-carousel-${new Date().toISOString().slice(0, 10)}.zip`);
+      setNotice(`فایل ZIP شامل ${entries.length.toLocaleString("fa-IR")} اسلاید نهایی با متن فارسی آماده شد.`);
+    } catch (cause) {
+      setError(cause instanceof Error
+        ? `ساخت فایل ZIP ناموفق بود: ${cause.message} برای دریافت جداگانه هر اسلاید از دکمه PNG استفاده کن.`
+        : "ساخت فایل ZIP ناموفق بود؛ هر اسلاید را جداگانه دریافت کن.");
+    } finally {
+      setDownloadingZip(false);
     }
   }
 
@@ -298,7 +334,17 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
         <section className="carousel-studio-result" aria-live="polite">
           <div className="media-library-heading">
             <strong>پیش‌نمایش کاروسل</strong>
-            <span>{carouselAssets.length.toLocaleString("fa-IR")} از ۵ اسلاید</span>
+            <div className="carousel-download-actions">
+              <span>{carouselAssets.length.toLocaleString("fa-IR")} از ۵ اسلاید</span>
+              <button
+                type="button"
+                className="carousel-download-all"
+                disabled={downloadingZip || downloadingSlide > 0 || carouselAssets.some((asset) => !asset.imageUrl)}
+                onClick={() => void downloadCarouselZip()}
+              >
+                {downloadingZip ? "در حال آماده‌سازی ZIP..." : `دانلود همه ${carouselAssets.length.toLocaleString("fa-IR")} اسلاید (ZIP)`}
+              </button>
+            </div>
           </div>
           <div className="carousel-studio-grid">
             {carouselAssets.map((asset, index) => (
@@ -314,7 +360,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
                   aria-label={`متن اسلاید ${index + 1}`}
                 />
                 <small className="carousel-copy-count">{(slideTexts[index] || "").length.toLocaleString("fa-IR")} از ۲۲۰ نویسه</small>
-                <button type="button" className="carousel-download" disabled={!asset.imageUrl || downloadingSlide > 0} onClick={() => void downloadCarouselSlide(asset, index)}>
+                <button type="button" className="carousel-download" disabled={!asset.imageUrl || downloadingSlide > 0 || downloadingZip} onClick={() => void downloadCarouselSlide(asset, index)}>
                   {downloadingSlide === index + 1 ? "در حال ساخت PNG..." : "دانلود PNG با متن فارسی"}
                 </button>
                 {asset.imageUrl && <a href={asset.imageUrl} target="_blank" rel="noreferrer">باز کردن تصویر بدون متن ↗</a>}
