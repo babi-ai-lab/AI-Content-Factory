@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const migrationDirectory = new URL("../supabase/migrations/", import.meta.url);
 const ownerScopedTables = [
   "ai_usage_events",
   "instagram_connections",
@@ -15,9 +14,9 @@ const ownerScopedTables = [
 ];
 
 async function loadMigrations() {
-  const directory = new URL(migrationDirectory);
+  const directory = new URL("../supabase/migrations/", import.meta.url);
   const files = (await readdir(directory)).filter((file) => file.endsWith(".sql")).sort();
-  const contents = await Promise.all(files.map((file) => readFile(join(directory.pathname, file), "utf8")));
+  const contents = await Promise.all(files.map((file) => readFile(new URL(file, directory), "utf8")));
   return contents.join("\n");
 }
 
@@ -36,16 +35,16 @@ test("sensitive user tables have authenticated owner-scoped policies", async () 
   const sql = await loadMigrations();
   for (const table of ownerScopedTables) {
     const policyBlocks = [...sql.matchAll(
-      new RegExp("CREATE\\s+POLICY\\s+[\\s\\S]*?ON\\s+public\\." + table + "[\\s\\S]*?;", "gi"),
+      new RegExp("CREATE\\s+POLICY\\s+[^;]*?ON\\s+public\\." + table + "\\b[^;]*;", "gi"),
     )].map((match) => match[0]);
 
     assert.ok(policyBlocks.length > 0, table + " must define at least one explicit RLS policy");
     assert.ok(
-      policyBlocks.some((policy) => /auth\\.uid\\s*\\(/i.test(policy)),
+      policyBlocks.some((policy) => /auth\.uid\s*\(/i.test(policy)),
       table + " policies must scope access to the authenticated owner",
     );
     assert.ok(
-      policyBlocks.every((policy) => !/\\bTO\\s+anon\\b/i.test(policy)),
+      policyBlocks.every((policy) => !/\bTO\s+anon\b/i.test(policy)),
       table + " must not grant an anonymous RLS policy",
     );
   }
