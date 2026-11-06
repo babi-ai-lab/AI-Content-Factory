@@ -64,6 +64,13 @@ jobs:
         working-directory: android
         run: bubblewrap update --skipVersionUpgrade --manifest=./twa-manifest.json
 
+      - name: Verify generated Android package and Play target API
+        working-directory: android
+        run: |
+          grep -Eq 'applicationId "ir\\.eltbabak\\.contentfactory"' app/build.gradle
+          grep -Eq 'minSdkVersion 24' app/build.gradle
+          grep -Eq 'targetSdkVersion 36' app/build.gradle
+
       - name: Build unsigned Android App Bundle for internal testing
         working-directory: android
         run: bubblewrap build --skipSigning --skipPwaValidation --manifest=./twa-manifest.json
