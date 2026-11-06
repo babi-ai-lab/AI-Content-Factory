@@ -26,6 +26,14 @@ export async function POST(request: NextRequest) {
   });
   const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
   if (authError || !user) return NextResponse.json({ error: "نشست کاربری معتبر نیست." }, { status: 401 });
+  const rateLimitSince = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const { count: recentJobs, error: rateLimitError } = await supabase
+    .from("instagram_publish_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", rateLimitSince);
+  if (rateLimitError) return NextResponse.json({ error: "بررسی محدودیت زمان‌بندی ناموفق بود." }, { status: 503 });
+  if ((recentJobs || 0) >= 20) return NextResponse.json({ error: "حداکثر ۲۰ درخواست انتشار در هر ساعت مجاز است." }, { status: 429 });
   if (process.env.INSTAGRAM_SCHEDULER_ENABLED !== "true") {
     return NextResponse.json({ error: "زمان‌بندی خودکار هنوز فعال نشده است؛ تنظیمات امن worker باید تکمیل شود." }, { status: 503 });
   }
