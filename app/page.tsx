@@ -2380,7 +2380,7 @@ const response = await fetch("/api/generate", {
 
         <a className="brand" href="#" aria-label="AI Content Factory">
 
-          <span className="brand-mark">✳</span>
+          <img className="brand-mark" src="/icons/app-icon-192.png" alt="" width="38" height="38" />
 
           <span>AI Content Factory</span>
 
