@@ -930,5 +930,9 @@ footer span { padding: 0 6px; }
 
 .carousel-slide-copy{width:100%;min-height:96px;resize:vertical;border:1px solid #d9e0ed;border-radius:8px;padding:9px;background:#fff;color:#303b58;font:inherit;font-size:.78rem;line-height:1.8;direction:rtl}
 .carousel-copy-count{color:#7a8499;font-size:.68rem;text-align:left}
+.carousel-download-actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+.carousel-download-all { min-height:36px; border:1px solid #c8d9c8; border-radius:8px; background:#f2f8f1; color:#315a38; padding:7px 12px; font:inherit; font-size:.76rem; font-weight:800; cursor:pointer; }
+.carousel-download-all:disabled { opacity:.55; cursor:not-allowed; }
+.carousel-zip-hint { display:block; color:#7a8499; font-size:10px; line-height:1.8; }
 .carousel-download{min-height:36px;border:1px solid #d4dced;border-radius:8px;background:#f7f9ff;color:#2d4ba0;font:inherit;font-size:.76rem;font-weight:700;cursor:pointer;padding:7px}
 .carousel-download:disabled{opacity:.55;cursor:wait}
