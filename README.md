@@ -2,7 +2,7 @@
 
 وب‌اپلیکیشن فارسی برای تولید و مدیریت محتوای بازاریابی و برنامه‌ریزی کمپین‌های کسب‌وکارها.
 
-نسخه آنلاین: https://ai-content-factory-6m32.onrender.com/
+نسخه آنلاین: https://app.eltbabak.ir/
 
 ## قابلیت‌های پیاده‌سازی‌شده
 
@@ -19,9 +19,9 @@
 - صفحه‌بندی تاریخچه با cursor و پشتیبان کامل تا سقف ۱۰٬۰۰۰ رکورد
 - داشبورد تحلیل با بازه‌های ۷ روز، ۳۰ روز و کل تاریخچه؛ تجمیع سمت PostgreSQL
 - ثبت تعداد تولیدهای موفق و مصرف توکن Gemini به تفکیک کاربر و مدل
-- پروفایل برند قابل استفاده مجدد برای مخاطب، ارزش پیشنهادی، لحن، واژگان و CTA
-- چک‌لیست ساختاری کیفیت محتوا و بررسی واژگان برند؛ این امتیاز صحت factual ادعاها را تضمین نمی‌کند
-- تقویم محتوایی شمسی برای برنامه‌ریزی دستی زمان انتشار
+- دانش معتبر برند شامل واقعیت‌های تأییدشده، شواهد قابل اثبات، FAQ و ادعاهای ممنوع؛ ذخیره در پروفایل کاربر و استفاده در تولید
+- چک‌لیست ساختاری کیفیت محتوا، بررسی واژگان ترجیحی و کشف عبارت‌های ممنوع؛ این امتیاز به‌تنهایی صحت factual همه ادعاها را تضمین نمی‌کند
+- تقویم محتوایی شمسی؛ برنامه‌ریزی دستی عمومی و کد زمان‌بندی انتشار اینستاگرام (فعال‌سازی واقعی منتظر تنظیم Meta و cron)
 - مدیریت کمپین‌های بازاریابی: هدف، مخاطب، کانال‌ها، وضعیت، چک‌لیست شش‌مرحله‌ای اجرا و اتصال خودکار خروجی ذخیره‌شده به کمپین
 - ثبت دستی بودجه، هزینه، نمایش، کلیک، سرنخ، تبدیل و درآمد کمپین؛ محاسبه CTR، CPL، CPA، نرخ تبدیل، مصرف بودجه و ROAS
 - راهنمای شروع سریع سه‌مرحله‌ای برای حساب‌های بدون تاریخچه
@@ -71,6 +71,11 @@ npm run dev
 | `GEMINI_API_KEY` | کلید محرمانه Gemini برای تولید واقعی |
 | `GEMINI_MODEL` | مدل اصلی Gemini |
 | `GEMINI_FALLBACK_MODEL` | مدل جایگزین |
+| `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` | اطلاعات محرمانه/شناسه Meta App برای Instagram Login |
+| `INSTAGRAM_REDIRECT_URI` | مسیر callback ثبت‌شده در Meta |
+| `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | کلید Base64 سی‌ودو بایتی برای رمزنگاری توکن‌ها |
+| `INSTAGRAM_GRAPH_API_VERSION` | نسخه Graph API (فعلاً v26.0) |
+| `INSTAGRAM_SCHEDULER_ENABLED` | فعال‌سازی زمان‌بندی؛ فقط پس از تنظیم Vault و cron روی true قرار گیرد |
 
 در توسعه محلی، اگر کلید Gemini تنظیم نشده باشد، API خروجی نمونه (demo) می‌دهد و این خروجی تولید واقعی مدل نیست. در محیط Production بدون کلید Gemini، API با خطای 503 متوقف می‌شود و خروجی نمونه به‌جای تولید واقعی نمایش داده نمی‌شود. سهمیه و محدودیت‌های Gemini تابع تنظیمات ارائه‌دهنده است.
 
@@ -80,18 +85,27 @@ npm run dev
 app/
   api/generate/route.ts   # API سمت سرور، احراز هویت، اعتبارسنجی و تولید
   api/health/route.ts     # health check ساده برای میزبان
+  api/integrations/instagram/ # OAuth، وضعیت، انتشار و زمان‌بندی Instagram
+  integrations/instagram/callback/ # صفحه بازگشت OAuth
   globals.css             # طراحی و واکنش‌گرایی
   layout.tsx              # metadata، زبان فارسی و RTL
   page.tsx                # رابط اصلی
 components/
-  campaign-manager.tsx    # مدیریت کمپین و اتصال محتواهای ذخیره‌شده
+  campaign-manager.tsx       # مدیریت کمپین و اتصال محتواهای ذخیره‌شده
+  instagram-integration.tsx  # اتصال و انتشار مستقیم/زمان‌بندی‌شده اینستاگرام
 lib/
   supabase.ts             # کلاینت Supabase
   server-controls.mjs     # اعتبارسنجی، محدودیت بدنه و rate limit
   content-quality.mjs     # تحلیل ساختاری کیفیت محتوا
+  instagram-security.mjs  # رمزنگاری توکن و اعتبارسنجی OAuth
+  instagram-publishing.mjs # اعتبارسنجی مسیر رسانه و زمان‌بندی
 tests/                    # تست‌های خودکار
-supabase/migrations/      # migrationهای نسخه‌دار پایگاه داده
-docs/ROADMAP.md           # نقشه راه و وضعیت تحویل
+supabase/
+  functions/instagram-publish-scheduler/index.ts # worker انتشار زمان‌بندی‌شده
+  migrations/             # migrationهای نسخه‌دار پایگاه داده
+docs/
+  ROADMAP.md              # نقشه راه و وضعیت تحویل
+  INSTAGRAM_SETUP.md      # راهنمای راه‌اندازی Meta App و اتصال Instagram
 .github/workflows/ci.yml  # کنترل کیفیت در Pull Request و main
 ```
 
