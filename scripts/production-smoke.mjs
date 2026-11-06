@@ -110,6 +110,27 @@ for (const target of targets) {
     throw new Error(`${target.label}: retired Instagram integration UI is visible (${visibleRetiredLabel})`);
   }
 
+  // Public legal resources must remain reachable without an authenticated session.
+  const legalPages = [
+    {
+      path: '/privacy',
+      required: ['سیاست حریم خصوصی', 'info@eltbabak.ir', 'Unpaid Services'],
+    },
+    {
+      path: '/account-deletion',
+      required: ['درخواست حذف حساب کاربری', 'حذف دائمی حساب و داده‌ها'],
+    },
+  ];
+  for (const legalPage of legalPages) {
+    const response = await fetchWithRetry(`${target.origin}${legalPage.path}`);
+    const body = await response.text();
+    for (const phrase of legalPage.required) {
+      if (!body.includes(phrase)) {
+        throw new Error(`${target.label}: public legal page ${legalPage.path} is missing required content: ${phrase}`);
+      }
+    }
+  }
+
   const manifestResponse = await fetchWithRetry(`${target.origin}/manifest.webmanifest`);
   const manifest = await manifestResponse.json();
   if (!manifest.name || !manifest.short_name || !manifest.start_url || manifest.display !== 'standalone' || manifest.prefer_related_applications !== false) {
