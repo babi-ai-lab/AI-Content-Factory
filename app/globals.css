@@ -797,3 +797,23 @@ footer span { padding: 0 6px; }
   line-height: 1.9;
   font-size: 13px;
 }
+
+
+.brand-knowledge-heading {
+  display: grid;
+  gap: 5px;
+  padding: 13px 15px;
+  border: 1px solid rgba(45, 75, 160, .14);
+  border-radius: 13px;
+  background: #f7f9ff;
+}
+.brand-knowledge-heading strong {
+  color: var(--ink, #1c2b5e);
+  font-size: 14px;
+}
+.brand-knowledge-heading p {
+  margin: 0;
+  color: var(--muted, #667085);
+  font-size: 12px;
+  line-height: 1.8;
+}
