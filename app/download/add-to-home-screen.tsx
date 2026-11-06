@@ -12,6 +12,8 @@ export default function AddToHomeScreen() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installMessage, setInstallMessage] = useState("");
   const [platform, setPlatform] = useState<"ios" | "android" | "other">("other");
 
   useEffect(() => {
@@ -25,13 +27,19 @@ export default function AddToHomeScreen() {
     else if (/Android/i.test(ua)) setPlatform("android");
 
     const handleBeforeInstall = (event: Event) => {
+      const installEvent = event as InstallPromptEvent;
+      if (typeof installEvent.prompt !== "function" || !installEvent.userChoice) return;
       event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
+      setInstallPrompt(installEvent);
+      setShowHelp(false);
+      setInstallMessage("");
     };
     const handleInstalled = () => {
       setInstalled(true);
       setInstallPrompt(null);
       setShowHelp(false);
+      setIsInstalling(false);
+      setInstallMessage("نصب برنامه با موفقیت انجام شد.");
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
@@ -43,15 +51,33 @@ export default function AddToHomeScreen() {
   }, []);
 
   const handleInstall = async () => {
-    if (installPrompt) {
+    if (!installPrompt) {
+      setShowHelp((visible) => !visible);
+      setInstallMessage("");
+      return;
+    }
+
+    setIsInstalling(true);
+    setInstallMessage("");
+    try {
       await installPrompt.prompt();
       const choice = await installPrompt.userChoice;
       setInstallPrompt(null);
-      if (choice.outcome === "accepted") setInstalled(true);
-      else setShowHelp(true);
-      return;
+      if (choice.outcome === "accepted") {
+        setInstalled(true);
+        setShowHelp(false);
+        setInstallMessage("درخواست نصب پذیرفته شد. آیکون برنامه را در صفحه اصلی بررسی کن.");
+      } else {
+        setShowHelp(true);
+        setInstallMessage("درخواست نصب لغو شد؛ می‌توانی راهنمای افزودن دستی را دنبال کنی.");
+      }
+    } catch {
+      setInstallPrompt(null);
+      setShowHelp(true);
+      setInstallMessage("مرورگر نتوانست پنجره نصب را باز کند؛ راهنمای افزودن دستی در دسترس است.");
+    } finally {
+      setIsInstalling(false);
     }
-    setShowHelp((visible) => !visible);
   };
 
   return (
@@ -66,12 +92,20 @@ export default function AddToHomeScreen() {
         </p>
       </div>
       {!installed && (
-        <button className={styles.homeScreenButton} type="button" onClick={handleInstall}>
-          {installPrompt ? "نصب اپلیکیشن" : "افزودن به صفحه اصلی"}
+        <button
+          className={styles.homeScreenButton}
+          type="button"
+          onClick={handleInstall}
+          disabled={isInstalling}
+          aria-expanded={showHelp}
+          aria-controls="home-screen-install-help"
+        >
+          {isInstalling ? "در حال باز کردن نصب..." : installPrompt ? "نصب اپلیکیشن" : "افزودن به صفحه اصلی"}
         </button>
       )}
+      {installMessage && <p className={styles.homeScreenStatus} role="status" aria-live="polite">{installMessage}</p>}
       {showHelp && !installed && (
-        <div className={styles.homeScreenHelp} role="status">
+        <div className={styles.homeScreenHelp} id="home-screen-install-help" role="status" aria-live="polite">
           {platform === "ios" ? (
             <p><b>در iPhone یا iPad:</b> صفحه را در Safari باز کن، دکمه Share (اشتراک‌گذاری) را بزن و گزینه <bdi>Add to Home Screen</bdi> یا «افزودن به صفحه اصلی» را انتخاب کن؛ سپس Add را بزن.</p>
           ) : platform === "android" ? (
