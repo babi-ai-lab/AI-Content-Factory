@@ -100,6 +100,9 @@ jobs:
                 await page.waitForTimeout(5000);
                 console.log('COMPARE_URL=' + url + ' STATUS=' + (res?.status() ?? 'none'));
                 console.log('COMPARE_BODY=' + (await page.locator('body').innerText()).slice(0, 650).replace(/\\s+/g, ' '));
+                const visibleText = await page.locator('body').innerText();
+                console.log('STALE_DIAGNOSTIC_VERSION=' + visibleText.includes('نسخه تشخیصی 06-11-2026-A'));
+                console.log('STUCK_AUTH_CHECK_MESSAGE=' + visibleText.includes('در حال بررسی حساب کاربری'));
                 const start = page.getByText('شروع رایگان', { exact: true }).first();
                 console.log('START_VISIBLE=' + await start.isVisible().catch(() => false));
                 console.log('START_HREF=' + (await start.getAttribute('href').catch(() => null)));
