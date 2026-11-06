@@ -21,6 +21,7 @@ test("account export includes owner data tables but excludes credentials and eph
   assert.doesNotMatch(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "ai_usage_events").columns, /model/i);
   assert.match(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "instagram_connections").columns, /username/);
   assert.doesNotMatch(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "instagram_connections").columns, /encrypted_access_token/);
+  assert.doesNotMatch(ACCOUNT_EXPORT_TABLES.find((entry) => entry.table === "instagram_publish_jobs").columns, /media_url|error_message|error_code/);
 });
 
 test("builds a versioned account export with user metadata and an explicit media-file limitation", () => {
