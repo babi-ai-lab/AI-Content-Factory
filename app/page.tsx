@@ -1957,7 +1957,7 @@ const response = await fetch("/api/generate", {
 
       <main className="shell" style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
 
-        <div className="panel">در حال بررسی حساب کاربری...</div>
+        <div className="panel">نسخه تشخیصی 06-11-2026-A · در حال بررسی حساب کاربری...</div>
 
       </main>
 
