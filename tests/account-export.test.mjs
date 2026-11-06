@@ -41,8 +41,8 @@ test("builds a versioned account export with user metadata and an explicit media
   assert.equal(payload.account.email, "owner@example.test");
   assert.deepEqual(payload.account.userMetadata, { aiContentFactoryBrandProfile: { brandName: "نمونه" } });
   assert.deepEqual(payload.data.contentHistory, [{ id: "content-1" }]);
-  assert.ok(payload.excluded.some((item) => item.includes("Binary media files")));
-  assert.ok(payload.excluded.some((item) => item.includes("access tokens")));
+  assert.ok(payload.excluded.some((item) => item.includes("فایل‌های باینری رسانه")));
+  assert.ok(payload.excluded.some((item) => item.includes("توکن‌های دسترسی")));
 });
 
 test("rejects invalid account identities and export timestamps", () => {
