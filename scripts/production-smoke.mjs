@@ -89,7 +89,7 @@ for (const target of targets) {
   const hasSignupCta = html.includes('شروع رایگان');
   const hasAuthLoadingShell = html.includes('id="auth-loading-state"') && html.includes('auth-loading-watchdog');
   if (!hasProductName || (!hasSignupCta && !hasAuthLoadingShell)) {
-    const preview = html.slice(0, 500).replace(/\\s+/g, ' ');
+    const preview = html.slice(0, 500).replace(/\s+/g, ' ');
     throw new Error(`${target.label}: expected product shell, signup CTA, or current auth shell was not found (product=${hasProductName}, signup=${hasSignupCta}, authShell=${hasAuthLoadingShell}, staleAuth=${html.includes('در حال بررسی حساب کاربری...')}, preview=${preview})`);
   }
   if (html.includes('در حال بررسی حساب کاربری...')) {
@@ -117,12 +117,12 @@ for (const target of targets) {
   }
   for (const requiredSize of ['192x192', '512x512']) {
     const icon = (manifest.icons || []).find((entry) =>
-      (entry.sizes || '').split(/\\s+/).includes(requiredSize) &&
-      (entry.purpose || 'any').split(/\\s+/).includes('any')
+      (entry.sizes || '').split(/\s+/).includes(requiredSize) &&
+      (entry.purpose || 'any').split(/\s+/).includes('any')
     );
     if (!icon) throw new Error(`${target.label}: PWA manifest is missing the ${requiredSize} install icon`);
   }
-  const maskableIcon = (manifest.icons || []).find((entry) => (entry.purpose || '').split(/\\s+/).includes('maskable'));
+  const maskableIcon = (manifest.icons || []).find((entry) => (entry.purpose || '').split(/\s+/).includes('maskable'));
   if (!maskableIcon) throw new Error(`${target.label}: PWA manifest is missing a maskable icon`);
   for (const icon of manifest.icons) {
     const iconResponse = await fetchWithRetry(new URL(icon.src, target.origin).toString());
