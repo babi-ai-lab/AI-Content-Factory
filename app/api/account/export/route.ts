@@ -49,13 +49,13 @@ export async function GET(request: NextRequest) {
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   if (!token) {
-    return NextResponse.json({ error: "برای دریافت نسخه پشتیبان، ابتدا وارد حساب کاربری شو." }, { status: 401 });
+    return NextResponse.json({ error: "برای دریافت نسخه پشتیبان، ابتدا وارد حساب کاربری شو." }, { status: 401, headers: { "Cache-Control": "private, no-store, max-age=0" } });
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: "تنظیمات احراز هویت سرور کامل نیست." }, { status: 500 });
+    return NextResponse.json({ error: "تنظیمات احراز هویت سرور کامل نیست." }, { status: 500, headers: { "Cache-Control": "private, no-store, max-age=0" } });
   }
 
   const client = createClient(supabaseUrl, supabaseAnonKey, {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
   const { data: { user }, error: authError } = await client.auth.getUser(token);
   if (authError || !user) {
-    return NextResponse.json({ error: "نشست کاربری معتبر نیست. دوباره وارد حساب شو." }, { status: 401 });
+    return NextResponse.json({ error: "نشست کاربری معتبر نیست. دوباره وارد حساب شو." }, { status: 401, headers: { "Cache-Control": "private, no-store, max-age=0" } });
   }
 
   try {
