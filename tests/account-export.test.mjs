@@ -59,6 +59,7 @@ test("account export API authenticates the caller and prevents caching", async (
   assert.match(source, /ACCOUNT_EXPORT_TABLES/);
   assert.match(source, /Cache-Control/);
   assert.match(source, /private, no-store/);
+  assert.match(source, /status: 401, headers: \{ "Cache-Control": "private, no-store, max-age=0" \}/);
   assert.match(source, /status: 413/);
   assert.match(source, /MAX_EXPORT_BYTES/);
   assert.match(source, /Buffer\.byteLength/);
