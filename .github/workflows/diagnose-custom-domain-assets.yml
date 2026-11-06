@@ -82,3 +82,31 @@ jobs:
           })();
           JS
           node probe.cjs
+
+      - name: Compare app entry flow on custom and Render hostnames
+        shell: bash
+        run: |
+          cd /tmp/pw
+          cat > compare.cjs <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+            for (const url of ['https://app.eltbabak.ir/', 'https://ai-content-factory-6m32.onrender.com/']) {
+              const page = await browser.newPage();
+              page.on('pageerror', e => console.log('COMPARE_PAGE_ERROR=' + url + ' :: ' + e.message));
+              page.on('requestfailed', r => console.log('COMPARE_REQUEST_FAILED=' + r.url() + ' :: ' + (r.failure()?.errorText || '')));
+              try {
+                const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForTimeout(5000);
+                console.log('COMPARE_URL=' + url + ' STATUS=' + (res?.status() ?? 'none'));
+                console.log('COMPARE_BODY=' + (await page.locator('body').innerText()).slice(0, 650).replace(/\\s+/g, ' '));
+                const start = page.getByText('شروع رایگان', { exact: true }).first();
+                console.log('START_VISIBLE=' + await start.isVisible().catch(() => false));
+                console.log('START_HREF=' + (await start.getAttribute('href').catch(() => null)));
+              } catch (e) { console.log('COMPARE_NAV_ERROR=' + url + ' :: ' + e.message); }
+              await page.close();
+            }
+            await browser.close();
+          })();
+          JS
+          node compare.cjs
