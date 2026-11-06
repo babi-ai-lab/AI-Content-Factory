@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
+  toImageResponseAspectRatio,
   validateMediaGenerationInput,
 } from "../lib/media-generation.mjs";
 
@@ -35,4 +36,19 @@ test("image prompt protects brand truth and reserves space for Persian copy", ()
   assert.match(prompt, /Do not render any words/);
   assert.match(prompt, /clean negative space/);
   assert.match(prompt, /خدمات بازسازی منزل/);
+});
+
+test("maps supported UI aspect ratios to the image API enum values", () => {
+  assert.deepEqual(
+    ["1:1", "4:5", "9:16", "16:9", "3:2", "2:3"].map(toImageResponseAspectRatio),
+    [
+      "ASPECT_RATIO_ONE_BY_ONE",
+      "ASPECT_RATIO_FOUR_BY_FIVE",
+      "ASPECT_RATIO_NINE_BY_SIXTEEN",
+      "ASPECT_RATIO_SIXTEEN_BY_NINE",
+      "ASPECT_RATIO_THREE_BY_TWO",
+      "ASPECT_RATIO_TWO_BY_THREE",
+    ],
+  );
+  assert.equal(toImageResponseAspectRatio("7:5"), null);
 });
