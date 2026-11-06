@@ -103,6 +103,12 @@ jobs:
                 const start = page.getByText('شروع رایگان', { exact: true }).first();
                 console.log('START_VISIBLE=' + await start.isVisible().catch(() => false));
                 console.log('START_HREF=' + (await start.getAttribute('href').catch(() => null)));
+                if (await start.isVisible().catch(() => false)) {
+                  await start.click();
+                  await page.waitForTimeout(1200);
+                  console.log('AUTH_EMAIL_INPUT_VISIBLE=' + await page.locator('input[type="email"]').first().isVisible().catch(() => false));
+                  console.log('AUTH_PASSWORD_INPUT_VISIBLE=' + await page.locator('input[type="password"]').first().isVisible().catch(() => false));
+                }
               } catch (e) { console.log('COMPARE_NAV_ERROR=' + url + ' :: ' + e.message); }
               await page.close();
             }
