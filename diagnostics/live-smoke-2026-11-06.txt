@@ -1,0 +1,1 @@
+Live smoke test trigger only. This file is isolated on the diagnostic branch and is not deployed to Render.
