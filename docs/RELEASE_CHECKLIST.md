@@ -131,9 +131,10 @@
 - [x] چک‌لیست خودکار Production برای manifest، آیکون‌ها، service worker و صفحه offline
 - [x] پیش‌نویس فارسی صفحه فروشگاه: [PLAY_STORE_LISTING_DRAFT_FA.md](PLAY_STORE_LISTING_DRAFT_FA.md)
 - [ ] اجرای smoke test واقعی روی هر دو origin پس از انتشار آخرین نسخه PWA
-- [ ] اجرای Bubblewrap validation روی PWA نهایی
-- [ ] تأیید شناسه دائمی Android package توسط مالک
-- [ ] ساخت پروژه TWA و تنظیم target SDK برابر API 36 یا بالاتر
+- [ ] اجرای Bubblewrap validation روی PWA نهایی (در workflow جدید)
+- [x] شناسه دائمی Android package با تأیید مالک ثبت شد: `ir.eltbabak.contentfactory`
+- [x] پیکربندی TWA و workflow خودکار Bubblewrap با Java 17 و Android SDK 36 در مخزن ثبت شد
+- [ ] اجرای workflow اندروید و موفقیت Bubblewrap validation و تولید AAB آزمایشی unsigned
 - [ ] تولید و نگهداری امن upload key تحت کنترل مالک
 - [ ] تنظیم Digital Asset Links با fingerprint گواهی Play App Signing
 - [ ] نصب و آزمون نسخه داخلی روی گوشی واقعی Android
