@@ -294,6 +294,7 @@ footer span { padding: 0 6px; }
 .versions-list { display: flex; flex-direction: column; gap: 8px; }
 .version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .version-row-actions { display: flex; align-items: center; gap: 7px; flex: none; }
+.version-row > .version-row-actions { flex-direction: row; align-items: center; gap: 7px; }
 .version-compare { margin-top: 14px; padding: 14px; border: 1px solid #cfdccf; border-radius: 12px; background: #f8faf7; }
 .version-compare-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .version-compare-heading b, .version-compare-heading small { display: block; }
