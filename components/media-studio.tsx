@@ -99,7 +99,6 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
       const prompts = buildCarouselSlidePrompts(prompt.trim(), stories);
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.access_token || !session.user?.id) throw new Error("نشست کاربری معتبر نیست؛ دوباره وارد حساب شو.");
-
       const { data: allowance, error: allowanceError } = await supabase
         .from("media_generation_allowance")
         .select("request_count,window_started_at")
@@ -109,10 +108,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
       const windowIsCurrent = allowance?.window_started_at
         && Date.now() - new Date(allowance.window_started_at).getTime() < 60 * 60 * 1000;
       const remainingAllowance = windowIsCurrent ? Math.max(0, 5 - allowance.request_count) : 5;
-      if (remainingAllowance < 5) {
-        throw new Error(`برای ساخت کاروسل کامل به ۵ تصویر نیاز است؛ سهمیه باقی‌مانده این ساعت ${remainingAllowance.toLocaleString("fa-IR")} تصویر است. پس از بازنشانی سهمیه دوباره تلاش کن.`);
-      }
-
+      if (remainingAllowance < 5) throw new Error(`برای ساخت کاروسل کامل به ۵ تصویر نیاز است؛ سهمیه باقی‌مانده این ساعت ${remainingAllowance.toLocaleString("fa-IR")} تصویر است. پس از بازنشانی سهمیه دوباره تلاش کن.`);
       for (let index = 0; index < prompts.length; index += 1) {
         const response = await fetch("/api/media/generate", {
           method: "POST",
@@ -165,10 +161,10 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
       <div className="media-studio-heading">
         <div>
           <span className="step">۰۳ · استودیوی رسانه</span>
-          <h3 id="media-studio-title">تولید تصویر تبلیغاتی با هوش مصنوعی</h3>
+          <h3 id="media-studio-title">استودیوی تصویر تبلیغاتی</h3>
           <p>بر اساس محتوای فعلی، تصویر اختصاصی بساز. فایل در فضای خصوصی حساب ذخیره می‌شود.</p>
         </div>
-        <span className="media-studio-tag">Gemini Image · 1K</span>
+        <span className="media-studio-tag">خروجی باکیفیت · 1K</span>
       </div>
       <label className="media-studio-prompt">
         شرح و جهت هنری تصویر
@@ -191,7 +187,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
           </button>
         </div>
       </div>
-      <p className="media-studio-disclosure">هر حساب حداکثر ۵ تصویر در ساعت تولید می‌کند. تولید تصویر ممکن است از سهمیه و اعتبار API گوگل استفاده کند. مدل متن داخل تصویر را تولید نمی‌کند تا بتوانی نوشته فارسی را جداگانه ویرایش کنی.</p>
+      <p className="media-studio-disclosure">هر حساب حداکثر ۵ تصویر در ساعت تولید می‌کند. ظرفیت و محدودیت‌های سرویس ممکن است بر تولید تصویر اثر بگذارند. نوشته‌ها داخل تصویر درج نمی‌شوند تا بتوانی متن فارسی را جداگانه ویرایش کنی.</p>
       {error && <div className="notice error" role="alert">{error}</div>}
       {notice && <div className="notice info" role="status">{notice}{remaining !== null ? ` · سهمیه باقی‌مانده این ساعت: ${remaining.toLocaleString("fa-IR")}` : ""}</div>}
       {imageUrl && (
@@ -214,7 +210,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId, stories }
             {carouselAssets.map((asset, index) => (
               <article className="carousel-studio-card" key={asset.id}>
                 {asset.imageUrl ? <img src={asset.imageUrl} alt={`تصویر اسلاید ${index + 1}`} loading="lazy" /> : <div className="carousel-studio-placeholder">تصویر در کتابخانه ذخیره شد</div>}
-                <span>اسلاید { (index + 1).toLocaleString("fa-IR") }</span>
+                <span>اسلاید {(index + 1).toLocaleString("fa-IR")}</span>
                 <p>{stories[index]}</p>
                 {asset.imageUrl && <a href={asset.imageUrl} target="_blank" rel="noreferrer">باز کردن تصویر اصلی ↗</a>}
               </article>
