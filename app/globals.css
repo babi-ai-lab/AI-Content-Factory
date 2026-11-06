@@ -422,6 +422,7 @@ footer span { padding: 0 6px; }
 .campaign-comparison-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
 .campaign-comparison-heading h3 { margin:0; color:var(--ink); font-size:13px; }
 .campaign-comparison-heading p,.campaign-comparison-hint { margin:4px 0 0; color:var(--muted); font-size:10px; line-height:1.8; }
+.campaign-comparison-actions { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .campaign-comparison-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:#fff; }
 .campaign-comparison-table { width:100%; min-width:520px; border-collapse:collapse; text-align:right; }
 .campaign-comparison-table th,.campaign-comparison-table td { padding:10px 12px; border-bottom:1px solid var(--line); font-size:10px; white-space:nowrap; }

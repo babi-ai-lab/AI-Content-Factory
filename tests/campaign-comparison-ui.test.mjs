@@ -13,5 +13,9 @@ test("campaign manager supports comparing up to four campaigns across key perfor
   assert.match(source, /بازده هزینه تبلیغ \(ROAS\)/);
   assert.match(source, /مصرف بودجه/);
   assert.match(source, /تبدیل/);
+  assert.match(source, /exportCampaignComparisonCsv/);
+  assert.match(source, /text\/csv;charset=utf-8/);
+  assert.match(source, /\\uFEFF/);
+  assert.match(source, /دریافت فایل CSV/);
   assert.match(source, /aria-label="مقایسه شاخص‌های عملکرد کمپین‌ها"/);
 });
