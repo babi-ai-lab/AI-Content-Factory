@@ -27,3 +27,9 @@ test("public content-generation API uses provider-neutral quota codes", async ()
   assert.match(source, /CONTENT_GENERATION_QUOTA_EXCEEDED/);
   assert.doesNotMatch(source, /GEMINI_QUOTA_EXCEEDED/);
 });
+
+test("image generation request uses the validated API enums", async () => {
+  const source = await readFile(new URL("../app/api/media/generate/route.ts", import.meta.url), "utf8");
+  assert.match(source, /aspectRatio:\s*toImageResponseAspectRatio\(input\.aspectRatio\)/);
+  assert.match(source, /imageSize:\s*toImageResponseImageSize\("1K"\)/);
+});
