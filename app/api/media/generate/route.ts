@@ -5,6 +5,7 @@ import { readBoundedJsonBody } from "@/lib/server-controls.mjs";
 import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
+  getImageServiceFailure,
   toImageResponseAspectRatio,
   toImageResponseImageSize,
   validateMediaGenerationInput,
@@ -94,16 +95,8 @@ export async function POST(request: NextRequest) {
     generated = await response.json().catch(() => ({})) as ImageServiceResponse;
     if (!response.ok) {
       console.error("Image generation provider rejected request:", { status: response.status, providerCode: generated.error?.code, providerMessage: generated.error?.message?.slice(0, 500) });
-      if (response.status === 429) {
-        return NextResponse.json({ error: "ظرفیت سرویس تولید تصویر موقتاً به پایان رسیده است. بعداً دوباره تلاش کن." }, { status: 429 });
-      }
-      if (response.status === 401 || response.status === 403) {
-        return NextResponse.json({ error: "دسترسی سرویس تولید تصویر موقتاً برقرار نیست. لطفاً کمی بعد دوباره تلاش کن." }, { status: 503 });
-      }
-      if (response.status === 400 || response.status === 404) {
-        return NextResponse.json({ error: "درخواست تولید تصویر با تنظیمات فعلی سازگار نیست. شرح تصویر را ساده‌تر کن یا بعداً دوباره تلاش کن." }, { status: 502 });
-      }
-      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
+      const failure = getImageServiceFailure(response.status);
+      return NextResponse.json({ error: failure.message }, { status: failure.status });
     }
   } catch (error) {
     console.error("Image generation provider request failed:", error);
@@ -113,7 +106,7 @@ export async function POST(request: NextRequest) {
   const imagePart = generated.candidates?.flatMap((candidate) => candidate.content?.parts || [])
     .find((part) => Boolean(part.inlineData?.data && part.inlineData.mimeType));
   if (!imagePart?.inlineData?.data || !imagePart.inlineData.mimeType) {
-    return NextResponse.json({ error: "مدل تصویر قابل ذخیره‌ای برنگرداند؛ دوباره با شرح ساده‌تری تلاش کن." }, { status: 502 });
+    return NextResponse.json({ error: "تصویر قابل ذخیره‌ای دریافت نشد؛ دوباره تلاش کن." }, { status: 502 });
   }
 
   const extension = getGeneratedImageExtension(imagePart.inlineData.mimeType);
