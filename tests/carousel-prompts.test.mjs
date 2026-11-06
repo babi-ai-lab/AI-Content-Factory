@@ -1,0 +1,21 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildCarouselSlidePrompts } from "../lib/carousel-prompts.mjs";
+
+test("creates five distinct visual briefs from the five approved story texts", () => {
+  const stories = ["اسلاید اول", "اسلاید دوم", "اسلاید سوم", "اسلاید چهارم", "اسلاید پنجم"];
+  const prompts = buildCarouselSlidePrompts("تصویر برند برای کسب‌وکار خدماتی با سبک مینیمال و حرفه‌ای", stories);
+  assert.equal(prompts.length, 5);
+  prompts.forEach((prompt, index) => {
+    assert.match(prompt, new RegExp(`visual ${index + 1} of a cohesive five-slide`, "i"));
+    assert.ok(prompt.includes(stories[index]));
+    assert.match(prompt, /No text, letters, numbers/);
+  });
+  assert.notEqual(prompts[0], prompts[4]);
+});
+
+test("rejects incomplete or oversized carousel copy", () => {
+  assert.throws(() => buildCarouselSlidePrompts("شرح معتبر برای تصویر برند", ["فقط یک اسلاید"]));
+  assert.throws(() => buildCarouselSlidePrompts("شرح معتبر برای تصویر برند", ["a", "b", "c", "d", "e"]));
+  assert.throws(() => buildCarouselSlidePrompts("short", ["a", "b", "c", "d", "e"]));
+});
