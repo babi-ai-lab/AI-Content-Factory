@@ -6,7 +6,6 @@ import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
   getImageServiceFailure,
-  toCloudflareImageDimensions,
   toImageResponseAspectRatio,
   toImageResponseImageSize,
   validateMediaGenerationInput,
@@ -100,7 +99,6 @@ export async function POST(request: NextRequest) {
   let mimeType = "image/jpeg";
   try {
     if (provider === "cloudflare") {
-      const dimensions = toCloudflareImageDimensions(input.aspectRatio);
       const response = await fetch(
         `https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(cloudflareAccountId!)}/ai/run/${CLOUDFLARE_MODEL}`,
         {
@@ -109,8 +107,6 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             prompt: buildBrandSafeImagePrompt(input.prompt).slice(0, 2048),
             steps: 4,
-            width: dimensions.width,
-            height: dimensions.height,
           }),
           signal: AbortSignal.timeout(90_000),
           cache: "no-store",
