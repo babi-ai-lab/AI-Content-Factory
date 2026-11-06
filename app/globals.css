@@ -871,3 +871,12 @@ footer span { padding: 0 6px; }
 .media-library-meta{display:flex;justify-content:space-between;gap:5px;color:#7a8499;font-size:.68rem}
 .media-library-delete{min-height:32px;border:1px solid #f0d7d7;border-radius:8px;background:#fff8f8;color:#a33d3d;font:inherit;font-size:.75rem;cursor:pointer}
 .media-library-delete:disabled{opacity:.55;cursor:wait}
+
+
+.brand-profile-switcher{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin:12px 0 16px;padding:13px;border:1px solid #dfe5f0;border-radius:12px;background:#f8faff}
+.brand-profile-switcher label{display:grid;gap:6px;flex:1;min-width:190px;color:#303b58;font-size:.84rem;font-weight:600}
+.brand-profile-switcher select{min-height:40px;padding:8px 10px;border:1px solid #d9e0ed;border-radius:9px;background:white;color:#26324f;font:inherit}
+.brand-profile-switcher>span{color:#7a8499;font-size:.75rem;white-space:nowrap}
+.brand-profile-delete{min-height:40px;padding:8px 12px;border:1px solid #f0d7d7;border-radius:9px;background:#fff8f8;color:#a33d3d;font:inherit;font-size:.82rem;cursor:pointer}
+.brand-profile-delete:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:640px){.brand-profile-switcher{display:grid}.brand-profile-switcher label{width:100%}.brand-profile-switcher button{width:100%}}

@@ -9,6 +9,7 @@ import MonthlyContentCalendar from "@/components/monthly-content-calendar";
 import CampaignManager from "@/components/campaign-manager";
 import PublicLanding from "@/components/public-landing";
 import MediaStudio from "@/components/media-studio";
+import { canAddBrandProfile, createBrandProfileEntry, normalizeBrandProfileEntries } from "@/lib/brand-profiles.mjs";
 
 type BusinessType =
   | "retail"
@@ -105,6 +106,8 @@ type BrandProfile = {
   prohibitedClaims: string;
 };
 
+type BrandProfileEntry = { id: string; name: string; profile: BrandProfile };
+
 const initialBrandProfile: BrandProfile = {
   brandName: "",
   tagline: "",
@@ -150,6 +153,25 @@ function normalizeBrandProfile(value: unknown): BrandProfile {
       ];
     })
   ) as BrandProfile;
+}
+
+function getBrandProfileContext(metadata: unknown): { profiles: BrandProfileEntry[]; active: BrandProfileEntry } {
+  const data = metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? metadata as Record<string, unknown>
+    : {};
+  const profiles = normalizeBrandProfileEntries(
+    data.aiContentFactoryBrandProfiles,
+    data.aiContentFactoryBrandProfile,
+  ).map((entry) => ({
+    id: entry.id,
+    name: entry.name,
+    profile: normalizeBrandProfile(entry.profile),
+  }));
+  const requestedId = typeof data.aiContentFactoryActiveBrandProfileId === "string"
+    ? data.aiContentFactoryActiveBrandProfileId
+    : "";
+  const active = profiles.find((entry) => entry.id === requestedId) || profiles[0];
+  return { profiles, active };
 }
 
 const businessTypes: { value: BusinessType; label: string }[] = [
@@ -532,6 +554,8 @@ export default function Home() {
   const [campaignRefreshKey, setCampaignRefreshKey] = useState(0);
   const activeCampaignUserIdRef = useRef<string | null>(null);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
+  const [brandProfiles, setBrandProfiles] = useState<BrandProfileEntry[]>([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
+  const [activeBrandProfileId, setActiveBrandProfileId] = useState("default");
   const [brandProfileSaving, setBrandProfileSaving] = useState(false);
   const [brandProfileNotice, setBrandProfileNotice] = useState("");
   const [content, setContent] = useState<Content | null>(null);
@@ -753,7 +777,10 @@ export default function Home() {
             ? { id: data.session.user.id, email: data.session.user.email }
             : null
         );
-        setBrandProfile(normalizeBrandProfile(data.session?.user.user_metadata?.aiContentFactoryBrandProfile));
+        const brandContext = getBrandProfileContext(data.session?.user.user_metadata);
+        setBrandProfiles(brandContext.profiles);
+        setActiveBrandProfileId(brandContext.active.id);
+        setBrandProfile(brandContext.active.profile);
         setDataProcessingNoticeAccepted(Boolean(data.session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
         setAuthReady(true);
       })
@@ -783,7 +810,10 @@ export default function Home() {
         return nextUser;
       });
 
-      setBrandProfile(normalizeBrandProfile(session?.user.user_metadata?.aiContentFactoryBrandProfile));
+      const brandContext = getBrandProfileContext(session?.user.user_metadata);
+      setBrandProfiles(brandContext.profiles);
+      setActiveBrandProfileId(brandContext.active.id);
+      setBrandProfile(brandContext.active.profile);
       setDataProcessingNoticeAccepted(Boolean(session?.user.user_metadata?.aiContentFactoryDataProcessingNoticeAcceptedAt));
 
       if (event === "PASSWORD_RECOVERY") {
@@ -834,6 +864,8 @@ export default function Home() {
 
       setHistoryReady(false);
       setBrandProfile(initialBrandProfile);
+      setBrandProfiles([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
+      setActiveBrandProfileId("default");
 
       return;
 
@@ -1212,17 +1244,75 @@ export default function Home() {
 
     try {
       const normalized = normalizeBrandProfile(brandProfile);
+      const nextProfiles = brandProfiles.map((entry) => entry.id === activeBrandProfileId
+        ? { ...entry, name: normalized.brandName || entry.name, profile: normalized }
+        : entry);
       const { error } = await supabase.auth.updateUser({
-        data: { aiContentFactoryBrandProfile: normalized },
+        data: {
+          aiContentFactoryBrandProfile: normalized,
+          aiContentFactoryBrandProfiles: nextProfiles,
+          aiContentFactoryActiveBrandProfileId: activeBrandProfileId,
+        },
       });
 
       if (error) throw error;
       setBrandProfile(normalized);
-      setBrandProfileNotice("پروفایل برند در حساب کاربری ذخیره شد و در تولیدهای بعدی استفاده می‌شود.");
+      setBrandProfiles(nextProfiles);
+      setBrandProfileNotice("پروفایل برند فعال همراه با فهرست برندهای حساب ذخیره شد.");
     } catch (error) {
       setBrandProfileNotice(
         error instanceof Error ? error.message : "ذخیره پروفایل برند انجام نشد."
       );
+    } finally {
+      setBrandProfileSaving(false);
+    }
+  }
+
+  function switchBrandProfile(id: string) {
+    const selected = brandProfiles.find((entry) => entry.id === id);
+    if (!selected) return;
+    setActiveBrandProfileId(selected.id);
+    setBrandProfile(selected.profile);
+    setBrandProfileNotice("");
+  }
+
+  function addBrandProfile() {
+    if (!canAddBrandProfile(brandProfiles.length)) {
+      setBrandProfileNotice("حداکثر ۱۰ پروفایل برند برای هر حساب قابل تعریف است.");
+      return;
+    }
+    const id = crypto.randomUUID();
+    const entry = createBrandProfileEntry(id, brandProfiles.length + 1, initialBrandProfile);
+    setBrandProfiles((current) => [...current, entry]);
+    setActiveBrandProfileId(id);
+    setBrandProfile(initialBrandProfile);
+    setBrandProfileNotice("پروفایل جدید ساخته شد؛ اطلاعات آن را تکمیل و ذخیره کن.");
+  }
+
+  async function deleteBrandProfile() {
+    if (brandProfiles.length <= 1) {
+      setBrandProfileNotice("حداقل یک پروفایل برند باید در حساب باقی بماند.");
+      return;
+    }
+    if (!window.confirm("پروفایل برند فعال حذف شود؟ این کار قابل بازگشت نیست.")) return;
+    const nextProfiles = brandProfiles.filter((entry) => entry.id !== activeBrandProfileId);
+    const nextActive = nextProfiles[0];
+    setBrandProfileSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          aiContentFactoryBrandProfiles: nextProfiles,
+          aiContentFactoryActiveBrandProfileId: nextActive.id,
+          aiContentFactoryBrandProfile: nextActive.profile,
+        },
+      });
+      if (error) throw error;
+      setBrandProfiles(nextProfiles);
+      setActiveBrandProfileId(nextActive.id);
+      setBrandProfile(nextActive.profile);
+      setBrandProfileNotice("پروفایل برند حذف شد.");
+    } catch (error) {
+      setBrandProfileNotice(error instanceof Error ? error.message : "حذف پروفایل برند انجام نشد.");
     } finally {
       setBrandProfileSaving(false);
     }
@@ -1281,6 +1371,8 @@ export default function Home() {
 
     setProduct(initialProduct);
     setBrandProfile(initialBrandProfile);
+    setBrandProfiles([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
+    setActiveBrandProfileId("default");
     setBrandProfileNotice("");
 
     setHistory([]);
@@ -2293,6 +2385,17 @@ const response = await fetch("/api/generate", {
         </section>
       )}
 
+      <div className="brand-profile-switcher">
+        <label>
+          برند فعال
+          <select value={activeBrandProfileId} onChange={(event) => switchBrandProfile(event.target.value)}>
+            {brandProfiles.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+          </select>
+        </label>
+        <button type="button" className="secondary-button" onClick={addBrandProfile} disabled={!canAddBrandProfile(brandProfiles.length)}>+ افزودن برند</button>
+        <button type="button" className="brand-profile-delete" onClick={() => void deleteBrandProfile()} disabled={brandProfiles.length <= 1 || brandProfileSaving}>حذف برند فعال</button>
+        <span>{brandProfiles.length.toLocaleString("fa-IR")} از ۱۰ برند</span>
+      </div>
       <details id="brand-profile" className="brand-profile-section">
         <summary className="brand-profile-summary">
           <div>
