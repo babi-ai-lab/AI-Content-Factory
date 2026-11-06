@@ -19,6 +19,12 @@
 
 ## اقداماتی که به حضور مالک نیاز دارند
 
+### ۰. فعال‌سازی تولید تصویر
+- [ ] در پنل حساب سرویس تصویر، ظرفیت و اعتبار قابل استفاده برای مدل متصل را فعال کن؛ لاگ Production محدودیت سهمیه صفر را نشان داده است و صرفاً منتظر بازنشانی ساعتی نیست.
+- [ ] پس از فعال‌سازی، با یک حساب واردشده یک تصویر ۴:۵ تولید و ذخیره خصوصی آن را بررسی کن.
+- [ ] سپس کاروسل پنج‌اسلایدی، خروجی PNG/ZIP و محدودیت پنج تصویر در ساعت را آزمون کن.
+- [ ] کلید یا رمز محرمانه را در چت یا GitHub ارسال نکن؛ فقط در تنظیمات امن سرویس ثبت شود.
+
 ### ۱. Supabase Auth و ایمیل
 
 - [x] Site URL و Redirect URL دامنه `https://app.eltbabak.ir` برای جریان ورود/تأیید ایمیل تنظیم و آزمون شده‌اند.
@@ -92,6 +98,7 @@
 
 
 ## Media studio regression checks
+- [ ] Resolve the zero-capacity account configuration before attempting authenticated generation.
 - [ ] Generate one 4:5 image with an authenticated account and verify the returned private asset.
 - [ ] Generate a five-slide carousel and verify all five images are stored under the requesting user.
 - [ ] Edit Persian copy on each slide and export 1080×1350 PNG files.
