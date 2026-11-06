@@ -28,6 +28,8 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 
 export default function InstagramIntegration({ userId }: Props) {
   const [connection, setConnection] = useState<InstagramConnection | null>(null);
+  const [configured, setConfigured] = useState(false);
+  const [schedulerEnabled, setSchedulerEnabled] = useState(false);
   const [jobs, setJobs] = useState<InstagramJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -51,6 +53,8 @@ export default function InstagramIntegration({ userId }: Props) {
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "خواندن وضعیت اتصال اینستاگرام ناموفق بود.");
       setConnection(result.connection || null);
+      setConfigured(Boolean(result.configured));
+      setSchedulerEnabled(Boolean(result.schedulerEnabled));
 
       const { data, error } = await supabase
         .from("instagram_publish_jobs")
