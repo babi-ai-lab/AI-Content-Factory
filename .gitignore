@@ -4,3 +4,9 @@ out
 .env
 .env.local
 .DS_Store
+
+# Android signing material - never commit private keys or signing config
+android/*.jks
+android/*.keystore
+android/*.p12
+android/signing.properties
