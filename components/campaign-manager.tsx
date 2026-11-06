@@ -468,7 +468,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
             <p className="campaign-comparison-hint">برای مشاهده گزارش مقایسه‌ای، حداقل یک کمپین دیگر را انتخاب کن.</p>
           ) : (
             <div className="campaign-comparison-scroll">
-              <table className="campaign-comparison-table">
+              <table className="campaign-comparison-table" aria-label="مقایسه شاخص‌های عملکرد کمپین‌ها">
                 <thead>
                   <tr>
                     <th scope="col">شاخص</th>
