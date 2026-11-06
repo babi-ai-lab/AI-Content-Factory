@@ -350,6 +350,8 @@ footer span { padding: 0 6px; }
 .monthly-calendar-month span { color: var(--muted); font-size: 10px; }
 .monthly-calendar-actions { display: flex; flex-wrap: wrap; gap: 7px; }
 .monthly-calendar-actions button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); font: inherit; font-size: 10px; cursor: pointer; }
+.monthly-calendar-actions button.monthly-calendar-export { border-color: #c9d9c7; background: #f2f8f1; color: #315a38; font-weight: 800; }
+.monthly-calendar-actions button:disabled { opacity: .5; cursor: not-allowed; }
 .monthly-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .monthly-calendar-weekday { padding: 8px 2px; color: var(--muted); font-size: 10px; text-align: center; }
 .monthly-calendar-blank { min-height: 74px; }
