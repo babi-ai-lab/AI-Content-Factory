@@ -100,7 +100,8 @@ export async function POST(request: NextRequest) {
       }
       if (response.status === 400 || response.status === 404) {
         return NextResponse.json({ error: "درخواست تولید تصویر با تنظیمات فعلی سازگار نیست. شرح تصویر را ساده‌تر کن یا بعداً دوباره تلاش کن." }, { status: 502 });
-      }\n      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
+      }
+      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
     }
   } catch (error) {
     console.error("Image generation provider request failed:", error);
