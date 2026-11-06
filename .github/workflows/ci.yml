@@ -35,6 +35,8 @@ jobs:
         run: npm audit --omit=dev
       - name: Unit tests
         run: npm test
+      - name: Validate production smoke script syntax
+        run: node --check scripts/production-smoke.mjs
       - name: Type check
         run: npm run typecheck
       - name: Build application
