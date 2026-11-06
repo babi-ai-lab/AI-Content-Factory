@@ -78,6 +78,9 @@ npm run dev
 | `CONTENT_GENERATION_API_KEY` | کلید محرمانه سرویس پردازش محتوای متصل برای تولید واقعی |
 | `CONTENT_GENERATION_MODEL` | شناسه مدل اصلی پیکربندی‌شده |
 | `CONTENT_GENERATION_FALLBACK_MODEL` | شناسه مدل جایگزین پیکربندی‌شده |
+| `IMAGE_GENERATION_PROVIDER` | انتخاب مسیر تولید تصویر: `cloudflare` یا `gemini`؛ مقدار پیشنهادی برای مسیر رایگان `cloudflare` است |
+| `CLOUDFLARE_ACCOUNT_ID` | شناسه حساب Cloudflare برای اجرای مدل تصویر |
+| `CLOUDFLARE_API_TOKEN` | توکن محرمانه با مجوزهای Workers AI؛ فقط در محیط سرور نگهداری شود |
 | `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` | اطلاعات محرمانه/شناسه Meta App برای Instagram Login |
 | `INSTAGRAM_REDIRECT_URI` | مسیر callback ثبت‌شده در Meta |
 | `INSTAGRAM_TOKEN_ENCRYPTION_KEY` | کلید Base64 سی‌ودو بایتی برای رمزنگاری توکن‌ها |
