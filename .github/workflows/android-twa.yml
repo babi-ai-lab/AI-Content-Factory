@@ -43,14 +43,14 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install --global @bubblewrap/cli
 
-      - name: Validate production PWA for Trusted Web Activity
-        run: bubblewrap validate --url=https://app.eltbabak.ir
-
       - name: Configure Bubblewrap toolchain
         working-directory: android
         run: |
           bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="$ANDROID_HOME"
           bubblewrap doctor
+
+      - name: Validate production PWA for Trusted Web Activity
+        run: bubblewrap validate --url=https://app.eltbabak.ir
 
       - name: Generate Android project from the reviewed TWA manifest
         working-directory: android
