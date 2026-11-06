@@ -121,10 +121,10 @@ export async function POST(request: NextRequest) {
     const graphBase = `https://graph.instagram.com/${version}`;
     const createForm = new URLSearchParams();
     if (input.mediaType === "image") {
-      createForm.set("image_url", input.mediaUrl);
+      createForm.set("image_url", mediaUrl);
     } else {
       createForm.set("media_type", "REELS");
-      createForm.set("video_url", input.mediaUrl);
+      createForm.set("video_url", mediaUrl);
       createForm.set("share_to_feed", "true");
     }
     if (input.caption) createForm.set("caption", input.caption);
