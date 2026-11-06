@@ -114,3 +114,11 @@ test("download-page install flow handles prompt acceptance, dismissal, and brows
   assert.match(component, /aria-live="polite"/);
   assert.match(component, /disabled=\{isInstalling\}/);
 });
+
+test("accepting the install prompt does not claim installation before appinstalled", async () => {
+  const component = await readFile(new URL("../app/download/add-to-home-screen.tsx", import.meta.url), "utf8");
+  const acceptedBranch = component.match(/if \(choice\.outcome === "accepted"\) \{([\s\S]*?)\n      \} else/);
+  assert.ok(acceptedBranch, "accepted install branch should exist");
+  assert.doesNotMatch(acceptedBranch[1], /setInstalled\(true\)/);
+  assert.match(component, /const handleInstalled = \(\) => \{[\s\S]*?setInstalled\(true\)/);
+});
