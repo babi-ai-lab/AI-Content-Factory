@@ -958,3 +958,6 @@ footer span { padding: 0 6px; }
 .account-deletion-help{font-size:.82rem!important}
 .account-deletion-card a:not(.account-deletion-brand){color:#2d4ba0;text-decoration:underline;text-underline-offset:3px}
 .account-deletion-links{display:flex;gap:18px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #edf0f6;font-size:.82rem}
+
+.public-legal-footer{display:flex;justify-content:center;padding:18px 16px 30px}
+.public-legal-footer a{color:#53617b;font-size:.8rem;text-decoration:underline;text-underline-offset:4px}
