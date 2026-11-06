@@ -111,10 +111,10 @@ export default function MediaStudio({ initialPrompt, contentHistoryId }: Props) 
       <div className="media-studio-heading">
         <div>
           <span className="step">۰۳ · استودیوی رسانه</span>
-          <h3 id="media-studio-title">تولید تصویر تبلیغاتی با هوش مصنوعی</h3>
+          <h3 id="media-studio-title">استودیوی تصویر تبلیغاتی</h3>
           <p>بر اساس محتوای فعلی، تصویر اختصاصی بساز. فایل در فضای خصوصی حساب ذخیره می‌شود.</p>
         </div>
-        <span className="media-studio-tag">Gemini Image · 1K</span>
+        <span className="media-studio-tag">خروجی باکیفیت · 1K</span>
       </div>
       <label className="media-studio-prompt">
         شرح و جهت هنری تصویر
@@ -132,7 +132,7 @@ export default function MediaStudio({ initialPrompt, contentHistoryId }: Props) 
           {loading ? <><span className="spinner" /> در حال ساخت تصویر...</> : "✦ تولید تصویر"}
         </button>
       </div>
-      <p className="media-studio-disclosure">هر حساب حداکثر ۵ تصویر در ساعت تولید می‌کند. تولید تصویر ممکن است از سهمیه و اعتبار API گوگل استفاده کند. مدل متن داخل تصویر را تولید نمی‌کند تا بتوانی نوشته فارسی را جداگانه ویرایش کنی.</p>
+      <p className="media-studio-disclosure">هر حساب حداکثر ۵ تصویر در ساعت تولید می‌کند. ظرفیت و محدودیت‌های سرویس ممکن است بر تولید تصویر اثر بگذارند. نوشته‌ها داخل تصویر درج نمی‌شوند تا بتوانی متن فارسی را جداگانه ویرایش کنی.</p>
       {error && <div className="notice error" role="alert">{error}</div>}
       {notice && <div className="notice info" role="status">{notice}{remaining !== null ? ` · سهمیه باقی‌مانده این ساعت: ${remaining.toLocaleString("fa-IR")}` : ""}</div>}
       {imageUrl && (

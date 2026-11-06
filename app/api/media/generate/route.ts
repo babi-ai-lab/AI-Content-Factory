@@ -11,9 +11,9 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type GeminiPart = { inlineData?: { mimeType?: string; data?: string }; text?: string };
-type GeminiResponse = {
-  candidates?: Array<{ content?: { parts?: GeminiPart[] }; finishReason?: string }>;
+type ImageServicePart = { inlineData?: { mimeType?: string; data?: string }; text?: string };
+type ImageServiceResponse = {
+  candidates?: Array<{ content?: { parts?: ImageServicePart[] }; finishReason?: string }>;
   error?: { message?: string; code?: number };
 };
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "بررسی سهمیه تولید تصویر ناموفق بود." }, { status: 503 });
   }
 
-  let generated: GeminiResponse;
+  let generated: ImageServiceResponse;
   try {
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1/models/gemini-3.1-flash-image:generateContent",
@@ -89,16 +89,22 @@ export async function POST(request: NextRequest) {
         cache: "no-store",
       },
     );
-    generated = await response.json().catch(() => ({})) as GeminiResponse;
+    generated = await response.json().catch(() => ({})) as ImageServiceResponse;
     if (!response.ok) {
-      console.error("Gemini image generation failed:", response.status, generated.error?.code);
+      console.error("Image generation provider rejected request:", { status: response.status, providerCode: generated.error?.code, providerMessage: generated.error?.message?.slice(0, 500) });
       if (response.status === 429) {
         return NextResponse.json({ error: "ظرفیت سرویس تولید تصویر موقتاً به پایان رسیده است. بعداً دوباره تلاش کن." }, { status: 429 });
       }
-      return NextResponse.json({ error: "تولید تصویر توسط سرویس هوش مصنوعی ناموفق بود. تنظیمات مدل و سهمیه Gemini را بررسی کن." }, { status: 502 });
+      if (response.status === 401 || response.status === 403) {
+        return NextResponse.json({ error: "دسترسی سرویس تولید تصویر موقتاً برقرار نیست. لطفاً کمی بعد دوباره تلاش کن." }, { status: 503 });
+      }
+      if (response.status === 400 || response.status === 404) {
+        return NextResponse.json({ error: "درخواست تولید تصویر با تنظیمات فعلی سازگار نیست. شرح تصویر را ساده‌تر کن یا بعداً دوباره تلاش کن." }, { status: 502 });
+      }
+      return NextResponse.json({ error: "در حال حاضر امکان تولید تصویر وجود ندارد. لطفاً کمی بعد دوباره تلاش کن." }, { status: 502 });
     }
   } catch (error) {
-    console.error("Gemini image generation request failed:", error);
+    console.error("Image generation provider request failed:", error);
     return NextResponse.json({ error: "ارتباط با سرویس تولید تصویر برقرار نشد." }, { status: 502 });
   }
 
