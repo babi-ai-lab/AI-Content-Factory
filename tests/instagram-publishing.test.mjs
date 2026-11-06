@@ -1,0 +1,30 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { validateInstagramMediaPath, validateInstagramPublishInput, validateInstagramScheduleTime } from "../lib/instagram-publishing.mjs";
+
+const user = "user-123";
+
+test("only media paths owned by the authenticated user and matching the media type are accepted", () => {
+  assert.equal(validateInstagramMediaPath(user + "/photo.jpg", user, "image"), true);
+  assert.equal(validateInstagramMediaPath(user + "/photo.jpeg", user, "image"), true);
+  assert.equal(validateInstagramMediaPath(user + "/video.mp4", user, "reel"), true);
+  assert.equal(validateInstagramMediaPath("another-user/photo.jpg", user, "image"), false);
+  assert.equal(validateInstagramMediaPath(user + "/../secret.jpg", user, "image"), false);
+  assert.equal(validateInstagramMediaPath(user + "/%2fsecret.jpg", user, "image"), false);
+  assert.equal(validateInstagramMediaPath(user + "/video.mp4", user, "image"), false);
+  assert.equal(validateInstagramMediaPath("https://evil.example/photo.jpg", user, "image"), false);
+});
+
+test("publishing input validates media type and caption length", () => {
+  assert.equal(validateInstagramPublishInput({ mediaPath: user + "/photo.jpg", mediaType: "image", caption: "Hello" }).valid, true);
+  assert.equal(validateInstagramPublishInput({ mediaPath: user + "/story.mp4", mediaType: "story", caption: "Hello" }).valid, false);
+  assert.equal(validateInstagramPublishInput({ mediaPath: user + "/photo.jpg", mediaType: "image", caption: "x".repeat(2201) }).valid, false);
+});
+
+test("Instagram schedule time must be between two minutes and 90 days ahead", () => {
+  const now = 1_800_000_000_000;
+  assert.equal(validateInstagramScheduleTime(new Date(now + 3 * 60 * 1000).toISOString(), now), new Date(now + 3 * 60 * 1000).toISOString());
+  assert.equal(validateInstagramScheduleTime(new Date(now + 60 * 1000).toISOString(), now), null);
+  assert.equal(validateInstagramScheduleTime(new Date(now + 91 * 24 * 60 * 60 * 1000).toISOString(), now), null);
+  assert.equal(validateInstagramScheduleTime("invalid", now), null);
+});
