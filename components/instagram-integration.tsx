@@ -260,8 +260,8 @@ export default function InstagramIntegration({ userId }: Props) {
 
       <div className="instagram-integration-actions">
         {!connection ? (
-          <button type="button" className="primary-button" onClick={connectAccount} disabled={busy || loading}>
-            {busy ? "در حال اتصال..." : "اتصال حساب حرفه‌ای اینستاگرام"}
+          <button type="button" className="primary-button" onClick={connectAccount} disabled={busy || loading || !configured}>
+            {busy ? "در حال اتصال..." : configured ? "اتصال حساب حرفه‌ای اینستاگرام" : "اتصال پس از تنظیم Meta فعال می‌شود"}
           </button>
         ) : (
           <>
@@ -271,6 +271,8 @@ export default function InstagramIntegration({ userId }: Props) {
           </>
         )}
       </div>
+
+      {!configured && !connection && <p className="privacy-note">برای فعال‌سازی اتصال، Meta App ID و App Secret باید در متغیرهای امن سرور ثبت شوند.</p>}
 
       {connection && (
         <div className="instagram-publish-form">
@@ -302,10 +304,11 @@ export default function InstagramIntegration({ userId }: Props) {
             <button type="button" className="primary-button" onClick={publishNow} disabled={busy || !mediaFile}>
               {busy ? "در حال انجام..." : "انتشار فوری"}
             </button>
-            <button type="button" className="secondary-button" onClick={schedulePost} disabled={busy || !mediaFile || !scheduleAt}>
+            <button type="button" className="secondary-button" onClick={schedulePost} disabled={busy || !mediaFile || !scheduleAt || !schedulerEnabled}>
               زمان‌بندی انتشار
             </button>
           </div>
+          {!schedulerEnabled && <p className="privacy-note">زمان‌بندی خودکار پس از راه‌اندازی امن worker در سرور فعال می‌شود.</p>}
         </div>
       )}
 
