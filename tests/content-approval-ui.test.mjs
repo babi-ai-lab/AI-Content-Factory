@@ -10,6 +10,7 @@ test("content history supports editorial review, approval and status filtering",
   assert.match(source, /reviewUpdatedAt/);
   assert.match(source, /reviewNote/);
   assert.match(source, /توضیح اصلاحات لازم/);
+  assert.match(source, /reviewNote: note\.trim\(\)\.slice\(0, 500\)/);
   assert.match(source, /updateHistoryMeta\(item, \{ reviewStatus:/);
   assert.match(source, /CONTENT_REVIEW_STATUSES\.map/);
 });
