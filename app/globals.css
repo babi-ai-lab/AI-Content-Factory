@@ -293,12 +293,25 @@ footer span { padding: 0 6px; }
 .versions-empty { padding: 14px; border: 1px dashed #dfe5dc; border-radius: 9px; color: var(--muted); font-size: 10px; text-align: center; line-height: 1.8; }
 .versions-list { display: flex; flex-direction: column; gap: 8px; }
 .version-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.version-row-actions { display: flex; align-items: center; gap: 7px; flex: none; }
+.version-compare { margin-top: 14px; padding: 14px; border: 1px solid #cfdccf; border-radius: 12px; background: #f8faf7; }
+.version-compare-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.version-compare-heading b, .version-compare-heading small { display: block; }
+.version-compare-heading b { color: var(--ink); font-size: 12px; }
+.version-compare-heading small { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.version-compare-field { padding: 12px 0; border-top: 1px solid var(--line); }
+.version-compare-field h4 { margin: 0 0 8px; color: var(--ink); font-size: 11px; }
+.version-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.version-compare-column { min-width: 0; padding: 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.version-compare-column b { display: block; margin-bottom: 7px; color: var(--muted); font-size: 10px; }
+.version-compare-column p { margin: 0; color: var(--ink); font-size: 11px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.version-compare-column.current { border-color: #b8d1b8; background: #fbfefb; }
 .version-row > div { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .version-row b { font-size: 10px; }
 .version-row small { color: var(--muted); font-size: 9px; }
 .version-row p { margin: 0; color: #68736c; font-size: 9px; line-height: 1.7; overflow-wrap: anywhere; }
 .version-row button { flex: none; padding: 7px 10px; }
-@media (max-width: 480px) { .versions-toolbar { align-items: flex-start; flex-direction: column; } .version-row { align-items: flex-start; flex-direction: column; } .version-row button { width: 100%; } }
+@media (max-width: 480px) { .versions-toolbar { align-items: flex-start; flex-direction: column; } .version-row { align-items: flex-start; flex-direction: column; } .version-row-actions { width: 100%; } .version-row-actions button { flex: 1; } .version-compare-grid { grid-template-columns: 1fr; } .version-compare-heading { align-items: flex-start; flex-direction: column; } }
 
 .history-load-more { display: flex; justify-content: center; margin: 15px 0 4px; }
 .history-load-more button { min-width: 230px; padding: 10px 16px; }
