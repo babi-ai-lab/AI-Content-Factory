@@ -29,6 +29,7 @@ test("Android TWA configuration uses the owner-confirmed permanent application I
   assert.equal(config.iconUrl, "https://app.eltbabak.ir/icons/app-icon-512.png");
   assert.equal(config.maskableIconUrl, "https://app.eltbabak.ir/icons/app-icon-maskable-512.png");
   assert.equal(config.appVersionCode, 1);
+  assert.equal(config.minSdkVersion, 24);
   assert.equal(config.signingKey.path, "./release-keystore.jks");
 });
 test("Android workflow validates PWA and builds unsigned artifacts without secrets", async () => {
