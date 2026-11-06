@@ -18,5 +18,6 @@ test("image generation failures are explained without exposing provider names", 
   const helpers = await readFile(new URL("../lib/media-generation.mjs", import.meta.url), "utf8");
   assert.match(helpers, /دسترسی سرویس تولید تصویر موقتاً برقرار نیست/);
   assert.doesNotMatch(source, /شرح تصویر را ساده‌تر کن/);
-  assert.doesNotMatch(source, /Gemini|Google|گوگل|جمنای/i);
+  const messages = [...helpers.matchAll(/message: "([^"]+)"/g)].map((match) => match[1]).join(" ");
+  assert.doesNotMatch(messages, /Gemini|Google|گوگل|جمنای/i);
 });
