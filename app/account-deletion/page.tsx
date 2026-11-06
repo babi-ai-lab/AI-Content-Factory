@@ -27,7 +27,6 @@ export default function AccountDeletionPage() {
         </p>
         <nav className="account-deletion-links" aria-label="پیوندهای مرتبط">
           <a href="/">بازگشت به برنامه</a>
-          <a href="/privacy">سیاست حریم خصوصی</a>
         </nav>
       </section>
     </main>
