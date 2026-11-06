@@ -146,3 +146,17 @@
   .primaryButton { transition: none; }
   .primaryButton:hover { transform: none; }
 }
+
+.homeScreen { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; align-items: center; gap: 15px; margin: 0 0 22px; padding: 19px 22px; border: 1px solid #dce8d9; border-radius: 17px; background: linear-gradient(110deg, #f0f6e9, #fff 75%); }
+.homeScreenIcon { width: 43px; height: 43px; display: grid; place-items: center; border-radius: 13px; background: #e2efd9; color: #315b43; font-size: 25px; font-weight: 700; }
+.homeScreenCopy strong { display: block; font-size: 12px; }
+.homeScreenCopy p { margin: 5px 0 0; color: var(--df-muted); font-size: 10px; line-height: 1.9; }
+.homeScreenButton { min-height: 42px; padding: 0 17px; border: 0; border-radius: 11px; background: var(--df-green); color: white; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; transition: background .18s ease, transform .18s ease; }
+.homeScreenButton:hover { background: var(--df-green-dark); transform: translateY(-1px); }
+.homeScreenHelp { grid-column: 1 / -1; padding: 12px 14px; border-radius: 11px; background: #fff; color: #5e6d61; font-size: 10px; line-height: 2.1; }
+.homeScreenHelp p { margin: 0; }
+@media (max-width: 650px) {
+  .homeScreen { grid-template-columns: 39px minmax(0, 1fr); gap: 11px; padding: 15px; }
+  .homeScreenIcon { width: 38px; height: 38px; }
+  .homeScreenButton { grid-column: 1 / -1; width: 100%; }
+}
