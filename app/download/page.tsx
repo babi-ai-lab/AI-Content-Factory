@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import styles from "./download.module.css";
+import styles from "./download.module.css";\nimport AddToHomeScreen from "./add-to-home-screen";
 
 const downloadUrl =
   "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.0/AI-Content-Factory-1.0.0.apk";
@@ -101,7 +101,7 @@ export default function DownloadPage() {
           </aside>
         </section>
 
-        <section className={styles.details} aria-label="مشخصات فایل">
+        <AddToHomeScreen />\n\n        <section className={styles.details} aria-label="مشخصات فایل">
           <div className={styles.detailItem}><span className={styles.detailIcon}>✓</span><div><b>نسخه رسمی</b><small>منتشرشده در GitHub Releases</small></div></div>
           <div className={styles.detailItem}><span className={styles.detailIcon}>⌁</span><div><b>دانلود مستقیم</b><small>بدون واسطه و لینک کوتاه‌کننده</small></div></div>
           <div className={styles.detailItem}><span className={styles.detailIcon}>▣</span><div><b>مخصوص اندروید</b><small>نصب از طریق فایل APK</small></div></div>
