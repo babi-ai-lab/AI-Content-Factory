@@ -591,6 +591,30 @@ export default function Home() {
   const [contentVersions, setContentVersions] = useState<ContentVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
+  const [compareVersionId, setCompareVersionId] = useState("");
+
+  const comparingVersion = useMemo(
+    () => contentVersions.find((version) => version.id === compareVersionId) || null,
+    [contentVersions, compareVersionId],
+  );
+  const versionCompareFields = useMemo(() => {
+    if (!comparingVersion || !content) return [];
+    const fields = [
+      { id: "caption", label: "کپشن", previous: comparingVersion.content.caption, current: content.caption },
+      { id: "reel", label: "سناریوی ریلز", previous: comparingVersion.content.reel, current: content.reel },
+      { id: "ad", label: "متن تبلیغ", previous: comparingVersion.content.ad, current: content.ad },
+    ];
+    const storyCount = Math.max(comparingVersion.content.stories.length, content.stories.length);
+    for (let index = 0; index < storyCount; index += 1) {
+      fields.push({
+        id: `story-${index}`,
+        label: `استوری ${(index + 1).toLocaleString("fa-IR")}`,
+        previous: comparingVersion.content.stories[index] || "",
+        current: content.stories[index] || "",
+      });
+    }
+    return fields;
+  }, [comparingVersion, content]);
   const versionsRequestRef = useRef(0);
 
   const [historyReady, setHistoryReady] = useState(false);
@@ -1781,6 +1805,7 @@ const response = await fetch("/api/generate", {
     }
 
     setContent(version.content);
+    setCompareVersionId("");
     setDraftText(getTabText(version.content, activeTab));
     setHistory((old) =>
       old.map((item) =>
@@ -1907,6 +1932,7 @@ const response = await fetch("/api/generate", {
     setDraftText(item.content.caption);
 
     setSelectedHistoryId(item.id);
+    setCompareVersionId("");
     versionsRequestRef.current += 1;
         setContentVersions([]);
     setVersionsError("");
@@ -1944,6 +1970,7 @@ const response = await fetch("/api/generate", {
     if (selectedHistoryId === id) {
 
       setSelectedHistoryId("");
+      setCompareVersionId("");
       versionsRequestRef.current += 1;
         setContentVersions([]);
       setVersionsError("");
@@ -2855,10 +2882,39 @@ const response = await fetch("/api/generate", {
                               <small>{formatDate(version.createdAt)}</small>
                               <p>{(version.content.caption || "").slice(0, 110)}{(version.content.caption || "").length > 110 ? "…" : ""}</p>
                             </div>
-                            <button className="history-open" onClick={() => restoreContentVersion(version)}>بازگردانی</button>
+                            <div className="version-row-actions">
+                              <button className="history-backup" onClick={() => setCompareVersionId(version.id)}>مقایسه</button>
+                              <button className="history-open" onClick={() => restoreContentVersion(version)}>بازگردانی</button>
+                            </div>
                           </div>
                         ))}
                       </div>
+                    )}
+                    {comparingVersion && (
+                      <section className="version-compare" aria-live="polite">
+                        <div className="version-compare-heading">
+                          <div>
+                            <b>مقایسه نسخه قبلی با نسخه فعلی ذخیره‌شده</b>
+                            <small>{formatDate(comparingVersion.createdAt)}</small>
+                          </div>
+                          <button className="history-backup" onClick={() => setCompareVersionId("")}>بستن مقایسه</button>
+                        </div>
+                        {versionCompareFields.map((field) => (
+                          <article className="version-compare-field" key={field.id}>
+                            <h4>{field.label}</h4>
+                            <div className="version-compare-grid">
+                              <div className="version-compare-column previous">
+                                <b>نسخه قبلی</b>
+                                <p>{field.previous || "—"}</p>
+                              </div>
+                              <div className="version-compare-column current">
+                                <b>نسخه فعلی</b>
+                                <p>{field.current || "—"}</p>
+                              </div>
+                            </div>
+                          </article>
+                        ))}
+                      </section>
                     )}
                   </div>
                 </details>
