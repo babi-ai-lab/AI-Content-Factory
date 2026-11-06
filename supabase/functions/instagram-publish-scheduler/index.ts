@@ -216,8 +216,22 @@ Deno.serve(async (request) => {
       return Response.json({ error: "Could not claim scheduled jobs" }, { status: 503 });
     }
 
-    const results = await Promise.all((jobs || []).map(async (job: PublishJob) => {
+    const results = await Promise.all((jobs || []).map(async (claimedJob: {
+      id: string;
+      user_id: string;
+      request_id: string;
+      media_type: "image" | "reel";
+      media_url: string;
+      caption: string;
+    }) => {
       try {
+        const { data: metadata, error: metadataError } = await supabase
+          .from("instagram_publish_jobs")
+          .select("container_id,attempt_count,created_at")
+          .eq("id", claimedJob.id)
+          .single();
+        if (metadataError || !metadata) throw new Error("Could not load Instagram job metadata");
+        const job: PublishJob = { ...claimedJob, ...metadata };
         const status = await processJob(job, encryptionKey);
         return { id: job.id, status };
       } catch (error) {
@@ -228,8 +242,8 @@ Deno.serve(async (request) => {
           error_message: message.slice(0, 500),
           completed_at: new Date().toISOString(),
           started_at: null,
-        }).eq("id", job.id);
-        return { id: job.id, status: "failed" };
+        }).eq("id", claimedJob.id);
+        return { id: claimedJob.id, status: "failed" };
       }
     }));
 
