@@ -68,6 +68,23 @@ for (const target of targets) {
 
   const pageResponse = await fetchWithRetry(`${target.origin}/`);
   const html = await pageResponse.text();
+  const securityHeaderExpectations = [
+    ['x-content-type-options', /^nosniff$/i],
+    ['x-frame-options', /^DENY$/i],
+    ['referrer-policy', /^strict-origin-when-cross-origin$/i],
+    ['permissions-policy', /camera=\\(\\), microphone=\\(\\), geolocation=\\(\\)/i],
+    ['strict-transport-security', /max-age=31536000/i],
+  ];
+  for (const [header, expected] of securityHeaderExpectations) {
+    const value = pageResponse.headers.get(header) || '';
+    if (!expected.test(value)) {
+      throw new Error(`${target.label}: missing or unsafe ${header} response header (${value || 'missing'})`);
+    }
+  }
+  const rootCacheControl = pageResponse.headers.get('cache-control') || '';
+  if (!/no-store/i.test(rootCacheControl) || !/must-revalidate/i.test(rootCacheControl)) {
+    throw new Error(`${target.label}: public app shell must not be cached (${rootCacheControl || 'missing'})`);
+  }
   const hasProductName = html.includes('AI Content Factory');
   const hasSignupCta = html.includes('شروع رایگان');
   const hasAuthLoadingShell = html.includes('id="auth-loading-state"') && html.includes('auth-loading-watchdog');
@@ -105,5 +122,5 @@ for (const target of targets) {
     }
   }
 
-  console.log(`PASS ${target.label}: health, anonymous API rejection including account export, vendor-neutral errors, page shell, signup CTA, retired integration hidden, and ${scripts.length} JavaScript asset(s)`);
+  console.log(`PASS ${target.label}: health, anonymous API rejection including account export, vendor-neutral errors, page shell, signup CTA, retired integration hidden, security headers, no-store app shell, and ${scripts.length} JavaScript asset(s)`);
 }
