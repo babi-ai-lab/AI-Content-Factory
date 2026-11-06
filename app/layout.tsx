@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+// Always render the app shell on the server; do not serve a stale prerendered
+// document after a deployment while its JavaScript assets have changed.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "AI Content Factory | فضای کاری بازاریابی کسب‌وکارها",
   description: "فضای کاری فارسی برای تولید محتوای متناسب با کانال، مدیریت کمپین، تاریخچه محتوا و سنجش عملکرد بازاریابی.",
