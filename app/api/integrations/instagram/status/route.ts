@@ -26,5 +26,10 @@ export async function GET(request: NextRequest) {
     console.error("Instagram connection status lookup failed:", error);
     return NextResponse.json({ error: "خواندن وضعیت اتصال اینستاگرام ناموفق بود." }, { status: 503 });
   }
-  return NextResponse.json({ connected: Boolean(data), connection: data || null });
+  return NextResponse.json({
+    connected: Boolean(data),
+    connection: data || null,
+    configured: Boolean(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET && process.env.INSTAGRAM_REDIRECT_URI && process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY),
+    schedulerEnabled: process.env.INSTAGRAM_SCHEDULER_ENABLED === "true",
+  });
 }
