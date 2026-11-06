@@ -11,3 +11,10 @@ export type ImageResponseAspectRatio =
   | "ASPECT_RATIO_THREE_BY_TWO"
   | "ASPECT_RATIO_TWO_BY_THREE";
 export function toImageResponseAspectRatio(aspectRatio: string): ImageResponseAspectRatio | null;
+
+export type ImageResponseImageSize =
+  | "IMAGE_SIZE_FIVE_TWELVE"
+  | "IMAGE_SIZE_ONE_K"
+  | "IMAGE_SIZE_TWO_K"
+  | "IMAGE_SIZE_FOUR_K";
+export function toImageResponseImageSize(imageSize: string): ImageResponseImageSize | null;
