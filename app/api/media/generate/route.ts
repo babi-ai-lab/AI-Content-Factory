@@ -6,6 +6,7 @@ import {
   buildBrandSafeImagePrompt,
   getGeneratedImageExtension,
   toImageResponseAspectRatio,
+  toImageResponseImageSize,
   validateMediaGenerationInput,
 } from "@/lib/media-generation.mjs";
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
           contents: [{ role: "user", parts: [{ text: buildBrandSafeImagePrompt(input.prompt) }] }],
           generationConfig: {
             responseModalities: ["IMAGE"],
-            responseFormat: { image: { aspectRatio: toImageResponseAspectRatio(input.aspectRatio), imageSize: "1K" } },
+            responseFormat: { image: { aspectRatio: toImageResponseAspectRatio(input.aspectRatio), imageSize: toImageResponseImageSize("1K") } },
           },
         }),
         signal: AbortSignal.timeout(90_000),
