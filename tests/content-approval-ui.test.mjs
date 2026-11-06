@@ -8,6 +8,8 @@ test("content history supports editorial review, approval and status filtering",
   assert.match(source, /فیلتر وضعیت بازبینی/);
   assert.match(source, /وضعیت بازبینی:/);
   assert.match(source, /reviewUpdatedAt/);
+  assert.match(source, /reviewNote/);
+  assert.match(source, /توضیح اصلاحات لازم/);
   assert.match(source, /updateHistoryMeta\(item, \{ reviewStatus:/);
   assert.match(source, /CONTENT_REVIEW_STATUSES\.map/);
 });
