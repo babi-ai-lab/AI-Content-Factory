@@ -31,5 +31,5 @@ export async function GET(request: NextRequest) {
     connection: data || null,
     configured: Boolean(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET && process.env.INSTAGRAM_REDIRECT_URI && process.env.INSTAGRAM_TOKEN_ENCRYPTION_KEY),
     schedulerEnabled: process.env.INSTAGRAM_SCHEDULER_ENABLED === "true",
-  });
+  }, { headers: { "Cache-Control": "private, no-store, max-age=0", Pragma: "no-cache" } });
 }
