@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { encryptInstagramToken, hashInstagramOAuthState, verifyInstagramOAuthState } from "@/lib/instagram-security.mjs";
+import { readBoundedJsonBody } from "@/lib/server-controls.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,7 +47,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "تنظیمات اتصال اینستاگرام کامل نیست." }, { status: 503 });
     }
 
-    const body = await request.json().catch(() => null) as { code?: string; state?: string } | null;
+    const parsedBody = await readBoundedJsonBody(request.body, 8 * 1024);
+    if ("error" in parsedBody) {
+      return NextResponse.json(
+        { error: parsedBody.error === "too_large" ? "حجم درخواست بیش از حد مجاز است." : "ساختار درخواست معتبر نیست." },
+        { status: parsedBody.error === "too_large" ? 413 : 400 },
+      );
+    }
+    const body = parsedBody.value && typeof parsedBody.value === "object" && !Array.isArray(parsedBody.value)
+      ? parsedBody.value as { code?: unknown; state?: unknown }
+      : null;
     const code = typeof body?.code === "string" ? body.code.trim() : "";
     const state = typeof body?.state === "string" ? body.state : "";
     if (!code || code.length > 4096 || !state || state.length > 2048) {
