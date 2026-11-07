@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   buildBrandSafeImagePrompt,
   getImageServiceFailure,
@@ -86,4 +87,11 @@ test("maps upstream image failures to accurate vendor-neutral user messages", as
     Object.values([400, 401, 403, 404, 429, 500]).map((status) => getImageServiceFailure(status).message).join(" "),
     /Gemini|Google|گوگل|جمنای/i,
   );
+});
+
+test("private media library responses disable HTTP caching for signed URLs", async () => {
+  const source = await readFile(new URL("../app/api/media/generate/route.ts", import.meta.url), "utf8");
+  assert.ok(source.includes('"Cache-Control": "private, no-store, max-age=0"'));
+  assert.ok(source.includes("Pragma: \"no-cache\""));
+  assert.ok(source.includes("{ headers: privateHeaders }"));
 });
