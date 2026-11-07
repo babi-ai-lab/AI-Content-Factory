@@ -525,27 +525,6 @@ export async function POST(request: NextRequest) {
 
     const businessType = p.businessType || "retail";
 
-    // محدودیت پایدار و اتمیک درخواست‌ها در PostgreSQL؛ در خطای سرویس fail closed می‌کنیم.
-    const { data: rateLimitData, error: rateLimitError } = await supabaseServer.rpc(
-      "consume_generation_request"
-    );
-
-    if (rateLimitError || !rateLimitData || typeof rateLimitData.allowed !== "boolean") {
-      console.error("Persistent generation rate limit check failed:", rateLimitError);
-      return NextResponse.json(
-        { error: "بررسی سهمیه درخواست‌ها موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کن." },
-        { status: 503 }
-      );
-    }
-
-    if (!rateLimitData.allowed) {
-      const retryAfter = Math.max(1, Number(rateLimitData.retry_after_seconds) || 600);
-      return NextResponse.json(
-        { error: "تعداد درخواست‌ها بیش از حد مجاز است. پس از پایان زمان محدودیت دوباره تلاش کن." },
-        { status: 429, headers: { "Retry-After": String(retryAfter) } }
-      );
-    }
-
     const apiKey = process.env.CONTENT_GENERATION_API_KEY || process.env.GEMINI_API_KEY;
 
     if (!apiKey && !shouldUseDemoGeneration(process.env.NODE_ENV, apiKey)) {
@@ -567,6 +546,27 @@ export async function POST(request: NextRequest) {
           businessType,
         }),
       });
+    }
+
+    // محدودیت پایدار و اتمیک درخواست‌ها در PostgreSQL؛ در خطای سرویس fail closed می‌کنیم.
+    const { data: rateLimitData, error: rateLimitError } = await supabaseServer.rpc(
+      "consume_generation_request"
+    );
+
+    if (rateLimitError || !rateLimitData || typeof rateLimitData.allowed !== "boolean") {
+      console.error("Persistent generation rate limit check failed:", rateLimitError);
+      return NextResponse.json(
+        { error: "بررسی سهمیه درخواست‌ها موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کن." },
+        { status: 503 }
+      );
+    }
+
+    if (!rateLimitData.allowed) {
+      const retryAfter = Math.max(1, Number(rateLimitData.retry_after_seconds) || 600);
+      return NextResponse.json(
+        { error: "تعداد درخواست‌ها بیش از حد مجاز است. پس از پایان زمان محدودیت دوباره تلاش کن." },
+        { status: 429, headers: { "Retry-After": String(retryAfter) } }
+      );
     }
 
     const primaryModel =
