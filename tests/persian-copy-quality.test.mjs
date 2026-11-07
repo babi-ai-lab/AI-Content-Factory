@@ -19,3 +19,16 @@ test("uses channel-specific writing guidance", () => {
 test("falls back safely for unknown channels", () => {
   assert.match(buildPersianCopyQualityInstructions("unknown"), /در کانال‌های مختلف قابل استفاده/);
 });
+
+
+test("sets relevant, restrained emoji rules by content and channel", () => {
+  const instagram = buildPersianCopyQualityInstructions("instagram");
+  assert.match(instagram, /۲ تا ۵ ایموجی/);
+  assert.match(instagram, /🛠️ برای خدمات فنی/);
+  assert.match(instagram, /🏡 برای ملک و بازسازی/);
+  assert.match(instagram, /ایموجی‌های کلیشه‌ای و نامرتبط/);
+  const sms = buildPersianCopyQualityInstructions("sms");
+  assert.match(sms, /برای پیامک، وب‌سایت و ایمیل رسمی ایموجی را حذف کن/);
+  const linkedin = buildPersianCopyQualityInstructions("linkedin");
+  assert.match(linkedin, /لینکدین حداکثر یک ایموجی حرفه‌ای/);
+});
