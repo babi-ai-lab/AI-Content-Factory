@@ -346,6 +346,31 @@ const STORAGE_KEY = "ai-content-factory-history-v1";
 
 const HISTORY_PAGE_SIZE = 50;
 
+const WORKSPACE_DRAFT_KEY = "ai-content-factory-workspace-draft-v1";
+
+function getPersianAuthError(error: unknown): string {
+  const message = error instanceof Error ? error.message : "";
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("password") &&
+    (normalized.includes("contain") ||
+      normalized.includes("lowercase") ||
+      normalized.includes("uppercase") ||
+      normalized.includes("number") ||
+      normalized.includes("symbol") ||
+      normalized.includes("character"))
+  ) {
+    return "رمز عبور باید حداقل ۸ نویسه داشته باشد و شامل حروف انگلیسی کوچک (a-z)، حروف بزرگ (A-Z)، حداقل یک عدد (0-9) و حداقل یک علامت مانند ! @ # $ باشد.";
+  }
+
+  if (normalized.includes("password") && normalized.includes("at least")) {
+    return "رمز عبور انتخاب‌شده شرایط امنیتی لازم را ندارد. لطفاً از ترکیب حروف کوچک و بزرگ انگلیسی، عدد و علامت استفاده کن.";
+  }
+
+  return message || "خطا در ورود یا ثبت‌نام. لطفاً دوباره تلاش کن.";
+}
+
 const initialProduct: Product = {
   businessType: "retail",
   contentTemplate: "balanced",
@@ -575,6 +600,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>("caption");
 
   const [draftText, setDraftText] = useState("");
+  const [workspaceDraftLoadedKey, setWorkspaceDraftLoadedKey] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -789,6 +815,85 @@ export default function Home() {
     setNoticeType(type);
 
   }
+
+  // بازیابی خودکار فرم و پیش‌نویس محتوای کاربر از همین مرورگر
+  useEffect(() => {
+    const storageKey = `${WORKSPACE_DRAFT_KEY}:${user?.id || "guest"}`;
+    setProduct(initialProduct);
+    setContent(null);
+    setActiveTab("caption");
+    setDraftText("");
+    setBrandProfile(initialBrandProfile);
+    setBrandProfiles([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
+    setActiveBrandProfileId("default");
+
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          product?: Partial<Product>;
+          content?: Content | null;
+          activeTab?: TabId;
+          draftText?: string;
+          brandProfile?: Partial<BrandProfile>;
+          brandProfiles?: BrandProfileEntry[];
+          activeBrandProfileId?: string;
+        };
+
+        if (saved.product && typeof saved.product === "object") {
+          setProduct(normalizeProduct(saved.product));
+        }
+        if (saved.content && typeof saved.content === "object") {
+          setContent(saved.content);
+        }
+        if (typeof saved.activeTab === "string" && tabs.some((tab) => tab.id === saved.activeTab)) {
+          setActiveTab(saved.activeTab);
+        }
+        if (typeof saved.draftText === "string") setDraftText(saved.draftText);
+        if (saved.brandProfile && typeof saved.brandProfile === "object") {
+          setBrandProfile(normalizeBrandProfile(saved.brandProfile));
+        }
+        if (Array.isArray(saved.brandProfiles)) setBrandProfiles(saved.brandProfiles);
+        if (typeof saved.activeBrandProfileId === "string") {
+          setActiveBrandProfileId(saved.activeBrandProfileId);
+        }
+      }
+    } catch (error) {
+      console.warn("Workspace draft restore failed:", error);
+    } finally {
+      setWorkspaceDraftLoadedKey(storageKey);
+    }
+  }, [user?.id]);
+
+  // ذخیره فوری تغییرات؛ حتی اگر مرورگر یا سیستم صفحه را در پس‌زمینه ببندد
+  useEffect(() => {
+    const storageKey = `${WORKSPACE_DRAFT_KEY}:${user?.id || "guest"}`;
+    if (workspaceDraftLoadedKey !== storageKey) return;
+    const saveDraft = () => {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify({
+          product,
+          content,
+          activeTab,
+          draftText,
+          brandProfile,
+          brandProfiles,
+          activeBrandProfileId,
+          savedAt: new Date().toISOString(),
+        }));
+      } catch (error) {
+        console.warn("Workspace draft save failed:", error);
+      }
+    };
+
+    saveDraft();
+    window.addEventListener("pagehide", saveDraft);
+    document.addEventListener("visibilitychange", saveDraft);
+    return () => {
+      window.removeEventListener("pagehide", saveDraft);
+      document.removeEventListener("visibilitychange", saveDraft);
+    };
+  }, [workspaceDraftLoadedKey, user?.id, product, content, activeTab, draftText, brandProfile, brandProfiles, activeBrandProfileId]);
 
   // بررسی نشست کاربر و گوش دادن به تغییر وضعیت ورود
   useEffect(() => {
@@ -1172,11 +1277,7 @@ export default function Home() {
 
     } catch (error) {
 
-      setAuthMessage(
-
-        error instanceof Error ? error.message : "خطا در ورود یا ثبت‌نام."
-
-      );
+      setAuthMessage(getPersianAuthError(error));
 
     } finally {
 
