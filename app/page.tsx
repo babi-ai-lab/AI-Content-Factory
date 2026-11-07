@@ -801,9 +801,9 @@ export default function Home() {
     // جلوگیری از ماندن بی‌نهایت صفحه روی وضعیت بررسی حساب
     authReadyTimeout = window.setTimeout(() => {
       if (!mounted) return;
-      setAuthMessage("ارتباط با سرویس احراز هویت طول کشیده است. می‌توانی دوباره تلاش کنی.");
+      setAuthMessage("بررسی نشست بیشتر از حد معمول طول کشید؛ فرم ورود نمایش داده می‌شود و اگر اتصال کامل شود، وضعیت حساب به‌صورت خودکار به‌روزرسانی خواهد شد.");
       setAuthReady(true);
-    }, 12000);
+    }, 4000);
 
     supabase.auth.getSession()
       .then(({ data, error }) => {
