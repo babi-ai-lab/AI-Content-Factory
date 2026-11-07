@@ -600,7 +600,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>("caption");
 
   const [draftText, setDraftText] = useState("");
-  const [workspaceDraftReady, setWorkspaceDraftReady] = useState(false);
+  const [workspaceDraftLoadedKey, setWorkspaceDraftLoadedKey] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -819,7 +819,13 @@ export default function Home() {
   // بازیابی خودکار فرم و پیش‌نویس محتوای کاربر از همین مرورگر
   useEffect(() => {
     const storageKey = `${WORKSPACE_DRAFT_KEY}:${user?.id || "guest"}`;
-    setWorkspaceDraftReady(false);
+    setProduct(initialProduct);
+    setContent(null);
+    setActiveTab("caption");
+    setDraftText("");
+    setBrandProfile(initialBrandProfile);
+    setBrandProfiles([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
+    setActiveBrandProfileId("default");
 
     try {
       const raw = window.localStorage.getItem(storageKey);
@@ -855,15 +861,14 @@ export default function Home() {
     } catch (error) {
       console.warn("Workspace draft restore failed:", error);
     } finally {
-      setWorkspaceDraftReady(true);
+      setWorkspaceDraftLoadedKey(storageKey);
     }
   }, [user?.id]);
 
   // ذخیره فوری تغییرات؛ حتی اگر مرورگر یا سیستم صفحه را در پس‌زمینه ببندد
   useEffect(() => {
-    if (!workspaceDraftReady) return;
-
     const storageKey = `${WORKSPACE_DRAFT_KEY}:${user?.id || "guest"}`;
+    if (workspaceDraftLoadedKey !== storageKey) return;
     const saveDraft = () => {
       try {
         window.localStorage.setItem(storageKey, JSON.stringify({
@@ -888,7 +893,7 @@ export default function Home() {
       window.removeEventListener("pagehide", saveDraft);
       document.removeEventListener("visibilitychange", saveDraft);
     };
-  }, [workspaceDraftReady, user?.id, product, content, activeTab, draftText, brandProfile, brandProfiles, activeBrandProfileId]);
+  }, [workspaceDraftLoadedKey, user?.id, product, content, activeTab, draftText, brandProfile, brandProfiles, activeBrandProfileId]);
 
   // بررسی نشست کاربر و گوش دادن به تغییر وضعیت ورود
   useEffect(() => {
