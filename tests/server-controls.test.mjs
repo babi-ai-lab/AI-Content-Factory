@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import {
   MAX_BODY_BYTES,
   readBoundedJsonBody,
@@ -167,4 +168,15 @@ test("accepts supported content channels and rejects unknown channels", () => {
   const value = validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", channel: "telegram" });
   assert.equal(value.channel, "telegram");
   assert.equal(validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", channel: "unknown-channel" }), null);
+});
+
+
+test("generation validates the request body before consuming persistent quota", async () => {
+  const source = await readFile(new URL("../app/api/generate/route.ts", import.meta.url), "utf8");
+  const validationIndex = source.indexOf("const p = validateBusinessInput(parsedBody.value)");
+  const quotaIndex = source.indexOf('supabaseServer.rpc(\n      "consume_generation_request"');
+  const invalidInputResponseIndex = source.indexOf('اطلاعات ورودی معتبر نیست');
+  assert.ok(validationIndex >= 0, "generation input validation must exist");
+  assert.ok(invalidInputResponseIndex > validationIndex, "invalid input must be rejected after validation");
+  assert.ok(quotaIndex > invalidInputResponseIndex, "quota must only be consumed after invalid input is rejected");
 });
