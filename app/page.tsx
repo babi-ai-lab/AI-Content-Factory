@@ -793,6 +793,9 @@ export default function Home() {
   // بررسی نشست کاربر و گوش دادن به تغییر وضعیت ورود
   useEffect(() => {
     let mounted = true;
+    // An auth event is authoritative if it arrives while the initial session
+    // request is still pending; never let that older snapshot overwrite it.
+    let authEventReceived = false;
     let authReadyTimeout: number | undefined;
 
     // جلوگیری از ماندن بی‌نهایت صفحه روی وضعیت بررسی حساب
@@ -804,7 +807,7 @@ export default function Home() {
 
     supabase.auth.getSession()
       .then(({ data, error }) => {
-        if (!mounted) return;
+        if (!mounted || authEventReceived) return;
         if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
 
         if (error) setAuthMessage(error.message);
@@ -822,7 +825,7 @@ export default function Home() {
         setAuthReady(true);
       })
       .catch((error: unknown) => {
-        if (!mounted) return;
+        if (!mounted || authEventReceived) return;
         if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
         setUser(null);
         setAuthMessage(error instanceof Error ? error.message : "بررسی نشست کاربری ناموفق بود. دوباره تلاش کن.");
@@ -833,6 +836,7 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
+      authEventReceived = true;
       if (authReadyTimeout !== undefined) window.clearTimeout(authReadyTimeout);
       setAuthReady(true);
 
