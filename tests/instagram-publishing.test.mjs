@@ -32,8 +32,8 @@ test("Instagram schedule time must be between two minutes and 90 days ahead", ()
 
 test("Instagram OAuth callback bounds the request body before parsing credentials", async () => {
   const source = await readFile(new URL("../app/api/integrations/instagram/callback/route.ts", import.meta.url), "utf8");
-  assert.match(source, /readBoundedJsonBody\\(request\\.body, 8 \\* 1024\\)/);
-  assert.match(source, /parsedBody\\.error === "too_large"/);
-  assert.match(source, /Array\\.isArray\\(parsedBody\\.value\\)/);
-  assert.doesNotMatch(source, /request\\.json\\(/);
+  assert.ok(source.includes("readBoundedJsonBody(request.body, 8 * 1024)"));
+  assert.ok(source.includes('parsedBody.error === "too_large"'));
+  assert.ok(source.includes("Array.isArray(parsedBody.value)"));
+  assert.equal(source.includes("request.json("), false);
 });
