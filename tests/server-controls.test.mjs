@@ -168,3 +168,14 @@ test("accepts supported content channels and rejects unknown channels", () => {
   assert.equal(value.channel, "telegram");
   assert.equal(validateBusinessInput({ name: "محصول جدید", features: "توضیحات معتبر", channel: "unknown-channel" }), null);
 });
+
+
+test("generation validates the request body before consuming persistent quota", async () => {
+  const source = await readFile(new URL("../app/api/generate/route.ts", import.meta.url), "utf8");
+  const validationIndex = source.indexOf("const p = validateBusinessInput(parsedBody.value)");
+  const quotaIndex = source.indexOf('supabaseServer.rpc(\n      "consume_generation_request"');
+  const invalidInputResponseIndex = source.indexOf('اطلاعات ورودی معتبر نیست');
+  assert.ok(validationIndex >= 0, "generation input validation must exist");
+  assert.ok(invalidInputResponseIndex > validationIndex, "invalid input must be rejected after validation");
+  assert.ok(quotaIndex > invalidInputResponseIndex, "quota must only be consumed after invalid input is rejected");
+});
