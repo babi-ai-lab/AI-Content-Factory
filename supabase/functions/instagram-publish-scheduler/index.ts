@@ -57,6 +57,43 @@ function equalHex(left: string, right: string): boolean {
   return difference === 0;
 }
 
+
+async function readBoundedJson(request: Request, maxBytes: number): Promise<Record<string, unknown> | null> {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) return null;
+  if (!request.body) return null;
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 async function verifyCronRequest(body: { timestamp?: string; signature?: string }) {
   if (!body.timestamp || !/^\d{10}$/.test(body.timestamp) || !body.signature || !/^[a-f0-9]{64}$/i.test(body.signature)) return false;
   const timestamp = Number(body.timestamp);
@@ -187,8 +224,8 @@ async function processJob(job: PublishJob, encryptionKey: string) {
 Deno.serve(async (request) => {
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
   try {
-    const body = await request.json().catch(() => ({}));
-    if (!await verifyCronRequest(body)) {
+    const body = await readBoundedJson(request, 1024);
+    if (!body || !await verifyCronRequest(body as { timestamp?: string; signature?: string })) {
       return Response.json({ error: "Unauthorized scheduler request" }, { status: 401 });
     }
 

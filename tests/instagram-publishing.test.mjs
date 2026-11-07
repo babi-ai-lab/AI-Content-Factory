@@ -43,3 +43,13 @@ test("Instagram connection status responses are never cached", async () => {
   assert.ok(source.includes('"Cache-Control": "private, no-store, max-age=0"'));
   assert.ok(source.includes('Pragma: "no-cache"'));
 });
+
+test("Instagram scheduler rejects oversized or malformed webhook bodies before HMAC verification", async () => {
+  const source = await readFile(new URL("../supabase/functions/instagram-publish-scheduler/index.ts", import.meta.url), "utf8");
+  assert.ok(source.includes("readBoundedJson(request, 1024)"));
+  assert.ok(source.includes("request.body.getReader()"));
+  assert.ok(source.includes("total > maxBytes"));
+  assert.ok(source.includes("TextDecoder(\"utf-8\", { fatal: true })"));
+  assert.ok(source.includes("Array.isArray(parsed)"));
+  assert.equal(source.includes("request.json()"), false);
+});
