@@ -23,3 +23,19 @@ test("workspace form and content drafts are restored and autosaved without stori
   assert.doesNotMatch(source.match(/window\.localStorage\.setItem\(storageKey, JSON\.stringify\(([\s\S]*?)\)\);/)?.[1] || "", /authPassword|deleteAccountPassword|newPassword/);
   assert.match(source, /workspaceDraftLoadedKey !== storageKey/);
 });
+
+
+test("auth token refreshes do not clear history or trigger a false empty state", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /const authUserIdRef = useRef<string \| null>\(null\)/);
+  assert.match(source, /const identityChanged = authUserIdRef\.current !== nextUserId/);
+  assert.match(source, /if \(identityChanged\) \{/);
+  assert.doesNotMatch(source, /if \(event !== "USER_UPDATED"\) \{[\s\S]{0,100}setHistory\(\[\]\)/);
+});
+
+test("password policy translations cover provider wording variants", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /lower case\|uppercase\|upper case/);
+  assert.match(source, /digit\|symbol\|special/);
+  assert.match(source, /isPasswordPolicyError/);
+});
