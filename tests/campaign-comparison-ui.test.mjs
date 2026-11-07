@@ -31,3 +31,21 @@ test("builds an Excel-friendly Persian CSV and escapes quotes and delimiters", (
     '\uFEFF"شاخص","کمپین، اول"\r\n"یادداشت","متن با ""نقل قول"""\r\n"هزینه","1200"',
   );
 });
+
+
+test("campaign loading ignores stale requests when the signed-in user or refresh cycle changes", async () => {
+  const source = await readFile(new URL("../components/campaign-manager.tsx", import.meta.url), "utf8");
+  assert.match(source, /const requestSequenceRef = useRef\(0\)/);
+  assert.match(source, /const requestId = \+\+requestSequenceRef\.current/);
+  assert.match(source, /const isStale = \(\) => requestId !== requestSequenceRef\.current/);
+  assert.match(source, /if \(isStale\(\)\) return;/);
+  assert.match(source, /return \(\) => \{ requestSequenceRef\.current \+= 1; \}/);
+  assert.match(source, /finally \{\s*if \(!isStale\(\)\) setLoading\(false\);\s*\}/);
+});
+
+test("campaign loading handles rejected network promises without leaving the loader stuck", async () => {
+  const source = await readFile(new URL("../components/campaign-manager.tsx", import.meta.url), "utf8");
+  assert.match(source, /try \{\s*const \[campaignResult, linkResult, contentResult\] = await Promise\.all/);
+  assert.match(source, /catch \{\s*if \(isStale\(\)\) return;/);
+  assert.match(source, /ارتباط با سرور برای بارگذاری کمپین‌ها برقرار نشد/);
+});
