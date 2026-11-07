@@ -46,3 +46,9 @@ test("initial auth snapshot cannot overwrite a newer auth-state event", async ()
   assert.match(source, /\.catch\(\(error: unknown\) => \{\s*if \(!mounted \|\| authEventReceived\) return;/);
   assert.match(source, /onAuthStateChange\(\(event, session\) => \{\s*if \(!mounted\) return;\s*authEventReceived = true;/);
 });
+
+
+test("auth effect cleanup clears its watchdog and unsubscribes from auth events", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /return \(\) => \{\s*mounted = false;\s*if \(authReadyTimeout !== undefined\) window\.clearTimeout\(authReadyTimeout\);\s*subscription\.unsubscribe\(\);\s*\};/);
+});
