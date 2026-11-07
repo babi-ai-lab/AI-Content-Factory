@@ -176,7 +176,11 @@ test("generation validates the request body before consuming persistent quota", 
   const validationIndex = source.indexOf("const p = validateBusinessInput(parsedBody.value)");
   const quotaIndex = source.indexOf('supabaseServer.rpc(\n      "consume_generation_request"');
   const invalidInputResponseIndex = source.indexOf('اطلاعات ورودی معتبر نیست');
+  const providerConfigurationCheckIndex = source.indexOf("AI_PROVIDER_NOT_CONFIGURED");
+  const demoFallbackIndex = source.indexOf('mode: "demo"');
   assert.ok(validationIndex >= 0, "generation input validation must exist");
   assert.ok(invalidInputResponseIndex > validationIndex, "invalid input must be rejected after validation");
-  assert.ok(quotaIndex > invalidInputResponseIndex, "quota must only be consumed after invalid input is rejected");
+  assert.ok(providerConfigurationCheckIndex > invalidInputResponseIndex, "provider configuration must be checked after input validation");
+  assert.ok(demoFallbackIndex > providerConfigurationCheckIndex, "development demo mode must remain available before quota reservation");
+  assert.ok(quotaIndex > demoFallbackIndex, "quota must only be consumed for a configured AI provider, not demo output");
 });
