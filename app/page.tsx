@@ -352,15 +352,14 @@ function getPersianAuthError(error: unknown): string {
   const message = error instanceof Error ? error.message : "";
   const normalized = message.toLowerCase();
 
-  if (
+  // Supabase Auth may phrase password policy failures differently across
+  // project settings and GoTrue versions. Match the common complexity terms
+  // instead of leaking an English provider message into the Persian UI.
+  const isPasswordPolicyError =
     normalized.includes("password") &&
-    (normalized.includes("contain") ||
-      normalized.includes("lowercase") ||
-      normalized.includes("uppercase") ||
-      normalized.includes("number") ||
-      normalized.includes("symbol") ||
-      normalized.includes("character"))
-  ) {
+    /(contain|lowercase|lower case|uppercase|upper case|number|digit|symbol|special|character|at least|strength|complex)/i.test(normalized);
+
+  if (isPasswordPolicyError) {
     return "رمز عبور باید حداقل ۸ نویسه داشته باشد و شامل حروف انگلیسی کوچک (a-z)، حروف بزرگ (A-Z)، حداقل یک عدد (0-9) و حداقل یک علامت مانند ! @ # $ باشد.";
   }
 
@@ -590,6 +589,8 @@ export default function Home() {
   const [activeCampaignForGeneration, setActiveCampaignForGeneration] = useState<{ id: string; name: string } | null>(null);
   const [campaignRefreshKey, setCampaignRefreshKey] = useState(0);
   const activeCampaignUserIdRef = useRef<string | null>(null);
+  // Tracks the authenticated identity independently of token refresh events.
+  const authUserIdRef = useRef<string | null>(null);
   const [brandProfile, setBrandProfile] = useState<BrandProfile>(initialBrandProfile);
   const [brandProfiles, setBrandProfiles] = useState<BrandProfileEntry[]>([{ id: "default", name: "برند اول", profile: initialBrandProfile }]);
   const [activeBrandProfileId, setActiveBrandProfileId] = useState("default");
@@ -917,6 +918,7 @@ export default function Home() {
 
         if (error) setAuthMessage(error.message);
 
+        authUserIdRef.current = data.session?.user.id ?? null;
         setUser(
           data.session?.user
             ? { id: data.session.user.id, email: data.session.user.email }
@@ -948,6 +950,9 @@ export default function Home() {
       const nextUser = session?.user
         ? { id: session.user.id, email: session.user.email }
         : null;
+      const nextUserId = nextUser?.id ?? null;
+      const identityChanged = authUserIdRef.current !== nextUserId;
+      authUserIdRef.current = nextUserId;
 
       setUser((current) => {
         if (current?.id === nextUser?.id && current?.email === nextUser?.email) {
@@ -967,7 +972,10 @@ export default function Home() {
         setAuthMessage("لینک بازیابی معتبر است. رمز عبور جدیدت را وارد کن.");
       }
 
-      if (event !== "USER_UPDATED") {
+      // Token refreshes and repeated INITIAL_SESSION notifications must not
+      // erase in-memory history. Clear user-scoped data only on sign-in,
+      // sign-out, or an actual account switch; the user effect then reloads it.
+      if (identityChanged) {
         setBrandProfileNotice("");
         setHistory([]);
         setHistoryHasMore(false);
