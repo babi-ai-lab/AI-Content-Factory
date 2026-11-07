@@ -37,3 +37,12 @@ test("production smoke verifies public privacy and account deletion resources", 
   assert.match(source, /info@eltbabak\.ir/);
   assert.match(source, /حذف دائمی حساب و داده‌ها/);
 });
+
+
+test("initial auth snapshot cannot overwrite a newer auth-state event", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /let authEventReceived = false/);
+  assert.match(source, /\.then\(\(\{ data, error \}\) => \{\s*if \(!mounted \|\| authEventReceived\) return;/);
+  assert.match(source, /\.catch\(\(error: unknown\) => \{\s*if \(!mounted \|\| authEventReceived\) return;/);
+  assert.match(source, /onAuthStateChange\(\(event, session\) => \{\s*if \(!mounted\) return;\s*authEventReceived = true;/);
+});
