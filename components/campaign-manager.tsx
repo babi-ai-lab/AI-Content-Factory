@@ -128,6 +128,7 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
   const [channels, setChannels] = useState("تلگرام، وب‌سایت، پیامک");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const loadedUserIdRef = useRef<string | null>(null);
+  const requestSequenceRef = useRef(0);
 
   const selectedCampaigns = campaigns.filter((campaign) => selectedComparisonIds.includes(campaign.id));
   const comparisonData: CampaignComparisonEntry[] = selectedCampaigns.map((campaign) => ({
@@ -190,6 +191,9 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
 
 
   const loadCampaigns = useCallback(async () => {
+    const requestId = ++requestSequenceRef.current;
+    const isStale = () => requestId !== requestSequenceRef.current;
+
     if (loadedUserIdRef.current !== userId) {
       loadedUserIdRef.current = userId;
       setMetricsDrafts({});
@@ -202,68 +206,84 @@ export default function CampaignManager({ userId, onUseCampaign, refreshKey = 0 
     setCampaigns([]);
     setContentLinks([]);
     setContentOptions([]);
-    const [campaignResult, linkResult, contentResult] = await Promise.all([
-      supabase
-        .from("marketing_campaigns")
-        .select("id,name,goal,audience,channels,status,stages,currency_label,budget_amount,spend_amount,impressions,clicks,leads,conversions,revenue_amount,created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("marketing_campaign_content")
-        .select("id,campaign_id,content_id,notes,created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("content_history")
-        .select("id,product,created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(50),
-    ]);
 
-    if (campaignResult.error || linkResult.error || contentResult.error) {
-      const failure = campaignResult.error || linkResult.error || contentResult.error;
-      setError("بارگذاری کمپین‌ها یا محتواهای مرتبط انجام نشد: " + (failure?.message || "خطای نامشخص"));
+    try {
+      const [campaignResult, linkResult, contentResult] = await Promise.all([
+        supabase
+          .from("marketing_campaigns")
+          .select("id,name,goal,audience,channels,status,stages,currency_label,budget_amount,spend_amount,impressions,clicks,leads,conversions,revenue_amount,created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("marketing_campaign_content")
+          .select("id,campaign_id,content_id,notes,created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("content_history")
+          .select("id,product,created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
+
+      if (isStale()) return;
+
+      if (campaignResult.error || linkResult.error || contentResult.error) {
+        const failure = campaignResult.error || linkResult.error || contentResult.error;
+        setError("بارگذاری کمپین‌ها یا محتواهای مرتبط انجام نشد: " + (failure?.message || "خطای نامشخص"));
+        setCampaigns([]);
+        setContentLinks([]);
+        setContentOptions([]);
+        return;
+      }
+
+      const links = (linkResult.data || []) as CampaignContentLink[];
+      const recentContent = (contentResult.data || []) as ContentOption[];
+      const recentIds = new Set(recentContent.map((item) => item.id));
+      const missingLinkedIds = Array.from(new Set(links.map((link) => link.content_id)))
+        .filter((id) => !recentIds.has(id));
+
+      let allContent = recentContent;
+      if (missingLinkedIds.length) {
+        const { data: linkedContent, error: linkedContentError } = await supabase
+          .from("content_history")
+          .select("id,product,created_at")
+          .eq("user_id", userId)
+          .in("id", missingLinkedIds);
+        if (isStale()) return;
+        if (!linkedContentError && linkedContent) {
+          allContent = [...recentContent, ...(linkedContent as ContentOption[])];
+        }
+      }
+
+      if (isStale()) return;
+      const loadedCampaigns = (campaignResult.data || []) as Campaign[];
+      setCampaigns(loadedCampaigns);
+      setMetricsDrafts((current) => {
+        const next = { ...current };
+        for (const campaign of loadedCampaigns) {
+          if (!next[campaign.id]) next[campaign.id] = toMetricsDraft(campaign);
+        }
+        return next;
+      });
+      setContentLinks(links);
+      setContentOptions(allContent);
+    } catch {
+      if (isStale()) return;
+      setError("ارتباط با سرور برای بارگذاری کمپین‌ها برقرار نشد. اتصال را بررسی و دوباره تلاش کن.");
       setCampaigns([]);
       setContentLinks([]);
       setContentOptions([]);
-      setLoading(false);
-      return;
+    } finally {
+      if (!isStale()) setLoading(false);
     }
-
-    const links = (linkResult.data || []) as CampaignContentLink[];
-    const recentContent = (contentResult.data || []) as ContentOption[];
-    const recentIds = new Set(recentContent.map((item) => item.id));
-    const missingLinkedIds = Array.from(new Set(links.map((link) => link.content_id)))
-      .filter((id) => !recentIds.has(id));
-
-    let allContent = recentContent;
-    if (missingLinkedIds.length) {
-      const { data: linkedContent, error: linkedContentError } = await supabase
-        .from("content_history")
-        .select("id,product,created_at")
-        .eq("user_id", userId)
-        .in("id", missingLinkedIds);
-      if (!linkedContentError && linkedContent) {
-        allContent = [...recentContent, ...(linkedContent as ContentOption[])];
-      }
-    }
-
-    const loadedCampaigns = (campaignResult.data || []) as Campaign[];
-    setCampaigns(loadedCampaigns);
-    setMetricsDrafts((current) => {
-      const next = { ...current };
-      for (const campaign of loadedCampaigns) {
-        if (!next[campaign.id]) next[campaign.id] = toMetricsDraft(campaign);
-      }
-      return next;
-    });
-    setContentLinks(links);
-    setContentOptions(allContent);
-    setLoading(false);
   }, [userId, refreshKey]);
 
-  useEffect(() => { void loadCampaigns(); }, [loadCampaigns]);
+  useEffect(() => {
+    void loadCampaigns();
+    return () => { requestSequenceRef.current += 1; };
+  }, [loadCampaigns]);
 
   async function createCampaign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
