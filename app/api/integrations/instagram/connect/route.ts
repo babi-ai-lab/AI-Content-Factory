@@ -36,6 +36,27 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
+    const now = new Date();
+    const { error: cleanupError } = await supabase
+      .from("instagram_oauth_states")
+      .delete()
+      .eq("user_id", user.id)
+      .lt("expires_at", now.toISOString());
+    if (cleanupError) {
+      return NextResponse.json({ error: "پاک‌سازی نشست‌های منقضی‌شده اتصال ناموفق بود." }, { status: 503 });
+    }
+    const { count: recentAttempts, error: rateLimitError } = await supabase
+      .from("instagram_oauth_states")
+      .select("state_hash", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", new Date(now.getTime() - 60 * 60 * 1000).toISOString());
+    if (rateLimitError) {
+      return NextResponse.json({ error: "بررسی محدودیت اتصال اینستاگرام ناموفق بود." }, { status: 503 });
+    }
+    if ((recentAttempts || 0) >= 10) {
+      return NextResponse.json({ error: "حداکثر ۱۰ تلاش برای شروع اتصال اینستاگرام در هر ساعت مجاز است." }, { status: 429 });
+    }
+
     const state = createInstagramOAuthState(user.id, appSecret);
     const stateHash = hashInstagramOAuthState(state);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();

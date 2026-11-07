@@ -53,3 +53,12 @@ test("Instagram scheduler rejects oversized or malformed webhook bodies before H
   assert.ok(source.includes("Array.isArray(parsed)"));
   assert.equal(source.includes("request.json()"), false);
 });
+
+test("Instagram OAuth connect cleans expired states and rate limits per user", async () => {
+  const source = await readFile(new URL("../app/api/integrations/instagram/connect/route.ts", import.meta.url), "utf8");
+  assert.ok(source.includes('.from("instagram_oauth_states")'));
+  assert.ok(source.includes('.lt("expires_at", now.toISOString())'));
+  assert.ok(source.includes('.gte("created_at", new Date(now.getTime() - 60 * 60 * 1000).toISOString())'));
+  assert.ok(source.includes("(recentAttempts || 0) >= 10"));
+  assert.ok(source.includes("{ status: 429 }"));
+});
