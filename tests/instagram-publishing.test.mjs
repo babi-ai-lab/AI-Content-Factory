@@ -37,3 +37,9 @@ test("Instagram OAuth callback bounds the request body before parsing credential
   assert.ok(source.includes("Array.isArray(parsedBody.value)"));
   assert.equal(source.includes("request.json("), false);
 });
+
+test("Instagram connection status responses are never cached", async () => {
+  const source = await readFile(new URL("../app/api/integrations/instagram/status/route.ts", import.meta.url), "utf8");
+  assert.ok(source.includes('"Cache-Control": "private, no-store, max-age=0"'));
+  assert.ok(source.includes('Pragma: "no-cache"'));
+});

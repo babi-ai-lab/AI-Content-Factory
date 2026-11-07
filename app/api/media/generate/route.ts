@@ -238,18 +238,19 @@ export async function GET(request: NextRequest) {
     console.error("Could not load generated media library:", error);
     return NextResponse.json({ error: "بارگذاری کتابخانه رسانه ناموفق بود." }, { status: 503 });
   }
-  if (!assets?.length) return NextResponse.json({ assets: [] });
+  const privateHeaders = { "Cache-Control": "private, no-store, max-age=0", Pragma: "no-cache" };
+  if (!assets?.length) return NextResponse.json({ assets: [] }, { headers: privateHeaders });
 
   const { data: signedUrls, error: signedError } = await supabase.storage
     .from("generated-media")
     .createSignedUrls(assets.map((asset) => asset.storage_path), 60 * 60);
   if (signedError || !signedUrls) {
-    return NextResponse.json({ error: "ساخت لینک امن فایل‌های رسانه ناموفق بود." }, { status: 503 });
+    return NextResponse.json({ error: "ساخت لینک امن فایل‌های رسانه ناموفق بود." }, { status: 503, headers: privateHeaders });
   }
   const signedByPath = new Map(signedUrls.map((item) => [item.path, item.signedUrl]));
   return NextResponse.json({
     assets: assets.map((asset) => ({ ...asset, imageUrl: signedByPath.get(asset.storage_path) || null })),
-  });
+  }, { headers: privateHeaders });
 }
 
 export async function DELETE(request: NextRequest) {
