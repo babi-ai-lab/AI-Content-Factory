@@ -68,7 +68,7 @@ jobs:
             ln -s "$CMDLINE_TOOLS_BIN" "$ANDROID_HOME/bin"
           fi
           mkdir -p "$HOME/.bubblewrap"
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
           bubblewrap doctor
 
@@ -107,7 +107,7 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.1.0/apksigner" verify "$APK"
           BADGING="$("$ANDROID_HOME/build-tools/36.1.0/aapt" dump badging "$APK")"
-          printf '%s\\n' "$BADGING" | grep -F "package: name='${PACKAGE_ID}' versionCode='${VERSION_CODE}' versionName='${VERSION_NAME}'"
+          printf '%s\n' "$BADGING" | grep -F "package: name='${PACKAGE_ID}' versionCode='${VERSION_CODE}' versionName='${VERSION_NAME}'"
 
       - name: Upload Android build artifacts
         uses: actions/upload-artifact@v4
