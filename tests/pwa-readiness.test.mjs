@@ -126,9 +126,9 @@ test("accepting the install prompt does not claim installation before appinstall
 test("public Android download page exposes the verified release and install component", async () => {
   const page = await readFile(new URL("../app/download/page.tsx", import.meta.url), "utf8");
   assert.match(page, /AddToHomeScreen/);
-  assert.match(page, /AI-Content-Factory-1\.0\.0\.apk/);
+  assert.match(page, /AI-Content-Factory-1\.0\.1\.apk/);
   assert.match(page, /ir\.eltbabak\.contentfactory/);
-  assert.match(page, /1C46E2EC8119768AF320A796B8824318BB99E5A77D97676637965B8FD3A4A0EC/);
+  assert.match(page, /AB7FA61FFAA5EE0C1A1F1DB79EFA19D11E006F69886CA9BF0406DB62C117AD2B2/);
   const install = await readFile(new URL("../app/download/add-to-home-screen.tsx", import.meta.url), "utf8");
   assert.match(install, /افزودن به صفحه اصلی/);
 });
