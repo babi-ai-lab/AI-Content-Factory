@@ -138,7 +138,7 @@ for (const target of targets) {
     "نسخه رسمی اندروید",
     "افزودن به صفحه اصلی",
     "SHA-256",
-    "AI-Content-Factory-1.0.0.apk",
+    "AI-Content-Factory-1.0.1.apk",
     "ir.eltbabak.contentfactory",
   ];
   for (const phrase of requiredDownloadContent) {
@@ -146,7 +146,7 @@ for (const target of targets) {
       throw new Error(`${target.label}: download page is missing required content: ${phrase}`);
     }
   }
-  const apkReleaseUrl = "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.0/AI-Content-Factory-1.0.0.apk";
+  const apkReleaseUrl = "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.1/AI-Content-Factory-1.0.1.apk";
   if (!downloadHtml.includes(apkReleaseUrl)) {
     throw new Error(`${target.label}: download page does not point to the official APK release asset`);
   }
