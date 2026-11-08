@@ -16,6 +16,6 @@ test("production smoke checks the public Android download and installation page"
   assert.match(source, /نسخه رسمی اندروید/);
   assert.match(source, /افزودن به صفحه اصلی/);
   assert.match(source, /SHA-256/);
-  assert.match(source, /AI-Content-Factory-1\.0\.0\.apk/);
+  assert.match(source, /AI-Content-Factory-1\.0\.1\.apk/);
   assert.match(source, /ir\.eltbabak\.contentfactory/);
 });
