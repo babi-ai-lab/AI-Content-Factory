@@ -68,7 +68,7 @@ jobs:
             ln -s "$CMDLINE_TOOLS_BIN" "$ANDROID_HOME/bin"
           fi
           mkdir -p "$HOME/.bubblewrap"
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\\n' "$JAVA_HOME" "$ANDROID_HOME" > "$HOME/.bubblewrap/config.json"
           cat "$HOME/.bubblewrap/config.json"
           bubblewrap doctor
 
@@ -97,18 +97,22 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon assembleDebug
 
-      - name: Verify the distributable TWA APK metadata
+      - name: Verify installable debug APK metadata and signature
         working-directory: android
         run: |
-          APK="./app-release-unsigned-aligned.apk"
+          PACKAGE_ID="$(node -p "require('./twa-manifest.json').packageId")"
+          VERSION_CODE="$(node -p "require('./twa-manifest.json').appVersionCode")"
+          VERSION_NAME="$(node -p "require('./twa-manifest.json').appVersionName")"
+          APK="./app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.1.0/apksigner" verify "$APK"
           BADGING="$("$ANDROID_HOME/build-tools/36.1.0/aapt" dump badging "$APK")"
-          printf '%s\\n' "$BADGING" | grep -F "package: name='ir.eltbabak.contentfactory' versionCode='1' versionName='1.0.0'"
+          printf '%s\\n' "$BADGING" | grep -F "package: name='${PACKAGE_ID}' versionCode='${VERSION_CODE}' versionName='${VERSION_NAME}'"
 
       - name: Upload Android build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ai-content-factory-android-unsigned
+          name: ai-content-factory-android-release-candidate
           if-no-files-found: error
           retention-days: 14
           path: |
