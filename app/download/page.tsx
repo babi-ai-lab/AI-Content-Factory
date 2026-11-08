@@ -3,7 +3,7 @@ import styles from "./download.module.css";
 import AddToHomeScreen from "./add-to-home-screen";
 
 const downloadUrl =
-  "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.0/AI-Content-Factory-1.0.0.apk";
+  "https://github.com/babi-ai-lab/AI-Content-Factory/releases/download/v1.0.1/AI-Content-Factory-1.0.1.apk";
 const pageUrl = "https://app.eltbabak.ir/download";
 const qrUrl =
   "https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data=https%3A%2F%2Fapp.eltbabak.ir%2Fdownload";
@@ -11,7 +11,7 @@ const qrUrl =
 export const metadata: Metadata = {
   title: "دانلود AI Content Factory برای اندروید",
   description:
-    "دانلود رسمی اپلیکیشن AI Content Factory نسخه 1.0.0 برای اندروید، همراه با QR Code و راهنمای نصب.",
+    "دانلود رسمی اپلیکیشن AI Content Factory نسخه 1.0.1 برای اندروید، همراه با QR Code و راهنمای نصب.",
   alternates: { canonical: pageUrl },
   openGraph: {
     title: "دانلود AI Content Factory",
@@ -70,7 +70,7 @@ export default function DownloadPage() {
                 <span>دانلود اپلیکیشن اندروید</span>
                 <b>↓</b>
               </a>
-              <span className={styles.versionNote}>نسخه 1.0.0 <span>·</span> فایل APK</span>
+              <span className={styles.versionNote}>نسخه 1.0.1 <span>·</span> فایل APK</span>
             </div>
             <div className={styles.trustLine}>
               <ShieldIcon />
@@ -95,7 +95,7 @@ export default function DownloadPage() {
               <span>با دوربین موبایل، این کد را اسکن کن.</span>
             </div>
             <div className={styles.cardMeta}>
-              <div><span>نسخه</span><b>1.0.0</b></div>
+              <div><span>نسخه</span><b>1.0.1</b></div>
               <div><span>سیستم‌عامل</span><b>Android</b></div>
               <div><span>حجم فایل</span><b>حدود 1.71 MB</b></div>
             </div>
@@ -121,7 +121,7 @@ export default function DownloadPage() {
               <span className={styles.stepNumber}>01</span>
               <div className={styles.stepSymbol}>↓</div>
               <h3>دانلود فایل</h3>
-              <p>روی دکمه دانلود بزن و فایل <bdi>AI-Content-Factory-1.0.0.apk</bdi> را دریافت کن.</p>
+              <p>روی دکمه دانلود بزن و فایل <bdi>AI-Content-Factory-1.0.1.apk</bdi> را دریافت کن.</p>
             </article>
             <article className={styles.stepCard}>
               <span className={styles.stepNumber}>02</span>
@@ -149,12 +149,12 @@ export default function DownloadPage() {
             <p>برای اطمینان از یکسان بودن فایل دریافت‌شده با نسخه رسمی، می‌توانی مقدار SHA-256 را بررسی کنی.</p>
           </div>
           <dl className={styles.fileFacts}>
-            <div><dt>نام فایل</dt><dd dir="ltr">AI-Content-Factory-1.0.0.apk</dd></div>
+            <div><dt>نام فایل</dt><dd dir="ltr">AI-Content-Factory-1.0.1.apk</dd></div>
             <div><dt>شناسه برنامه</dt><dd dir="ltr">ir.eltbabak.contentfactory</dd></div>
             <div><dt>حجم دقیق</dt><dd dir="ltr">1,795,862 bytes</dd></div>
-            <div className={styles.hashRow}><dt>SHA-256</dt><dd dir="ltr">1C46E2EC8119768AF320A796B8824318BB99E5A77D97676637965B8FD3A4A0EC</dd></div>
+            <div className={styles.hashRow}><dt>SHA-256</dt><dd dir="ltr">AB7FA61FFAA5EE0C1A1F1DB79EFA19D11E006F69886CA9BF0406DB62C117AD2B2</dd></div>
           </dl>
-          <a className={styles.releaseLink} href="https://github.com/babi-ai-lab/AI-Content-Factory/releases/tag/v1.0.0" target="_blank" rel="noopener noreferrer">مشاهده صفحه انتشار و جزئیات در GitHub <span aria-hidden="true">↗</span></a>
+          <a className={styles.releaseLink} href="https://github.com/babi-ai-lab/AI-Content-Factory/releases/tag/v1.0.1" target="_blank" rel="noopener noreferrer">مشاهده صفحه انتشار و جزئیات در GitHub <span aria-hidden="true">↗</span></a>
         </section>
 
         <section className={styles.finalCta}>
