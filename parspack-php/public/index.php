@@ -10,6 +10,10 @@ if (auth_route($path, $method)) {
     exit;
 }
 
+if (history_route($path, $method)) {
+    exit;
+}
+
 if ($path === '/api/generate' && $method === 'POST') {
     handle_content_generation();
 }
