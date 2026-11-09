@@ -113,6 +113,8 @@ test("Persian workspace UI is connected to the local generation and history APIs
   assert.match(script, /\/api\/campaigns/);
   assert.match(page, /name="scheduledAt"/);
   assert.match(script, /\/api\/calendar/);
+  assert.match(script, /\/api\/calendar\/ics/);
+  assert.match(page, /id="calendar-export"/);
   assert.match(script, /\/api\/media\/generate/);
   assert.match(script, /\/api\/media/);
   assert.match(page, /id="brand-form"/);
@@ -148,4 +150,12 @@ test("account export excludes password hashes and deletion requires password con
   assert.doesNotMatch(account, /SELECT .*password_hash.*export/i);
   assert.match(page, /id="delete-account-form"/);
   assert.match(page, /\/api\/account\/export/);
+});
+
+test("calendar ICS export is authenticated and escapes user content", () => {
+  const calendar = read("../parspack-php/app/analytics_calendar.php");
+  assert.match(calendar, /calendar_export_ics/);
+  assert.match(calendar, /Content-Type: text\/calendar/);
+  assert.match(calendar, /ics_escape/);
+  assert.match(calendar, /WHERE user_id = :user_id/);
 });
