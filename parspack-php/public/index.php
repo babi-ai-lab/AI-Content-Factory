@@ -113,6 +113,7 @@ if ($path === '/' && $method === 'GET') {
               <div><label for="item-audience">مخاطب هدف</label><input id="item-audience" name="audience" maxlength="160"></div>
               <div><label for="item-goal">هدف محتوا</label><input id="item-goal" name="goal" maxlength="100" placeholder="مثلاً افزایش تماس"></div>
               <div><label for="item-tone">لحن</label><input id="item-tone" name="tone" maxlength="100" placeholder="مثلاً حرفه‌ای و صمیمی"></div>
+              <div><label for="scheduled-at">زمان پیشنهادی انتشار</label><input id="scheduled-at" name="scheduledAt" type="datetime-local"></div>
             </div>
             <label for="item-features">توضیحات و ویژگی‌های واقعی</label><textarea id="item-features" name="features" rows="4" maxlength="1800" required></textarea>
             <label for="item-differentiators">مزیت‌های واقعی (اختیاری)</label><textarea id="item-differentiators" name="differentiators" rows="2" maxlength="220"></textarea>
@@ -133,6 +134,11 @@ if ($path === '/' && $method === 'GET') {
           <div class="section-head"><div><h2>کتابخانه محتوا</h2><p class="muted">محتواهای ذخیره‌شده در حساب کاربری</p></div><input id="history-search" class="search-input" type="search" placeholder="جست‌وجو در تاریخچه"></div>
           <div id="history-items" class="history-list"></div>
           <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
+        </section>
+        <section class="module-card">
+          <h2>تقویم محتوای ۳۰ روز آینده</h2>
+          <p class="muted">محتواهایی که زمان انتشار برای آن‌ها تعیین کرده‌ای.</p>
+          <div id="calendar-items" class="history-list"></div>
         </section>
         <section class="module-card">
           <h2>پروفایل‌های برند</h2>
