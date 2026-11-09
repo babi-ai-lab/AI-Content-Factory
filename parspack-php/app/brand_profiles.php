@@ -86,12 +86,13 @@ function brand_profile_create(string $userId): never
 
     $count = db()->prepare('SELECT COUNT(*) FROM brand_profiles WHERE user_id = :user_id');
     $count->execute(['user_id' => $userId]);
-    if ((int)$count->fetchColumn() >= 10) {
+    $profileCount = (int)$count->fetchColumn();
+    if ($profileCount >= 10) {
         json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_LIMIT', 'message' => 'حداکثر ۱۰ پروفایل برند می‌توانی داشته باشی.']], 409);
     }
 
     $id = uuid_v4();
-    $default = (int)$count->fetchColumn() === 0 ? 1 : 0;
+    $default = $profileCount === 0 ? 1 : 0;
     $insert = db()->prepare(
         'INSERT INTO brand_profiles (id, user_id, name, business_type, profile_data, is_default, created_at, updated_at)
          VALUES (:id, :user_id, :name, :business_type, :profile_data, :is_default, UTC_TIMESTAMP(), UTC_TIMESTAMP())'
