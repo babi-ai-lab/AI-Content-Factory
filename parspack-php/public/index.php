@@ -10,6 +10,10 @@ if (auth_route($path, $method)) {
     exit;
 }
 
+if ($path === '/api/generate' && $method === 'POST') {
+    handle_content_generation();
+}
+
 if ($path === '/api/health' && $method === 'GET') {
     try {
         db()->query('SELECT 1');
