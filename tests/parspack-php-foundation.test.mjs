@@ -80,3 +80,12 @@ test("history APIs scope reads, updates, deletes and version restores to the cur
   assert.match(history, /count\(\$content\['stories'\]\) !== 5/);
   assert.match(history, /history_restore/);
 });
+
+test("campaign APIs enforce ownership and validate metrics and campaign stages", () => {
+  const campaigns = read("../parspack-php/app/campaigns.php");
+  assert.match(campaigns, /WHERE id = :id AND user_id = :user_id/);
+  assert.match(campaigns, /CONTENT_ALREADY_LINKED/);
+  assert.match(campaigns, /CAMPAIGN_METRIC_INVALID/);
+  assert.match(campaigns, /CAMPAIGN_STAGES_INVALID/);
+  assert.match(campaigns, /marketing_campaign_content/);
+});
