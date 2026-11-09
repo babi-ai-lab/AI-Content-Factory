@@ -41,4 +41,20 @@ test("initial MySQL schema scopes user-owned records with foreign keys", () => {
   }
   assert.match(schema, /ON DELETE CASCADE/);
   assert.match(schema, /utf8mb4/);
+  assert.match(schema, /email_verification_tokens/);
+  assert.match(schema, /auth_rate_limits/);
+  assert.match(schema, /session_version/);
+});
+
+test("local authentication requires CSRF, verified email and versioned sessions", () => {
+  const security = read("../parspack-php/app/security.php");
+  const auth = read("../parspack-php/app/auth.php");
+  const bootstrap = read("../parspack-php/app/bootstrap.php");
+  assert.match(security, /hash_equals/);
+  assert.match(security, /password_hash/);
+  assert.match(security, /session_version/);
+  assert.match(auth, /pending_verification/);
+  assert.match(auth, /email_verified_at/);
+  assert.match(auth, /session_regenerate_id/);
+  assert.match(bootstrap, /session.use_strict_mode/);
 });
