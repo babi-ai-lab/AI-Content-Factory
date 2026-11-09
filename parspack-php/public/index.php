@@ -6,6 +6,10 @@ require dirname(__DIR__) . '/app/bootstrap.php';
 $path = request_path();
 $method = request_method();
 
+if (auth_route($path, $method)) {
+    exit;
+}
+
 if ($path === '/api/health' && $method === 'GET') {
     try {
         db()->query('SELECT 1');
