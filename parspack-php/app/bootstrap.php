@@ -76,3 +76,4 @@ require_once __DIR__ . '/campaigns.php';
 require_once __DIR__ . '/analytics_calendar.php';
 require_once __DIR__ . '/media.php';
 require_once __DIR__ . '/brand_profiles.php';
+require_once __DIR__ . '/account.php';
