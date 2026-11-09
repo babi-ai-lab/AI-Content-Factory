@@ -36,3 +36,8 @@ select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(2
 .media-card img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:rgba(255,255,255,.04)}
 .media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px;font-size:10px;color:var(--muted)}
 .media-footer button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#e6eaf4;border-radius:7px;padding:6px 8px;font-size:10px;cursor:pointer}
+
+.export-link{display:inline-block;color:var(--gold);border:1px solid rgba(255,213,79,.3);border-radius:10px;padding:11px 14px;text-decoration:none;font-size:12px}
+.danger-form{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.danger-button{width:100%;border:1px solid rgba(255,120,120,.35);background:rgba(160,35,55,.22);color:#ffb8b8;border-radius:11px;padding:13px 16px;cursor:pointer;font-weight:700;margin-top:18px}
+.danger-button:hover{background:rgba(160,35,55,.34)}
