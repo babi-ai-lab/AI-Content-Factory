@@ -81,7 +81,10 @@
     const needsConsent = !result.user?.ai_data_notice_accepted_at;
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
-    if (!needsConsent) await loadHistory(true);
+    if (!needsConsent) {
+      try { await loadHistory(true); }
+      catch (error) { notify(workMessage, error.message, true); }
+    }
   }
   $("login-tab").addEventListener("click", () => showMode("login"));
   $("register-tab").addEventListener("click", () => showMode("register"));
