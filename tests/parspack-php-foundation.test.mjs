@@ -97,3 +97,13 @@ test("analytics and calendar queries are scoped to the authenticated account", (
   assert.match(module, /get_ai_usage|ai_usage_events/);
   assert.match(module, /CALENDAR_RANGE_INVALID/);
 });
+
+test("Persian workspace UI is connected to the local generation and history APIs", () => {
+  const page = read("../parspack-php/public/index.php");
+  const script = read("../parspack-php/public/auth.js");
+  assert.match(page, /id="generate-form"/);
+  assert.match(page, /id="history-items"/);
+  assert.match(script, /\/api\/generate/);
+  assert.match(script, /\/api\/history/);
+  assert.match(script, /\/api\/auth\/ai-data-notice\/accept/);
+});
