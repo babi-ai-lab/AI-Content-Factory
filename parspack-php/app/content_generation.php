@@ -186,13 +186,37 @@ function parse_generated_content(string $raw): array
 
 function call_gemini_model(string $model, string $apiKey, array $requestBody): array
 {
-    if (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN) || !extension_loaded('openssl')) {
-        return ['status' => 0, 'body' => null, 'network_error' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'model' => $model];
-    }
-
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent';
     $json = json_encode($requestBody, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if (!is_string($json)) return ['status' => 0, 'body' => null, 'network_error' => 'REQUEST_ENCODING_FAILED', 'model' => $model];
+
+    if (function_exists('curl_init')) {
+        $handle = curl_init($url);
+        curl_setopt_array($handle, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $json,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'X-Goog-Api-Key: ' . $apiKey],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_TIMEOUT => 45,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ]);
+        $responseBody = curl_exec($handle);
+        $status = (int)curl_getinfo($handle, CURLINFO_HTTP_CODE);
+        $networkError = $responseBody === false ? 'PROVIDER_NETWORK_ERROR' : null;
+        curl_close($handle);
+        return [
+            'status' => $status,
+            'body' => is_string($responseBody) ? $responseBody : null,
+            'network_error' => $networkError,
+            'model' => $model,
+        ];
+    }
+
+    if (!function_exists('curl_init') && (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN) || !extension_loaded('openssl'))) {
+        return ['status' => 0, 'body' => null, 'network_error' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'model' => $model];
+    }
 
     $context = stream_context_create([
         'http' => [
