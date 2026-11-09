@@ -140,6 +140,12 @@ if ($path === '/' && $method === 'GET') {
           <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
         </section>
         <section class="module-card">
+          <div class="section-head"><div><h2>تحلیل عملکرد</h2><p class="muted">آمار تولید محتوا و مصرف مدل هوش مصنوعی</p></div><select id="analytics-period" class="period-select"><option value="7">۷ روز</option><option value="30" selected>۳۰ روز</option><option value="all">همه زمان‌ها</option></select></div>
+          <div id="analytics-stats" class="analytics-stats"></div>
+          <div id="analytics-trend" class="analytics-trend"></div>
+          <div id="analytics-business" class="analytics-business"></div>
+        </section>
+        <section class="module-card">
           <h2>مدیریت کمپین‌ها</h2>
           <p class="muted">هدف، مراحل اجرا و محتواهای مرتبط هر کمپین را مدیریت کن.</p>
           <form id="campaign-form" class="generator-form">
