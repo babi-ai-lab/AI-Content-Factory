@@ -18,6 +18,10 @@ if (campaign_route($path, $method)) {
     exit;
 }
 
+if (analytics_calendar_route($path, $method)) {
+    exit;
+}
+
 if ($path === '/api/generate' && $method === 'POST') {
     handle_content_generation();
 }
