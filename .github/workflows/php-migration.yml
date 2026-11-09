@@ -1,0 +1,45 @@
+name: ParsPack PHP migration checks
+
+on:
+  push:
+    branches: [migration/parspack-php]
+    paths:
+      - "parspack-php/**"
+      - ".github/workflows/php-migration.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "parspack-php/**"
+      - ".github/workflows/php-migration.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    name: PHP syntax validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          extensions: pdo_mysql, mbstring, fileinfo
+          coverage: none
+      - name: Setup Node.js for regression tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.22.1
+      - name: Run migration regression tests
+        run: node --test tests/parspack-php-foundation.test.mjs
+      - name: Lint PHP source
+        run: |
+          find parspack-php/app parspack-php/public parspack-php/bin -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l parspack-php/config.example.php
+      - name: Verify migration artifacts
+        run: |
+          test -s parspack-php/database/schema.mysql.sql
+          test -s parspack-php/README.md
