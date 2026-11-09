@@ -129,6 +129,20 @@ if ($path === '/' && $method === 'GET') {
           <div id="history-items" class="history-list"></div>
           <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
         </section>
+        <section class="module-card">
+          <h2>تولید و کتابخانه تصویر</h2>
+          <p class="muted">تصویر پس از تولید در فضای خصوصی همین هاست ذخیره می‌شود.</p>
+          <form id="image-form" class="generator-form">
+            <label for="image-prompt">توضیحات تصویر</label>
+            <textarea id="image-prompt" rows="3" maxlength="3000" minlength="20" required placeholder="صحنه، سوژه، سبک بصری، نور و جزئیات موردنظر را توصیف کن..."></textarea>
+            <div class="form-grid">
+              <div><label for="image-ratio">نسبت تصویر</label><select id="image-ratio"><option value="4:5">عمودی ۴:۵</option><option value="1:1">مربع ۱:۱</option><option value="9:16">استوری ۹:۱۶</option><option value="16:9">افقی ۱۶:۹</option><option value="3:2">افقی ۳:۲</option><option value="2:3">عمودی ۲:۳</option></select></div>
+            </div>
+            <button class="primary" type="submit">تولید تصویر</button>
+          </form>
+          <div id="media-message" class="message" role="status" aria-live="polite"></div>
+          <div id="media-items" class="media-grid"></div>
+        </section>
       </div>
     </section>
     <footer>© AI Content Factory · ELTBabak</footer>
