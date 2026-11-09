@@ -32,6 +32,8 @@ The first migration slices establish:
   manually entered performance metrics;
 - local analytics aggregation for history and AI token usage, plus scheduled-content
   range queries for the calendar;
+- image generation through the configured Cloudflare AI provider, private local file
+  storage, per-user hourly quota, MIME/size validation and authenticated media delivery;
 - a CLI hosting diagnostics script that reports capabilities without exposing secrets.
 
 The migration is still incomplete and not production-ready. The authentication
