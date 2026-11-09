@@ -89,3 +89,11 @@ test("campaign APIs enforce ownership and validate metrics and campaign stages",
   assert.match(campaigns, /CAMPAIGN_STAGES_INVALID/);
   assert.match(campaigns, /marketing_campaign_content/);
 });
+
+test("analytics and calendar queries are scoped to the authenticated account", () => {
+  const module = read("../parspack-php/app/analytics_calendar.php");
+  assert.match(module, /WHERE user_id = :user_id/);
+  assert.match(module, /JSON_EXTRACT\(product, '\$\._factoryMeta\.scheduledAt'\)/);
+  assert.match(module, /get_ai_usage|ai_usage_events/);
+  assert.match(module, /CALENDAR_RANGE_INVALID/);
+});
