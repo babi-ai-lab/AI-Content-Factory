@@ -145,6 +145,17 @@ if ($path === '/' && $method === 'GET') {
           <div id="calendar-items" class="history-list"></div>
         </section>
         <section class="module-card">
+          <h2>مدیریت حساب و داده‌ها</h2>
+          <p class="muted">می‌توانی نسخه‌ای از داده‌های حساب خود دریافت کنی یا حساب را به‌صورت دائمی حذف کنی.</p>
+          <a class="export-link" href="/api/account/export">دریافت خروجی اطلاعات حساب (JSON)</a>
+          <form id="delete-account-form" class="generator-form danger-form">
+            <label for="delete-password">رمز عبور فعلی</label><input id="delete-password" type="password" autocomplete="current-password" required>
+            <label for="delete-confirmation">برای تأیید، عبارت DELETE را وارد کن</label><input id="delete-confirmation" type="text" autocomplete="off" required>
+            <button class="danger-button" type="submit">حذف دائمی حساب و اطلاعات</button>
+          </form>
+          <div id="account-message" class="message" role="status" aria-live="polite"></div>
+        </section>
+        <section class="module-card">
           <h2>پروفایل‌های برند</h2>
           <p class="muted">اطلاعات تأییدشده برند را یک‌بار ذخیره کن تا در تولیدهای بعدی استفاده شود. حداکثر ۱۰ پروفایل.</p>
           <form id="brand-form" class="generator-form">
