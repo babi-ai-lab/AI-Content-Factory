@@ -57,8 +57,9 @@ unless the hosting plan or inference architecture changes.
    registration, explicit email verification, login/logout and password-reset token
    endpoints are drafted; browser UI, delivery verification, account export/deletion,
    password-change UI and two-user isolation tests remain.
-3. **Core content:** generation adapter, validation, business prompts, content
-   history CRUD, review workflow, search/filter, favorites/folders/tags.
+3. **Core content (in progress):** the PHP text-generation adapter, input validation,
+   business prompts, output validation, consent gate and per-user rate limit are drafted;
+   content history CRUD, review workflow, search/filter, favorites/folders/tags remain.
 4. **Brand and quality:** profile CRUD, verified facts, FAQ, forbidden claims,
    quality checks and parity tests against existing fixtures.
 5. **Campaigns and calendar:** campaign CRUD, linked content, checklist, metrics,
