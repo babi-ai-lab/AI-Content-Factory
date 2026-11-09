@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     display_name VARCHAR(120) NOT NULL DEFAULT '',
     email_verified_at DATETIME NULL,
+    ai_data_notice_accepted_at DATETIME NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'pending_verification',
     session_version INT UNSIGNED NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
