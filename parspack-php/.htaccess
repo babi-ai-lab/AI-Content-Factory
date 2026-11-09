@@ -1,0 +1,13 @@
+Options -Indexes
+
+<FilesMatch "^(config\.php|\.env|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(app|database)/ - [F,L,NC]
+    RewriteRule ^config(\.example)?\.php$ - [F,L,NC]
+    RewriteRule ^public/ - [L]
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
