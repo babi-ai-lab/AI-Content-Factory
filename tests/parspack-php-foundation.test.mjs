@@ -55,6 +55,8 @@ test("local authentication requires CSRF, verified email and versioned sessions"
   assert.match(security, /session_version/);
   assert.match(auth, /pending_verification/);
   assert.match(auth, /email_verified_at/);
+  assert.match(auth, /auth_verify_email_preview/);
+  assert.match(auth, /method === 'POST'/);
   assert.match(auth, /session_regenerate_id/);
   assert.match(bootstrap, /session.use_strict_mode/);
 });
