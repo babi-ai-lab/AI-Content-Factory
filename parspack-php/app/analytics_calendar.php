@@ -172,6 +172,22 @@ function ics_escape(string $value): string
     return str_replace(["\r\n", "\r", "\n"], "\\n", $value);
 }
 
+function ics_fold_line(string $line): string
+{
+    $characters = preg_split('//u', $line, -1, PREG_SPLIT_NO_EMPTY) ?: str_split($line);
+    $result = '';
+    $chunk = '';
+    foreach ($characters as $character) {
+        if ($chunk !== '' && strlen($chunk) + strlen($character) > 73) {
+            $result .= $chunk . "\\r\\n ";
+            $chunk = $character;
+        } else {
+            $chunk .= $character;
+        }
+    }
+    return $result . $chunk;
+}
+
 function calendar_export_ics(string $userId): never
 {
     $start = trim((string)($_GET['start'] ?? ''));
