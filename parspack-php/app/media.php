@@ -122,47 +122,85 @@ function media_generate(string $userId): never
         json_response(['ok' => false, 'error' => ['code' => 'AI_DATA_PROCESSING_NOTICE_REQUIRED', 'message' => 'پیش از ارسال اطلاعات به سرویس هوش مصنوعی، اطلاعیه پردازش داده را تأیید کن.']], 428);
     }
 
-    $accountId = trim((string)($GLOBALS['config']['ai']['image_account_id'] ?? ''));
-    $apiToken = trim((string)($GLOBALS['config']['ai']['image_api_token'] ?? ''));
-    if ($accountId === '' || $apiToken === '') {
-        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_NOT_CONFIGURED', 'message' => 'سرویس تولید تصویر هنوز پیکربندی نشده است.']], 503);
-    }
-    if (!function_exists('curl_init') && (!extension_loaded('openssl') || !filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))) {
-        json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. cURL یا OpenSSL باید در cPanel فعال شود.']], 503);
+    $provider = strtolower(trim((string)($GLOBALS['config']['ai']['image_provider'] ?? 'cloudflare')));
+    $imageBase64 = '';
+    $mime = '';
+    $safePrompt = "Create an original, high-quality marketing visual. Follow the user's scene description while avoiding logos, watermarks, fake text, fabricated certifications, misleading before-and-after claims, or identifiable real people. Do not add written text unless the user explicitly requests it. Prompt: " . $prompt;
+
+    if ($provider === 'cloudflare') {
+        $accountId = trim((string)($GLOBALS['config']['ai']['image_account_id'] ?? ''));
+        $apiToken = trim((string)($GLOBALS['config']['ai']['image_api_token'] ?? ''));
+        if ($accountId === '' || $apiToken === '') {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_NOT_CONFIGURED', 'message' => 'اطلاعات اتصال Cloudflare AI هنوز پیکربندی نشده است.']], 503);
+        }
+        if (!function_exists('curl_init') && (!extension_loaded('openssl') || !filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))) {
+            json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. cURL یا OpenSSL باید در cPanel فعال شود.']], 503);
+        }
+        $url = 'https://api.cloudflare.com/client/v4/accounts/' . rawurlencode($accountId) . '/ai/run/@cf/black-forest-labs/flux-1-schnell';
+        $response = media_http_post($url, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiToken,
+        ], ['prompt' => mb_substr($safePrompt, 0, 2048, 'UTF-8'), 'steps' => 4]);
+        $storedRatio = '1:1';
+        $mime = 'image/jpeg';
+        if ($response['status'] === 0 || !is_string($response['body'])) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_UNAVAILABLE', 'message' => 'ارتباط با سرویس تولید تصویر برقرار نشد.']], 502);
+        }
+        if ($response['status'] === 429) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_QUOTA', 'message' => 'ظرفیت سرویس تولید تصویر به پایان رسیده است.']], 429);
+        }
+        if ($response['status'] < 200 || $response['status'] >= 300) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_ERROR', 'message' => 'سرویس تولید تصویر موقتاً پاسخ‌گو نیست.']], 502);
+        }
+        $data = json_decode($response['body'], true);
+        $imageBase64 = is_array($data) ? (string)($data['result']['image'] ?? '') : '';
+    } elseif ($provider === 'gemini') {
+        $apiKey = trim((string)($GLOBALS['config']['ai']['text_api_key'] ?? ''));
+        if ($apiKey === '') {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_NOT_CONFIGURED', 'message' => 'کلید Gemini برای تولید تصویر پیکربندی نشده است.']], 503);
+        }
+        if (!function_exists('curl_init') && (!extension_loaded('openssl') || !filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))) {
+            json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. cURL یا OpenSSL باید در cPanel فعال شود.']], 503);
+        }
+        $url = 'https://generativelanguage.googleapis.com/v1/models/gemini-3.1-flash-image:generateContent';
+        $response = media_http_post($url, [
+            'Content-Type: application/json',
+            'x-goog-api-key: ' . $apiKey,
+        ], [
+            'contents' => [['role' => 'user', 'parts' => [['text' => $safePrompt]]]],
+            'generationConfig' => [
+                'responseModalities' => ['IMAGE'],
+                'responseFormat' => ['image' => ['aspectRatio' => $ratio, 'imageSize' => '1K']],
+            ],
+        ]);
+        $storedRatio = $ratio;
+        if ($response['status'] === 0 || !is_string($response['body'])) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_UNAVAILABLE', 'message' => 'ارتباط با سرویس تولید تصویر برقرار نشد.']], 502);
+        }
+        if ($response['status'] === 429) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_QUOTA', 'message' => 'ظرفیت سرویس تولید تصویر به پایان رسیده است.']], 429);
+        }
+        if ($response['status'] < 200 || $response['status'] >= 300) {
+            json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_ERROR', 'message' => 'سرویس تولید تصویر موقتاً پاسخ‌گو نیست.']], 502);
+        }
+        $data = json_decode($response['body'], true);
+        foreach (($data['candidates'] ?? []) as $candidate) {
+            foreach (($candidate['content']['parts'] ?? []) as $part) {
+                if (!empty($part['inlineData']['data']) && !empty($part['inlineData']['mimeType'])) {
+                    $imageBase64 = (string)$part['inlineData']['data'];
+                    $mime = (string)$part['inlineData']['mimeType'];
+                    break 2;
+                }
+            }
+        }
+    } else {
+        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_INVALID', 'message' => 'ارائه‌دهنده تولید تصویر پشتیبانی نمی‌شود.']], 503);
     }
 
-    $quota = media_reserve_quota($userId);
-    if (!$quota['allowed']) {
-        header('Retry-After: ' . $quota['retryAfter']);
-        json_response(['ok' => false, 'error' => ['code' => 'MEDIA_GENERATION_LIMIT', 'message' => 'سهمیه تولید تصویر این حساب در یک ساعت به پایان رسیده است.']], 429);
+    if ($imageBase64 === '' || $mime === '') {
+        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_RESPONSE_INVALID', 'message' => 'تصویر قابل ذخیره‌ای از سرویس دریافت نشد.']], 502);
     }
 
-    $dimensions = [
-        '1:1' => [1024, 1024], '4:5' => [832, 1024], '9:16' => [576, 1024],
-        '16:9' => [1024, 576], '3:2' => [1024, 672], '2:3' => [672, 1024],
-    ];
-    [$width, $height] = $dimensions[$ratio];
-    $url = 'https://api.cloudflare.com/client/v4/accounts/' . rawurlencode($accountId) . '/ai/run/@cf/black-forest-labs/flux-1-schnell';
-    $response = media_http_post($url, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiToken,
-    ], ['prompt' => $prompt, 'width' => $width, 'height' => $height]);
-
-    if ($response['status'] === 0 || !is_string($response['body'])) {
-        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_UNAVAILABLE', 'message' => 'ارتباط با سرویس تولید تصویر برقرار نشد.']], 502);
-    }
-    if ($response['status'] === 429) {
-        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_QUOTA', 'message' => 'ظرفیت سرویس تولید تصویر به پایان رسیده است.']], 429);
-    }
-    if ($response['status'] < 200 || $response['status'] >= 300) {
-        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_PROVIDER_ERROR', 'message' => 'سرویس تولید تصویر موقتاً پاسخ‌گو نیست.']], 502);
-    }
-
-    $data = json_decode($response['body'], true);
-    $encoded = $data['result']['image'] ?? null;
-    if (!is_string($encoded)) {
-        json_response(['ok' => false, 'error' => ['code' => 'IMAGE_RESPONSE_INVALID', 'message' => 'پاسخ سرویس تصویر معتبر نیست.']], 502);
-    }
     $binary = base64_decode($encoded, true);
     if (!is_string($binary) || $binary === '' || strlen($binary) > AICF_IMAGE_MAX_BYTES) {
         json_response(['ok' => false, 'error' => ['code' => 'IMAGE_SIZE_INVALID', 'message' => 'حجم یا داده تصویر معتبر نیست.']], 502);
@@ -197,7 +235,7 @@ function media_generate(string $userId): never
         );
         $insert->execute([
             'id' => $id, 'user_id' => $userId, 'storage_path' => $relative, 'prompt' => $prompt,
-            'aspect_ratio' => $ratio, 'mime_type' => $mime, 'byte_size' => strlen($binary),
+            'aspect_ratio' => $storedRatio, 'mime_type' => $mime, 'byte_size' => strlen($binary),
             'content_history_id' => $historyId,
         ]);
     } catch (Throwable $error) {
@@ -210,7 +248,7 @@ function media_generate(string $userId): never
         'url' => '/api/media/' . $id,
         'mime_type' => $mime,
         'byte_size' => strlen($binary),
-        'aspect_ratio' => $ratio,
+        'aspect_ratio' => $storedRatio,
     ]], 201);
 }
 
