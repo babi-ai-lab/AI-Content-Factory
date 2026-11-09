@@ -30,3 +30,9 @@ select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(2
 .history-empty{color:var(--muted);font-size:12px;text-align:center;padding:22px;border:1px dashed var(--line);border-radius:12px}
 #history-more{display:block;width:100%;margin-top:14px}
 @media(max-width:760px){.module-card{padding:18px;margin-top:14px}.form-grid,.output-grid{grid-template-columns:1fr}.section-head{align-items:stretch;flex-direction:column}.search-input{max-width:none}.history-row{align-items:flex-start}.history-actions button{padding:8px 7px}}
+
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:18px}
+.media-card{min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:rgba(4,10,27,.4)}
+.media-card img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:rgba(255,255,255,.04)}
+.media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px;font-size:10px;color:var(--muted)}
+.media-footer button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:#e6eaf4;border-radius:7px;padding:6px 8px;font-size:10px;cursor:pointer}
