@@ -21,11 +21,23 @@ $streamReady = extension_loaded('openssl') && (bool)ini_get('allow_url_fopen');
 $httpsReady = $curlReady || $streamReady;
 $add('Outbound HTTPS transport', $httpsReady, $curlReady ? 'cURL is enabled' : ($streamReady ? 'OpenSSL streams are enabled' : 'Enable cURL or OpenSSL with allow_url_fopen'));
 $add('allow_url_fopen', $curlReady || (bool)ini_get('allow_url_fopen'), $curlReady ? 'not required; cURL is enabled' : (string)ini_get('allow_url_fopen'));
-$add('Session save path', is_dir((string)session_save_path()) && is_writable((string)session_save_path()), (string)session_save_path());
+$sessionPath = session_save_path() !== '' ? session_save_path() : sys_get_temp_dir();
+$add('Session save path', is_dir($sessionPath) && is_writable($sessionPath), $sessionPath);
+$add('PHP mail()', function_exists('mail'), function_exists('mail') ? 'available' : 'disabled');
+$storagePath = dirname(__DIR__) . '/storage';
+$add('Private storage writable', is_dir($storagePath) && is_writable($storagePath), is_dir($storagePath) ? (is_writable($storagePath) ? 'writable' : 'not writable') : 'storage directory missing');
 $add('Upload limit', true, (string)ini_get('upload_max_filesize'));
 $add('POST limit', true, (string)ini_get('post_max_size'));
-$add('Memory limit', true, (string)ini_get('memory_limit'));
-$add('Execution time', true, (string)ini_get('max_execution_time'));
+$memory = strtolower(trim((string)ini_get('memory_limit')));
+$memoryBytes = match (substr($memory, -1)) {
+    'g' => (int)$memory * 1024 * 1024 * 1024,
+    'm' => (int)$memory * 1024 * 1024,
+    'k' => (int)$memory * 1024,
+    default => (int)$memory,
+};
+$add('Memory limit >= 128M', $memory === '-1' || $memoryBytes >= 128 * 1024 * 1024, $memory);
+$execution = (int)ini_get('max_execution_time');
+$add('Execution time >= 120s', $execution === 0 || $execution >= 120, $execution === 0 ? 'unlimited' : $execution . ' seconds');
 
 $configFile = dirname(__DIR__) . '/config.php';
 $add('Private config file', is_file($configFile), is_file($configFile) ? 'present' : 'not installed');
