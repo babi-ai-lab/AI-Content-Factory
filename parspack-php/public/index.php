@@ -26,6 +26,10 @@ if (media_route($path, $method)) {
     exit;
 }
 
+if (brand_profile_route($path, $method)) {
+    exit;
+}
+
 if ($path === '/api/generate' && $method === 'POST') {
     handle_content_generation();
 }
