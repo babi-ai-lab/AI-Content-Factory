@@ -64,8 +64,8 @@ unless the hosting plan or inference architecture changes.
 4. **Brand and quality:** profile CRUD, verified facts, FAQ, forbidden claims,
    quality checks and parity tests against existing fixtures.
 5. **Campaigns and calendar (in progress):** campaign CRUD, content linking,
-   checklist stages and manual metrics endpoints are drafted; analytics, Jalali
-   calendar UI and ICS export remain.
+   checklist stages, manual metrics, analytics aggregation and scheduled-content
+   range query endpoints are drafted; Jalali calendar UI and ICS export remain.
 6. **Media:** private local storage, upload/download/delete, signed or
    session-authorized delivery, image generation, quota and cleanup.
 7. **Release hardening:** browser tests, accessibility, rate limiting, backups,
