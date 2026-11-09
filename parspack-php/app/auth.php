@@ -28,7 +28,7 @@ function auth_route(string $path, string $method): bool
 
     if ($path === '/api/auth/me' && $method === 'GET') {
         $userId = require_user_id();
-        $stmt = db()->prepare('SELECT id, email, display_name, email_verified_at, created_at FROM users WHERE id = :id LIMIT 1');
+        $stmt = db()->prepare('SELECT id, email, display_name, email_verified_at, ai_data_notice_accepted_at, created_at FROM users WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $userId]);
         json_response(['ok' => true, 'user' => $stmt->fetch()]);
     }
