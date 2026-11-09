@@ -7,6 +7,10 @@ function analytics_calendar_route(string $path, string $method): bool
         $userId = require_user_id();
         analytics_summary($userId);
     }
+    if ($path === '/api/calendar/ics' && $method === 'GET') {
+        $userId = require_user_id();
+        calendar_export_ics($userId);
+    }
     if ($path === '/api/calendar' && $method === 'GET') {
         $userId = require_user_id();
         calendar_range($userId);
@@ -160,4 +164,64 @@ function calendar_range(string $userId): never
     unset($item);
 
     json_response(['ok' => true, 'items' => $items]);
+}
+
+function ics_escape(string $value): string
+{
+    $value = str_replace(["\\\\", ";", ","], ["\\\\\\\\", "\\;", "\\,"], $value);
+    return str_replace(["\r\n", "\r", "\n"], "\\n", $value);
+}
+
+function calendar_export_ics(string $userId): never
+{
+    $start = trim((string)($_GET['start'] ?? ''));
+    $end = trim((string)($_GET['end'] ?? ''));
+    if ($start === '' || $end === '' || strlen($start) > 40 || strlen($end) > 40 || $start >= $end) {
+        json_response(['ok' => false, 'error' => ['code' => 'CALENDAR_RANGE_INVALID', 'message' => 'بازه زمانی تقویم معتبر نیست.']], 422);
+    }
+
+    $stmt = db()->prepare(
+        "SELECT id, product, content,
+                JSON_UNQUOTE(JSON_EXTRACT(product, '$._factoryMeta.scheduledAt')) AS scheduled_at
+         FROM content_history
+         WHERE user_id = :user_id
+           AND JSON_UNQUOTE(JSON_EXTRACT(product, '$._factoryMeta.scheduledAt')) >= :start_value
+           AND JSON_UNQUOTE(JSON_EXTRACT(product, '$._factoryMeta.scheduledAt')) < :end_value
+         ORDER BY scheduled_at ASC, id ASC"
+    );
+    $stmt->execute(['user_id' => $userId, 'start_value' => $start, 'end_value' => $end]);
+
+    $lines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//ELTBabak//AI Content Factory//FA',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+    ];
+    foreach ($stmt->fetchAll() as $row) {
+        $product = json_decode((string)$row['product'], true) ?? [];
+        $content = json_decode((string)$row['content'], true) ?? [];
+        try {
+            $date = new DateTimeImmutable((string)$row['scheduled_at']);
+        } catch (Throwable $error) {
+            continue;
+        }
+        $startUtc = $date->setTimezone(new DateTimeZone('UTC'))->format('Ymd\THis\Z');
+        $title = (string)($product['name'] ?? $product['businessName'] ?? 'محتوای زمان‌بندی‌شده');
+        $description = (string)($content['caption'] ?? '');
+        $lines[] = 'BEGIN:VEVENT';
+        $lines[] = 'UID:' . $row['id'] . '@eltbabak.ir';
+        $lines[] = 'DTSTAMP:' . gmdate('Ymd\THis\Z');
+        $lines[] = 'DTSTART:' . $startUtc;
+        $lines[] = 'SUMMARY:' . ics_escape($title);
+        if ($description !== '') $lines[] = 'DESCRIPTION:' . ics_escape($description);
+        $lines[] = 'END:VEVENT';
+    }
+    $lines[] = 'END:VCALENDAR';
+
+    header('Content-Type: text/calendar; charset=utf-8');
+    header('Content-Disposition: attachment; filename="ai-content-factory-calendar.ics"');
+    header('Cache-Control: private, no-store');
+    echo implode("\r\n", $lines) . "\r\n";
+    exit;
 }
