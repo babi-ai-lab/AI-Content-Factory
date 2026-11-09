@@ -16,9 +16,11 @@ foreach (['pdo_mysql', 'mbstring', 'fileinfo'] as $extension) {
     $add('Extension ' . $extension, extension_loaded($extension), extension_loaded($extension) ? 'enabled' : 'missing');
 }
 
-$httpsReady = extension_loaded('openssl') || extension_loaded('curl');
-$add('Outbound HTTPS transport', $httpsReady, $httpsReady ? 'OpenSSL or cURL is enabled' : 'Both OpenSSL and cURL are missing');
-$add('allow_url_fopen', (bool)ini_get('allow_url_fopen'), (string)ini_get('allow_url_fopen'));
+$curlReady = extension_loaded('curl');
+$streamReady = extension_loaded('openssl') && (bool)ini_get('allow_url_fopen');
+$httpsReady = $curlReady || $streamReady;
+$add('Outbound HTTPS transport', $httpsReady, $curlReady ? 'cURL is enabled' : ($streamReady ? 'OpenSSL streams are enabled' : 'Enable cURL or OpenSSL with allow_url_fopen'));
+$add('allow_url_fopen', $curlReady || (bool)ini_get('allow_url_fopen'), $curlReady ? 'not required; cURL is enabled' : (string)ini_get('allow_url_fopen'));
 $add('Session save path', is_dir((string)session_save_path()) && is_writable((string)session_save_path()), (string)session_save_path());
 $add('Upload limit', true, (string)ini_get('upload_max_filesize'));
 $add('POST limit', true, (string)ini_get('post_max_size'));
