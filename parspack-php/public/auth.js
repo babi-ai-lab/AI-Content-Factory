@@ -106,6 +106,41 @@
     const result = await request("/api/media", null, "GET");
     renderMedia(result.items || []);
   }
+  function renderBrands(profiles) {
+    const host = $("brand-items");
+    const select = $("brand-profile-id");
+    const selected = select.value;
+    select.replaceChildren();
+    const empty = document.createElement("option"); empty.value = ""; empty.textContent = "بدون پروفایل"; select.append(empty);
+    for (const profile of profiles) {
+      const option = document.createElement("option");
+      option.value = profile.id; option.textContent = profile.name + (profile.is_default ? " · پیش‌فرض" : "");
+      select.append(option);
+    }
+    select.value = profiles.some((item) => item.id === selected) ? selected : (profiles.find((item) => item.is_default)?.id || "");
+    host.replaceChildren();
+    if (!profiles.length) {
+      const emptyState = document.createElement("div"); emptyState.className = "history-empty";
+      emptyState.textContent = "هنوز پروفایل برندی ذخیره نشده است."; host.append(emptyState); return;
+    }
+    for (const profile of profiles) {
+      const row = document.createElement("div"); row.className = "history-row";
+      const title = document.createElement("div"); title.className = "history-title";
+      title.textContent = profile.name + (profile.is_default ? " · پیش‌فرض" : "");
+      const actions = document.createElement("div"); actions.className = "history-actions";
+      if (!profile.is_default) {
+        const makeDefault = document.createElement("button"); makeDefault.type = "button";
+        makeDefault.textContent = "پیش‌فرض"; makeDefault.dataset.brandDefault = profile.id; actions.append(makeDefault);
+      }
+      const remove = document.createElement("button"); remove.type = "button";
+      remove.textContent = "حذف"; remove.dataset.brandDelete = profile.id; actions.append(remove);
+      row.append(title, actions); host.append(row);
+    }
+  }
+  async function loadBrands() {
+    const result = await request("/api/brands", null, "GET");
+    renderBrands(result.profiles || []);
+  }
   async function loadWorkspaceUser() {
     const result = await request("/api/auth/me", null, "GET");
     card.classList.add("hidden"); workspace.classList.remove("hidden");
@@ -114,7 +149,7 @@
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
     if (!needsConsent) {
-      try { await loadHistory(true); await loadMedia(); }
+      try { await loadHistory(true); await loadMedia(); await loadBrands(); }
       catch (error) { notify(workMessage, error.message, true); }
     }
   }
@@ -158,7 +193,7 @@
     try {
       await request("/api/auth/ai-data-notice/accept", {});
       $("ai-consent").classList.add("hidden"); $("app-modules").classList.remove("hidden");
-      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia();
+      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands();
     } catch (error) { notify(workMessage, error.message, true); }
   });
   $("logout-button").addEventListener("click", async () => {
@@ -179,6 +214,30 @@
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
+  });
+  $("brand-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    notify($("brand-message"), "در حال ذخیره پروفایل...");
+    const data = Object.fromEntries(new FormData($("brand-form")).entries());
+    try {
+      await request("/api/brands", data);
+      $("brand-form").reset();
+      notify($("brand-message"), "پروفایل برند ذخیره شد.");
+      await loadBrands();
+    } catch (error) { notify($("brand-message"), error.message, true); }
+  });
+  $("brand-items").addEventListener("click", async (event) => {
+    const makeDefault = event.target.closest("[data-brand-default]");
+    const remove = event.target.closest("[data-brand-delete]");
+    try {
+      if (makeDefault) {
+        await request("/api/brands/" + encodeURIComponent(makeDefault.dataset.brandDefault) + "/default", {});
+        await loadBrands(); notify($("brand-message"), "پروفایل پیش‌فرض تغییر کرد.");
+      } else if (remove && confirm("این پروفایل برند حذف شود؟")) {
+        await request("/api/brands/" + encodeURIComponent(remove.dataset.brandDelete), {}, "DELETE");
+        await loadBrands(); notify($("brand-message"), "پروفایل حذف شد.");
+      }
+    } catch (error) { notify($("brand-message"), error.message, true); }
   });
   $("image-form").addEventListener("submit", async (event) => {
     event.preventDefault();
