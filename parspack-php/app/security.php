@@ -46,7 +46,7 @@ function csrf_token(): string
 
 function require_csrf(): void
 {
-    $provided = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    $provided = (string)($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ($_POST['_csrf'] ?? ''));
     $expected = (string)($_SESSION['csrf_token'] ?? '');
 
     if ($provided === '' || $expected === '' || !hash_equals($expected, $provided)) {
