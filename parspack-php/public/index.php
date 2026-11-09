@@ -140,6 +140,21 @@ if ($path === '/' && $method === 'GET') {
           <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
         </section>
         <section class="module-card">
+          <h2>مدیریت کمپین‌ها</h2>
+          <p class="muted">هدف، مراحل اجرا و محتواهای مرتبط هر کمپین را مدیریت کن.</p>
+          <form id="campaign-form" class="generator-form">
+            <div class="form-grid">
+              <div><label for="campaign-name">نام کمپین</label><input id="campaign-name" maxlength="120" required></div>
+              <div><label for="campaign-audience">مخاطب هدف</label><input id="campaign-audience" maxlength="500"></div>
+            </div>
+            <label for="campaign-goal">هدف کمپین</label><textarea id="campaign-goal" rows="2" maxlength="500" required></textarea>
+            <label for="campaign-channels">کانال‌ها (با ویرگول جدا کن)</label><input id="campaign-channels" maxlength="500" placeholder="اینستاگرام، تلگرام، وب‌سایت">
+            <button class="primary" type="submit">ساخت کمپین</button>
+          </form>
+          <div id="campaign-message" class="message" role="status" aria-live="polite"></div>
+          <div id="campaign-items" class="campaign-list"></div>
+        </section>
+        <section class="module-card">
           <h2>تقویم محتوای ۳۰ روز آینده</h2>
           <p class="muted">محتواهایی که زمان انتشار برای آن‌ها تعیین کرده‌ای.</p>
           <div id="calendar-items" class="history-list"></div>
