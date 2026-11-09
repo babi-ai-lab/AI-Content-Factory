@@ -345,7 +345,7 @@
     const remove = event.target.closest("[data-campaign-delete]");
     try {
       if (link) {
-        const select = $("campaign-items").querySelector('[data-campaign-content="' + CSS.escape(link.dataset.campaignLink) + '"]');
+        const select = Array.from($("campaign-items").querySelectorAll("[data-campaign-content]")).find((item) => item.dataset.campaignContent === link.dataset.campaignLink);
         if (!select?.value) return notify($("campaign-message"), "ابتدا یک محتوا انتخاب کن.", true);
         await request("/api/campaigns/" + encodeURIComponent(link.dataset.campaignLink) + "/content", { content_id: select.value });
         await loadCampaigns(); notify($("campaign-message"), "محتوا به کمپین متصل شد.");
