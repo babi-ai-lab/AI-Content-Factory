@@ -31,7 +31,7 @@ The first migration slices establish:
 - campaign create/list/update/delete, content linking, checklist stages and
   manually entered performance metrics;
 - local analytics aggregation for history and AI token usage, plus scheduled-content
-  range queries for the calendar and a Persian analytics dashboard;
+  range queries and authenticated ICS export for the calendar, plus a Persian analytics dashboard;
 - image generation through the configured Cloudflare AI provider, private local file
   storage, per-user hourly quota, MIME/size validation and authenticated media delivery;
 - brand profile CRUD, default profile selection, a ten-profile cap and server-side
