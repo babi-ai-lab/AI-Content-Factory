@@ -34,6 +34,8 @@ The first migration slices establish:
   range queries for the calendar;
 - image generation through the configured Cloudflare AI provider, private local file
   storage, per-user hourly quota, MIME/size validation and authenticated media delivery;
+- brand profile CRUD, default profile selection, a ten-profile cap and server-side
+  profile loading during text generation;
 - a CLI hosting diagnostics script that reports capabilities without exposing secrets.
 
 The migration is still incomplete and not production-ready. The authentication
