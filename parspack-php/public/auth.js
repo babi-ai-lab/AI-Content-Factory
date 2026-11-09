@@ -1,6 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { csrf: window.AICF_CSRF || "", generated: null, historyItems: [], brands: [], cursor: null, hasMore: false };
+  const state = { csrf: window.AICF_CSRF || "", generated: null, historyItems: [], brands: [], campaigns: [], campaignLinks: [], contentOptions: [], cursor: null, hasMore: false };
   const card = $("auth-card"), workspace = $("workspace"), message = $("message");
   const loginForm = $("login-form"), registerForm = $("register-form"), resetForm = $("reset-form");
   const genMessage = $("generation-message"), workMessage = $("workspace-message");
@@ -144,6 +144,71 @@
     const result = await request("/api/brands", null, "GET");
     renderBrands(result.profiles || []);
   }
+  function renderCampaigns() {
+    const host = $("campaign-items"); host.replaceChildren();
+    if (!state.campaigns.length) {
+      const empty = document.createElement("div"); empty.className = "history-empty";
+      empty.textContent = "هنوز کمپینی ساخته نشده است."; host.append(empty); return;
+    }
+    const statusLabels = { draft: "پیش‌نویس", active: "در حال اجرا", paused: "متوقف", completed: "تکمیل‌شده" };
+    for (const campaign of state.campaigns) {
+      const card = document.createElement("article"); card.className = "campaign-card";
+      const head = document.createElement("div"); head.className = "campaign-head";
+      const title = document.createElement("h3"); title.textContent = campaign.name;
+      const status = document.createElement("select"); status.dataset.campaignStatus = campaign.id;
+      for (const [value, label] of Object.entries(statusLabels)) {
+        const option = document.createElement("option"); option.value = value; option.textContent = label; status.append(option);
+      }
+      status.value = campaign.status; head.append(title, status); card.append(head);
+      const goal = document.createElement("p"); goal.className = "muted"; goal.textContent = campaign.goal; card.append(goal);
+      if (campaign.channels?.length) {
+        const channels = document.createElement("p"); channels.className = "campaign-meta";
+        channels.textContent = "کانال‌ها: " + campaign.channels.join("، "); card.append(channels);
+      }
+      const stageTitle = document.createElement("strong"); stageTitle.className = "campaign-subtitle"; stageTitle.textContent = "مراحل اجرا"; card.append(stageTitle);
+      const stages = document.createElement("div"); stages.className = "campaign-stages";
+      for (const stage of campaign.stages || []) {
+        const label = document.createElement("label"); label.className = "stage-item";
+        const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = Boolean(stage.done);
+        checkbox.dataset.campaignStage = campaign.id; checkbox.dataset.stageId = stage.id;
+        const text = document.createElement("span"); text.textContent = stage.title;
+        label.append(checkbox, text); stages.append(label);
+      }
+      card.append(stages);
+      const linkRow = document.createElement("div"); linkRow.className = "campaign-link-row";
+      const select = document.createElement("select"); select.dataset.campaignContent = campaign.id;
+      const placeholder = document.createElement("option"); placeholder.value = ""; placeholder.textContent = "انتخاب محتوای ذخیره‌شده"; select.append(placeholder);
+      for (const content of state.contentOptions) {
+        const option = document.createElement("option"); option.value = content.id;
+        option.textContent = content.product?.name || content.product?.businessName || "محتوای ذخیره‌شده";
+        select.append(option);
+      }
+      const add = document.createElement("button"); add.type = "button"; add.textContent = "اتصال محتوا"; add.dataset.campaignLink = campaign.id;
+      linkRow.append(select, add); card.append(linkRow);
+      const links = state.campaignLinks.filter((link) => link.campaign_id === campaign.id);
+      if (links.length) {
+        const linked = document.createElement("div"); linked.className = "campaign-linked";
+        for (const link of links) {
+          const line = document.createElement("div"); line.className = "linked-item";
+          const option = state.contentOptions.find((item) => item.id === link.content_id);
+          const label = document.createElement("span"); label.textContent = option?.product?.name || option?.product?.businessName || "محتوای متصل";
+          const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "حذف ارتباط"; remove.dataset.campaignUnlink = link.id;
+          line.append(label, remove); linked.append(line);
+        }
+        card.append(linked);
+      }
+      const deleteButton = document.createElement("button"); deleteButton.type = "button"; deleteButton.className = "campaign-delete";
+      deleteButton.textContent = "حذف کمپین"; deleteButton.dataset.campaignDelete = campaign.id; card.append(deleteButton);
+      host.append(card);
+    }
+  }
+  async function loadCampaigns() {
+    const result = await request("/api/campaigns", null, "GET");
+    state.campaigns = result.campaigns || [];
+    state.campaignLinks = result.links || [];
+    state.contentOptions = result.content || [];
+    renderCampaigns();
+  }
   function renderCalendar(items) {
     const host = $("calendar-items"); host.replaceChildren();
     if (!items.length) {
@@ -175,7 +240,7 @@
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
     if (!needsConsent) {
-      try { await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); }
+      try { await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns(); }
       catch (error) { notify(workMessage, error.message, true); }
     }
   }
@@ -219,7 +284,7 @@
     try {
       await request("/api/auth/ai-data-notice/accept", {});
       $("ai-consent").classList.add("hidden"); $("app-modules").classList.remove("hidden");
-      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar();
+      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns();
     } catch (error) { notify(workMessage, error.message, true); }
   });
   $("logout-button").addEventListener("click", async () => {
@@ -241,6 +306,57 @@
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
+  });
+  $("campaign-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    notify($("campaign-message"), "در حال ساخت کمپین...");
+    const channels = $("campaign-channels").value.split(/[،,]/).map((item) => item.trim()).filter(Boolean).slice(0, 8);
+    try {
+      await request("/api/campaigns", {
+        name: $("campaign-name").value.trim(),
+        goal: $("campaign-goal").value.trim(),
+        audience: $("campaign-audience").value.trim(),
+        channels
+      });
+      $("campaign-form").reset();
+      notify($("campaign-message"), "کمپین ساخته شد.");
+      await loadCampaigns();
+    } catch (error) { notify($("campaign-message"), error.message, true); }
+  });
+  $("campaign-items").addEventListener("change", async (event) => {
+    const status = event.target.closest("[data-campaign-status]");
+    const stage = event.target.closest("[data-campaign-stage]");
+    try {
+      if (status) {
+        await request("/api/campaigns/" + encodeURIComponent(status.dataset.campaignStatus), { status: status.value }, "PATCH");
+        await loadCampaigns();
+      } else if (stage) {
+        const campaign = state.campaigns.find((item) => item.id === stage.dataset.campaignStage);
+        if (!campaign) return;
+        const stages = campaign.stages.map((item) => ({ ...item, done: item.id === stage.dataset.stageId ? stage.checked : item.done }));
+        await request("/api/campaigns/" + encodeURIComponent(campaign.id), { stages }, "PATCH");
+        await loadCampaigns();
+      }
+    } catch (error) { notify($("campaign-message"), error.message, true); }
+  });
+  $("campaign-items").addEventListener("click", async (event) => {
+    const link = event.target.closest("[data-campaign-link]");
+    const unlink = event.target.closest("[data-campaign-unlink]");
+    const remove = event.target.closest("[data-campaign-delete]");
+    try {
+      if (link) {
+        const select = $("campaign-items").querySelector('[data-campaign-content="' + CSS.escape(link.dataset.campaignLink) + '"]');
+        if (!select?.value) return notify($("campaign-message"), "ابتدا یک محتوا انتخاب کن.", true);
+        await request("/api/campaigns/" + encodeURIComponent(link.dataset.campaignLink) + "/content", { content_id: select.value });
+        await loadCampaigns(); notify($("campaign-message"), "محتوا به کمپین متصل شد.");
+      } else if (unlink) {
+        await request("/api/campaign-links/" + encodeURIComponent(unlink.dataset.campaignUnlink), {}, "DELETE");
+        await loadCampaigns(); notify($("campaign-message"), "ارتباط محتوا حذف شد.");
+      } else if (remove && confirm("این کمپین حذف شود؟")) {
+        await request("/api/campaigns/" + encodeURIComponent(remove.dataset.campaignDelete), {}, "DELETE");
+        await loadCampaigns(); notify($("campaign-message"), "کمپین حذف شد.");
+      }
+    } catch (error) { notify($("campaign-message"), error.message, true); }
   });
   $("brand-profile-id").addEventListener("change", () => {
     const profile = state.brands.find((item) => item.id === $("brand-profile-id").value);
