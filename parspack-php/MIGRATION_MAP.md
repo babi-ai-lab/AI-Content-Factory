@@ -52,10 +52,11 @@ unless the hosting plan or inference architecture changes.
 ## Migration phases
 
 1. **Foundation (in progress):** private config, PDO, front controller, health
-   endpoint, initial MySQL schema, PHP lint workflow.
-2. **Authentication and account lifecycle:** registration, email verification,
-   login/logout, password reset/change, account export/deletion, session/CSRF
-   controls, two-user isolation tests.
+   endpoint, initial MySQL schema, PHP lint workflow and hosting diagnostics.
+2. **Authentication and account lifecycle (in progress):** CSRF/session foundations,
+   registration, explicit email verification, login/logout and password-reset token
+   endpoints are drafted; browser UI, delivery verification, account export/deletion,
+   password-change UI and two-user isolation tests remain.
 3. **Core content:** generation adapter, validation, business prompts, content
    history CRUD, review workflow, search/filter, favorites/folders/tags.
 4. **Brand and quality:** profile CRUD, verified facts, FAQ, forbidden claims,
