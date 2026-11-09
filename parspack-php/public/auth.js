@@ -34,6 +34,7 @@
     const result = await request("/api/auth/me", null, "GET");
     card.classList.add("hidden"); workspace.classList.remove("hidden");
     $("welcome-message").textContent = "خوش آمدی " + (result.user?.display_name || result.user?.email || "");
+    $("ai-consent").classList.toggle("hidden", Boolean(result.user?.ai_data_notice_accepted_at));
   }
   $("login-tab").addEventListener("click", () => showMode("login"));
   $("register-tab").addEventListener("click", () => showMode("register"));
@@ -71,6 +72,13 @@
       history.replaceState({}, "", "/"); showMode("login"); notify(result.message || "رمز عبور تغییر کرد."); resetForm.reset();
     } catch (error) { notify(error.message, true); }
   });
+  $("accept-ai-notice").addEventListener("click", async () => {
+    try {
+      await request("/api/auth/ai-data-notice/accept", {});
+      $("ai-consent").classList.add("hidden");
+      notify("تأیید پردازش داده ثبت شد.");
+    } catch (error) { notify(error.message, true); }
+  });
   $("logout-button").addEventListener("click", async () => {
     try {
       await request("/api/auth/logout", {}); location.reload();
@@ -81,5 +89,6 @@
   else request("/api/auth/me", null, "GET").then((result) => {
     card.classList.add("hidden"); workspace.classList.remove("hidden");
     $("welcome-message").textContent = "خوش آمدی " + (result.user?.display_name || result.user?.email || "");
+    $("ai-consent").classList.toggle("hidden", Boolean(result.user?.ai_data_notice_accepted_at));
   }).catch(() => {});
 })();
