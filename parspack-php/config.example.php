@@ -21,6 +21,10 @@ return [
         'password' => '',
         'charset' => 'utf8mb4',
     ],
+    'mail' => [
+        'from_email' => 'no-reply@eltbabak.ir',
+        'from_name' => 'AI Content Factory',
+    ],
     'session' => [
         'name' => 'aicf_session',
         'secure' => true,
