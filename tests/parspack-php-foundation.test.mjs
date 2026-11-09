@@ -107,3 +107,12 @@ test("Persian workspace UI is connected to the local generation and history APIs
   assert.match(script, /\/api\/history/);
   assert.match(script, /\/api\/auth\/ai-data-notice\/accept/);
 });
+
+test("generated media is private, owner-scoped and constrained by MIME and size", () => {
+  const media = read("../parspack-php/app/media.php");
+  assert.match(media, /AICF_IMAGE_MAX_BYTES/);
+  assert.match(media, /FILEINFO_MIME_TYPE/);
+  assert.match(media, /WHERE id = :id AND user_id = :user_id/);
+  assert.match(media, /storage\/generated-media/);
+  assert.match(media, /media_generation_allowance/);
+});
