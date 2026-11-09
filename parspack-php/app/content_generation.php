@@ -253,6 +253,20 @@ function handle_content_generation(): never
     require_csrf();
     $userId = require_user_id();
     $body = json_body(AICF_MAX_GENERATION_BODY);
+    $brandProfileId = trim((string)($body['brandProfileId'] ?? ''));
+    if ($brandProfileId !== '') {
+        if (!preg_match('/^[a-f0-9-]{36}$/i', $brandProfileId)) {
+            json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_ID_INVALID', 'message' => 'شناسه پروفایل برند معتبر نیست.']], 422);
+        }
+        $profileStmt = db()->prepare('SELECT business_type, profile_data FROM brand_profiles WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $profileStmt->execute(['id' => $brandProfileId, 'user_id' => $userId]);
+        $profile = $profileStmt->fetch();
+        if (!$profile) {
+            json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_NOT_FOUND', 'message' => 'پروفایل برند انتخاب‌شده پیدا نشد.']], 404);
+        }
+        $body['brandProfile'] = json_decode((string)$profile['profile_data'], true) ?? [];
+        $body['businessType'] = (string)$profile['business_type'];
+    }
     $input = validate_generation_input($body);
 
     if ($input === null) {
