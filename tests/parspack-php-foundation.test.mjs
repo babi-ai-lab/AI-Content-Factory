@@ -71,3 +71,12 @@ test("text generation requires consent, enforces quotas and validates provider o
   assert.match(generator, /count\(\$stories\) !== 5/);
   assert.match(auth, /ai-data-notice\/accept/);
 });
+
+test("history APIs scope reads, updates, deletes and version restores to the current user", () => {
+  const history = read("../parspack-php/app/history.php");
+  assert.match(history, /WHERE id = :id AND user_id = :user_id/);
+  assert.match(history, /history_id = :history_id AND user_id = :user_id/);
+  assert.match(history, /history_validate_payload/);
+  assert.match(history, /count\(\$content\['stories'\]\) !== 5/);
+  assert.match(history, /history_restore/);
+});
