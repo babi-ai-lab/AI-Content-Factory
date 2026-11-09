@@ -203,7 +203,7 @@ if ($path === '/' && $method === 'GET') {
         </section>
         <section class="module-card">
           <h2>تولید و کتابخانه تصویر</h2>
-          <p class="muted">تصویر پس از تولید در فضای خصوصی همین هاست ذخیره می‌شود.</p>
+          <p class="muted">تصویر پس از تولید در فضای خصوصی همین هاست ذخیره می‌شود. ارائه‌دهنده Cloudflare خروجی مربع می‌دهد؛ برای نسبت‌های متنوع، ارائه‌دهنده Gemini را در تنظیمات نصب انتخاب کن.</p>
           <form id="image-form" class="generator-form">
             <label for="image-prompt">توضیحات تصویر</label>
             <textarea id="image-prompt" rows="3" maxlength="3000" minlength="20" required placeholder="صحنه، سوژه، سبک بصری، نور و جزئیات موردنظر را توصیف کن..."></textarea>
