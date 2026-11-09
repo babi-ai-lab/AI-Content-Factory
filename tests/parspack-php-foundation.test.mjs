@@ -30,7 +30,9 @@ test("initial MySQL schema scopes user-owned records with foreign keys", () => {
     "marketing_campaigns",
     "marketing_campaign_content",
     "ai_usage_events",
-    "media_assets",
+    "generated_media",
+    "generation_rate_limits",
+    "media_generation_allowance",
   ]) {
     assert.match(schema, new RegExp("CREATE TABLE IF NOT EXISTS " + table));
   }
