@@ -209,6 +209,46 @@
     state.contentOptions = result.content || [];
     renderCampaigns();
   }
+  function renderAnalytics(data) {
+    const analytics = data.analytics || {}, usage = data.usage || {};
+    const stats = $("analytics-stats"); stats.replaceChildren();
+    const values = [
+      ["تعداد محتوا", analytics.entries?.length || 0],
+      ["قطعات تولیدشده", analytics.totalPieces || 0],
+      ["مورد علاقه", analytics.favorites || 0],
+      ["دفعات تولید", usage.generations || 0],
+      ["توکن مصرفی", usage.totalTokens || 0]
+    ];
+    for (const [label, value] of values) {
+      const card = document.createElement("div"); card.className = "analytics-stat";
+      const number = document.createElement("strong"); number.textContent = Number(value).toLocaleString("fa-IR");
+      const caption = document.createElement("span"); caption.textContent = label;
+      card.append(number, caption); stats.append(card);
+    }
+    const trend = $("analytics-trend"); trend.replaceChildren();
+    for (const day of analytics.trend || []) {
+      const row = document.createElement("div"); row.className = "trend-row";
+      const date = document.createElement("span"); date.textContent = new Date(day.key + "T12:00:00+03:30").toLocaleDateString("fa-IR", { timeZone: "Asia/Tehran", month: "numeric", day: "numeric" });
+      const track = document.createElement("div"); track.className = "trend-track";
+      const bar = document.createElement("div"); bar.className = "trend-bar";
+      bar.style.width = Math.max(0, Math.min(100, (day.count / Math.max(1, analytics.maxDaily || 1)) * 100)) + "%";
+      track.append(bar);
+      const count = document.createElement("b"); count.textContent = Number(day.count).toLocaleString("fa-IR");
+      row.append(date, track, count); trend.append(row);
+    }
+    const business = $("analytics-business"); business.replaceChildren();
+    for (const item of analytics.byBusiness || []) {
+      const row = document.createElement("div"); row.className = "business-stat";
+      const label = document.createElement("span"); label.textContent = item.label;
+      const count = document.createElement("strong"); count.textContent = Number(item.count).toLocaleString("fa-IR");
+      row.append(label, count); business.append(row);
+    }
+  }
+  async function loadAnalytics() {
+    const period = $("analytics-period").value || "30";
+    const result = await request("/api/analytics?period=" + encodeURIComponent(period), null, "GET");
+    renderAnalytics(result);
+  }
   function renderCalendar(items) {
     const host = $("calendar-items"); host.replaceChildren();
     if (!items.length) {
@@ -240,7 +280,7 @@
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
     if (!needsConsent) {
-      try { await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns(); }
+      try { await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns(); await loadAnalytics(); }
       catch (error) { notify(workMessage, error.message, true); }
     }
   }
@@ -284,7 +324,7 @@
     try {
       await request("/api/auth/ai-data-notice/accept", {});
       $("ai-consent").classList.add("hidden"); $("app-modules").classList.remove("hidden");
-      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns();
+      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); await loadCampaigns(); await loadAnalytics();
     } catch (error) { notify(workMessage, error.message, true); }
   });
   $("logout-button").addEventListener("click", async () => {
@@ -302,7 +342,7 @@
       renderContent(generated.content);
       try {
         await request("/api/history", { product, content: generated.content });
-        notify(genMessage, "محتوا تولید و در کتابخانه ذخیره شد."); await loadHistory(true); await loadCalendar();
+        notify(genMessage, "محتوا تولید و در کتابخانه ذخیره شد."); await loadHistory(true); await loadCalendar(); await loadAnalytics();
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
@@ -440,6 +480,7 @@
       location.reload();
     } catch (error) { notify($("account-message"), error.message, true); }
   });
+  $("analytics-period").addEventListener("change", () => loadAnalytics().catch((error) => notify(workMessage, error.message, true)));
   $("history-search").addEventListener("change", () => loadHistory(true).catch((error) => notify(workMessage, error.message, true)));
   $("history-more").addEventListener("click", () => loadHistory(false).catch((error) => notify(workMessage, error.message, true)));
 
