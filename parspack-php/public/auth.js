@@ -141,6 +141,29 @@
     const result = await request("/api/brands", null, "GET");
     renderBrands(result.profiles || []);
   }
+  function renderCalendar(items) {
+    const host = $("calendar-items"); host.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement("div"); empty.className = "history-empty";
+      empty.textContent = "برای ۳۰ روز آینده برنامه‌ای ثبت نشده است."; host.append(empty); return;
+    }
+    for (const item of items) {
+      const row = document.createElement("div"); row.className = "history-row";
+      const info = document.createElement("div");
+      const title = document.createElement("div"); title.className = "history-title";
+      title.textContent = item.product?.name || item.product?.businessName || "محتوای زمان‌بندی‌شده";
+      const date = document.createElement("div"); date.className = "history-date";
+      date.textContent = item.scheduled_at ? new Date(item.scheduled_at).toLocaleString("fa-IR", { timeZone: "Asia/Tehran" }) : "";
+      info.append(title, date); row.append(info); host.append(row);
+    }
+  }
+  async function loadCalendar() {
+    const start = new Date().toISOString();
+    const end = new Date(Date.now() + 30 * 86400000).toISOString();
+    const params = new URLSearchParams({ start, end });
+    const result = await request("/api/calendar?" + params.toString(), null, "GET");
+    renderCalendar(result.items || []);
+  }
   async function loadWorkspaceUser() {
     const result = await request("/api/auth/me", null, "GET");
     card.classList.add("hidden"); workspace.classList.remove("hidden");
@@ -149,7 +172,7 @@
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
     if (!needsConsent) {
-      try { await loadHistory(true); await loadMedia(); await loadBrands(); }
+      try { await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar(); }
       catch (error) { notify(workMessage, error.message, true); }
     }
   }
@@ -193,7 +216,7 @@
     try {
       await request("/api/auth/ai-data-notice/accept", {});
       $("ai-consent").classList.add("hidden"); $("app-modules").classList.remove("hidden");
-      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands();
+      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia(); await loadBrands(); await loadCalendar();
     } catch (error) { notify(workMessage, error.message, true); }
   });
   $("logout-button").addEventListener("click", async () => {
@@ -205,12 +228,13 @@
     const submit = $("generate-form").querySelector('button[type="submit"]'); submit.disabled = true;
     try {
       const fields = Object.fromEntries(new FormData($("generate-form")).entries());
-      const product = { ...fields, _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt: "", reviewStatus: "draft" } };
+      const scheduledAt = fields.scheduledAt ? new Date(fields.scheduledAt + ":00+03:30").toISOString() : "";
+      const product = { ...fields, _factoryMeta: { tags: [], folder: "عمومی", favorite: false, scheduledAt, reviewStatus: "draft" } };
       const generated = await request("/api/generate", { ...fields, brandProfile: {} });
       renderContent(generated.content);
       try {
         await request("/api/history", { product, content: generated.content });
-        notify(genMessage, "محتوا تولید و در کتابخانه ذخیره شد."); await loadHistory(true);
+        notify(genMessage, "محتوا تولید و در کتابخانه ذخیره شد."); await loadHistory(true); await loadCalendar();
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
