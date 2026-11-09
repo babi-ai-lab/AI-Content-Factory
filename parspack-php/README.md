@@ -28,14 +28,16 @@ The first migration slices establish:
   Gemini fallback model and response validation;
 - user-scoped history create/list/update/delete, cursor pagination, search,
   automatic version snapshots and restore endpoints;
+- campaign create/list/update/delete, content linking, checklist stages and
+  manually entered performance metrics;
 - a CLI hosting diagnostics script that reports capabilities without exposing secrets.
 
 The migration is still incomplete and not production-ready. The authentication
 API does not yet have its final browser UI, email-delivery setup must be verified,
 and the content-generation browser workflow, history export and advanced filters,
-brand-profile management, analytics, calendar, campaign workflows, media
-generation/private file delivery, account export/deletion, and admin operations
-still need to be ported and tested. Instagram publishing is intentionally excluded from the
+brand-profile management, analytics, calendar UI, media generation/private file
+delivery, account export/deletion, and admin operations still need to be ported
+and tested. Campaign API endpoints still require full browser integration and tests. Instagram publishing is intentionally excluded from the
 first release because the current product roadmap marks it inactive.
 
 ## Local checks
