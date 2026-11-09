@@ -71,3 +71,4 @@ require_once __DIR__ . '/http.php';
 require_once __DIR__ . '/security.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/content_generation.php';
+require_once __DIR__ . '/history.php';
