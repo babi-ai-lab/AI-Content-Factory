@@ -23,8 +23,28 @@ function json_body(int $maxBytes = 16384): array
         json_response(['ok' => false, 'error' => ['code' => 'BODY_TOO_LARGE', 'message' => 'حجم درخواست بیش از حد مجاز است.']], 413);
     }
 
-    $raw = file_get_contents('php://input');
-    if (!is_string($raw) || $raw === '') {
+    $stream = fopen('php://input', 'rb');
+    if ($stream === false) {
+        json_response(['ok' => false, 'error' => ['code' => 'INVALID_BODY', 'message' => 'خواندن درخواست ناموفق بود.']], 400);
+    }
+
+    $raw = '';
+    while (!feof($stream)) {
+        $chunk = fread($stream, min(4096, $maxBytes + 1 - strlen($raw)));
+        if ($chunk === false) {
+            fclose($stream);
+            json_response(['ok' => false, 'error' => ['code' => 'INVALID_BODY', 'message' => 'خواندن درخواست ناموفق بود.']], 400);
+        }
+        $raw .= $chunk;
+        if (strlen($raw) > $maxBytes) {
+            fclose($stream);
+            json_response(['ok' => false, 'error' => ['code' => 'BODY_TOO_LARGE', 'message' => 'حجم درخواست بیش از حد مجاز است.']], 413);
+        }
+        if ($chunk === '') break;
+    }
+    fclose($stream);
+
+    if ($raw === '') {
         return [];
     }
 
