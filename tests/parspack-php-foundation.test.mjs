@@ -105,6 +105,9 @@ test("Persian workspace UI is connected to the local generation and history APIs
   assert.match(page, /id="history-items"/);
   assert.match(script, /\/api\/generate/);
   assert.match(script, /\/api\/history/);
+  assert.match(page, /id="image-form"/);
+  assert.match(script, /\/api\/media\/generate/);
+  assert.match(script, /\/api\/media/);
   assert.match(script, /\/api\/auth\/ai-data-notice\/accept/);
 });
 
