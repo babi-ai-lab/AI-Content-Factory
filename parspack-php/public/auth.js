@@ -73,7 +73,7 @@
   });
   $("logout-button").addEventListener("click", async () => {
     try {
-      await request("/api/auth/logout", {}); workspace.classList.add("hidden"); card.classList.remove("hidden"); showMode("login");
+      await request("/api/auth/logout", {}); location.reload();
     } catch (error) { notify(error.message, true); }
   });
   const resetToken = new URLSearchParams(location.search).get("reset_token");
