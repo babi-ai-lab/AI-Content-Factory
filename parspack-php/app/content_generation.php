@@ -247,6 +247,10 @@ function handle_content_generation(): never
         json_response(['ok' => false, 'error' => ['code' => 'AI_PROVIDER_NOT_CONFIGURED', 'message' => 'سرویس تولید محتوا هنوز برای این محیط پیکربندی نشده است.']], 503);
     }
 
+    if (!filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN) || !extension_loaded('openssl')) {
+        json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. افزونه OpenSSL یا روش HTTPS خروجی باید در cPanel فعال شود.']], 503);
+    }
+
     $rate = consume_generation_request($userId);
     if (!$rate['allowed']) {
         header('Retry-After: ' . $rate['retryAfter']);
