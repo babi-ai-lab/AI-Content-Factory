@@ -85,7 +85,43 @@ if ($path === '/' && $method === 'GET') {
       <div class="workspace-head"><div><p class="eyebrow">WORKSPACE</p><h2>حساب کاربری فعال است</h2></div><button id="logout-button" class="secondary" type="button">خروج</button></div>
       <p id="welcome-message" class="muted"></p>
       <div id="ai-consent" class="notice hidden"><strong>اطلاعیه پردازش داده هوش مصنوعی</strong><p>اطلاعات کسب‌وکار و درخواست تولید محتوا برای پردازش به ارائه‌دهنده هوش مصنوعی پیکربندی‌شده ارسال می‌شود. اطلاعات ورود و رمز عبور ارسال نمی‌شوند. با انتخاب دکمه زیر، این موضوع را می‌پذیری.</p><button id="accept-ai-notice" class="primary" type="button">مطالعه کردم و می‌پذیرم</button></div>
-      <div class="notice"><strong>زیرساخت PHP در حال انتقال است.</strong><p>ورود و مدیریت حساب در این مرحله آماده‌سازی شده‌اند. ماژول‌های تولید محتوا، تاریخچه، کمپین و رسانه پس از انتقال و آزمون به این پنل متصل می‌شوند.</p></div>
+      <div id="app-modules" class="hidden">
+        <section class="module-card">
+          <h2>تولید محتوای جدید</h2>
+          <p class="muted">اطلاعات واقعی کسب‌وکار را وارد کن؛ خروجی پس از تولید در کتابخانه ذخیره می‌شود.</p>
+          <form id="generate-form" class="generator-form">
+            <div class="form-grid">
+              <div><label for="business-name">نام کسب‌وکار</label><input id="business-name" name="businessName" maxlength="120"></div>
+              <div><label for="business-type">حوزه فعالیت</label><select id="business-type" name="businessType"><option value="retail">فروشگاه و خرده‌فروشی</option><option value="services">خدمات</option><option value="restaurant">رستوران و کافه</option><option value="real_estate">املاک</option><option value="construction">ساختمان و بازسازی</option><option value="education">آموزش</option><option value="fitness">ورزش و تناسب اندام</option><option value="personal_brand">برند شخصی</option><option value="other">سایر</option></select></div>
+              <div><label for="content-channel">کانال انتشار</label><select id="content-channel" name="channel"><option value="general">عمومی</option><option value="instagram">اینستاگرام</option><option value="telegram">تلگرام</option><option value="bale">بله</option><option value="sms">پیامک</option><option value="website">وب‌سایت</option><option value="email">ایمیل</option><option value="linkedin">لینکدین</option><option value="youtube">یوتیوب</option></select></div>
+              <div><label for="content-template">الگوی محتوا</label><select id="content-template" name="contentTemplate"><option value="balanced">متعادل</option><option value="educational">آموزشی</option><option value="product_launch">معرفی محصول یا خدمت</option><option value="customer_story">داستان مشتری</option><option value="faq">پرسش‌های متداول</option><option value="limited_offer">پیشنهاد ویژه</option><option value="lead_generation">جذب سرنخ</option><option value="brand_awareness">آگاهی از برند</option><option value="before_after">قبل و بعد</option><option value="problem_solution">مسئله و راه‌حل</option></select></div>
+              <div><label for="item-name">نام محصول یا خدمت</label><input id="item-name" name="name" maxlength="120" required></div>
+              <div><label for="item-price">قیمت (اختیاری)</label><input id="item-price" name="price" maxlength="100"></div>
+              <div><label for="item-audience">مخاطب هدف</label><input id="item-audience" name="audience" maxlength="160"></div>
+              <div><label for="item-goal">هدف محتوا</label><input id="item-goal" name="goal" maxlength="100" placeholder="مثلاً افزایش تماس"></div>
+              <div><label for="item-tone">لحن</label><input id="item-tone" name="tone" maxlength="100" placeholder="مثلاً حرفه‌ای و صمیمی"></div>
+            </div>
+            <label for="item-features">توضیحات و ویژگی‌های واقعی</label><textarea id="item-features" name="features" rows="4" maxlength="1800" required></textarea>
+            <label for="item-differentiators">مزیت‌های واقعی (اختیاری)</label><textarea id="item-differentiators" name="differentiators" rows="2" maxlength="220"></textarea>
+            <label for="item-service-area">محدوده فعالیت (اختیاری)</label><input id="item-service-area" name="serviceArea" maxlength="160">
+            <label for="item-offer">پیشنهاد ثبت‌شده (اختیاری)</label><input id="item-offer" name="offer" maxlength="180">
+            <label for="item-additional">اطلاعات تکمیلی (اختیاری)</label><textarea id="item-additional" name="additionalInfo" rows="2" maxlength="1000"></textarea>
+            <button class="primary" type="submit">تولید محتوای هوشمند</button>
+          </form>
+          <div id="generation-message" class="message" role="status" aria-live="polite"></div>
+          <div id="generated-output" class="output-grid hidden">
+            <article class="output-card"><div class="output-head"><h3>کپشن / متن اصلی</h3><button data-copy="caption" type="button" class="copy-button">کپی</button></div><pre id="output-caption"></pre></article>
+            <article class="output-card"><div class="output-head"><h3>سناریوی ویدیو</h3><button data-copy="reel" type="button" class="copy-button">کپی</button></div><pre id="output-reel"></pre></article>
+            <article class="output-card"><div class="output-head"><h3>پنج استوری</h3><button data-copy="stories" type="button" class="copy-button">کپی</button></div><pre id="output-stories"></pre></article>
+            <article class="output-card"><div class="output-head"><h3>متن تبلیغاتی</h3><button data-copy="ad" type="button" class="copy-button">کپی</button></div><pre id="output-ad"></pre></article>
+          </div>
+        </section>
+        <section class="module-card">
+          <div class="section-head"><div><h2>کتابخانه محتوا</h2><p class="muted">محتواهای ذخیره‌شده در حساب کاربری</p></div><input id="history-search" class="search-input" type="search" placeholder="جست‌وجو در تاریخچه"></div>
+          <div id="history-items" class="history-list"></div>
+          <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
+        </section>
+      </div>
     </section>
     <footer>© AI Content Factory · ELTBabak</footer>
   </main>
