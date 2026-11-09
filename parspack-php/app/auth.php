@@ -8,6 +8,12 @@ function auth_route(string $path, string $method): bool
     }
 
     if ($path === '/api/auth/verify' && $method === 'GET') {
+        auth_verify_email_preview();
+        return true;
+    }
+
+    if ($path === '/api/auth/verify' && $method === 'POST') {
+        require_csrf();
         auth_verify_email();
         return true;
     }
@@ -141,9 +147,25 @@ function auth_register(): never
     }
 }
 
-function auth_verify_email(): never
+function auth_verify_email_preview(): never
 {
     $token = trim((string)($_GET['token'] ?? ''));
+    if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+        http_response_code(400);
+        echo 'پیوند تأیید معتبر نیست.';
+        exit;
+    }
+
+    $csrf = htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8');
+    $safeToken = htmlspecialchars($token, ENT_QUOTES, 'UTF-8');
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8"><title>تأیید ایمیل</title><body><main><h1>تأیید آدرس ایمیل</h1><p>برای فعال‌سازی حساب، دکمه زیر را انتخاب کن.</p><form method="post" action="/api/auth/verify"><input type="hidden" name="_csrf" value="' . $csrf . '"><input type="hidden" name="token" value="' . $safeToken . '"><button type="submit">تأیید ایمیل</button></form></main></body></html>';
+    exit;
+}
+
+function auth_verify_email(): never
+{
+    $token = trim((string)($_POST['token'] ?? ''));
     if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
         http_response_code(400);
         echo 'پیوند تأیید معتبر نیست.';
