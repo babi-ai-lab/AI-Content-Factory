@@ -76,6 +76,7 @@ if ($path === '/' && $method === 'GET') {
     <section id="workspace" class="auth-card hidden">
       <div class="workspace-head"><div><p class="eyebrow">WORKSPACE</p><h2>حساب کاربری فعال است</h2></div><button id="logout-button" class="secondary" type="button">خروج</button></div>
       <p id="welcome-message" class="muted"></p>
+      <div id="ai-consent" class="notice hidden"><strong>اطلاعیه پردازش داده هوش مصنوعی</strong><p>اطلاعات کسب‌وکار و درخواست تولید محتوا برای پردازش به ارائه‌دهنده هوش مصنوعی پیکربندی‌شده ارسال می‌شود. اطلاعات ورود و رمز عبور ارسال نمی‌شوند. با انتخاب دکمه زیر، این موضوع را می‌پذیری.</p><button id="accept-ai-notice" class="primary" type="button">مطالعه کردم و می‌پذیرم</button></div>
       <div class="notice"><strong>زیرساخت PHP در حال انتقال است.</strong><p>ورود و مدیریت حساب در این مرحله آماده‌سازی شده‌اند. ماژول‌های تولید محتوا، تاریخچه، کمپین و رسانه پس از انتقال و آزمون به این پنل متصل می‌شوند.</p></div>
     </section>
     <footer>© AI Content Factory · ELTBabak</footer>
