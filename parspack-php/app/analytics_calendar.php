@@ -168,8 +168,10 @@ function calendar_range(string $userId): never
 
 function ics_escape(string $value): string
 {
-    $value = str_replace(["\\\\", ";", ","], ["\\\\\\\\", "\\;", "\\,"], $value);
-    return str_replace(["\r\n", "\r", "\n"], "\\n", $value);
+    $value = str_replace('\\', '\\\\', $value);
+    $value = str_replace(';', '\\;', $value);
+    $value = str_replace(',', '\\,', $value);
+    return str_replace(["\r\n", "\r", "\n"], '\\n', $value);
 }
 
 function ics_fold_line(string $line): string
@@ -179,7 +181,7 @@ function ics_fold_line(string $line): string
     $chunk = '';
     foreach ($characters as $character) {
         if ($chunk !== '' && strlen($chunk) + strlen($character) > 73) {
-            $result .= $chunk . "\\r\\n ";
+            $result .= $chunk . "\r\n ";
             $chunk = $character;
         } else {
             $chunk .= $character;
