@@ -17,6 +17,9 @@ test("PHP entry point exposes only a minimal health endpoint before feature migr
   assert.match(entry, /\/api\/health/);
   assert.match(entry, /DATABASE_UNAVAILABLE/);
   assert.match(entry, /NOT_FOUND/);
+  const diagnostics = read("../parspack-php/bin/check-hosting.php");
+  assert.match(diagnostics, /Outbound HTTPS transport/);
+  assert.match(diagnostics, /PDO MySQL|pdo_mysql/i);
   assert.doesNotMatch(entry, /password_hash|api_key|secret_key/i);
 });
 
