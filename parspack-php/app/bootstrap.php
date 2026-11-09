@@ -18,10 +18,23 @@ if (!is_file($configFile)) {
 
 $config = require $configFile;
 
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+
 date_default_timezone_set($config['app']['timezone'] ?? 'Asia/Tehran');
 
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
+if ($isHttps) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
 
 session_name((string)($config['session']['name'] ?? 'aicf_session'));
 session_set_cookie_params([
