@@ -18,6 +18,22 @@ if (!is_file($configFile)) {
 
 $config = require $configFile;
 
+set_exception_handler(static function (Throwable $error): void {
+    error_log('[AI Content Factory] Unhandled application error: ' . $error->getMessage());
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store, private');
+    }
+    echo json_encode([
+        'ok' => false,
+        'error' => [
+            'code' => 'INTERNAL_ERROR',
+            'message' => 'خطای داخلی رخ داد. کمی بعد دوباره تلاش کن.',
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+});
+
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 ini_set('session.use_strict_mode', '1');
