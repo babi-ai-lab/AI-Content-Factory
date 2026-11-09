@@ -136,6 +136,11 @@ function media_generate(string $userId): never
         if (!function_exists('curl_init') && (!extension_loaded('openssl') || !filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))) {
             json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. cURL یا OpenSSL باید در cPanel فعال شود.']], 503);
         }
+        $quota = media_reserve_quota($userId);
+        if (!$quota['allowed']) {
+            header('Retry-After: ' . $quota['retryAfter']);
+            json_response(['ok' => false, 'error' => ['code' => 'MEDIA_GENERATION_LIMIT', 'message' => 'سهمیه تولید تصویر این حساب در یک ساعت به پایان رسیده است.']], 429);
+        }
         $url = 'https://api.cloudflare.com/client/v4/accounts/' . rawurlencode($accountId) . '/ai/run/@cf/black-forest-labs/flux-1-schnell';
         $response = media_http_post($url, [
             'Content-Type: application/json',
@@ -161,6 +166,11 @@ function media_generate(string $userId): never
         }
         if (!function_exists('curl_init') && (!extension_loaded('openssl') || !filter_var(ini_get('allow_url_fopen'), FILTER_VALIDATE_BOOLEAN))) {
             json_response(['ok' => false, 'error' => ['code' => 'OUTBOUND_HTTPS_UNAVAILABLE', 'message' => 'ارتباط امن خروجی از هاست فعال نیست. cURL یا OpenSSL باید در cPanel فعال شود.']], 503);
+        }
+        $quota = media_reserve_quota($userId);
+        if (!$quota['allowed']) {
+            header('Retry-After: ' . $quota['retryAfter']);
+            json_response(['ok' => false, 'error' => ['code' => 'MEDIA_GENERATION_LIMIT', 'message' => 'سهمیه تولید تصویر این حساب در یک ساعت به پایان رسیده است.']], 429);
         }
         $url = 'https://generativelanguage.googleapis.com/v1/models/gemini-3.1-flash-image:generateContent';
         $response = media_http_post($url, [
@@ -201,7 +211,7 @@ function media_generate(string $userId): never
         json_response(['ok' => false, 'error' => ['code' => 'IMAGE_RESPONSE_INVALID', 'message' => 'تصویر قابل ذخیره‌ای از سرویس دریافت نشد.']], 502);
     }
 
-    $binary = base64_decode($encoded, true);
+    $binary = base64_decode($imageBase64, true);
     if (!is_string($binary) || $binary === '' || strlen($binary) > AICF_IMAGE_MAX_BYTES) {
         json_response(['ok' => false, 'error' => ['code' => 'IMAGE_SIZE_INVALID', 'message' => 'حجم یا داده تصویر معتبر نیست.']], 502);
     }
