@@ -36,6 +36,7 @@ The first migration slices establish:
   storage, per-user hourly quota, MIME/size validation and authenticated media delivery;
 - brand profile CRUD, default profile selection, a ten-profile cap and server-side
   profile loading during text generation;
+- user data export and password-confirmed account deletion with local media cleanup;
 - a CLI hosting diagnostics script that reports capabilities without exposing secrets.
 
 The migration is still incomplete and not production-ready. The authentication
