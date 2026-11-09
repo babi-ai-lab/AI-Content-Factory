@@ -138,8 +138,8 @@ function media_generate(string $userId): never
     }
 
     $dimensions = [
-        '1:1' => [1024, 1024], '4:5' => [896, 1120], '9:16' => [768, 1365],
-        '16:9' => [1365, 768], '3:2' => [1200, 800], '2:3' => [800, 1200],
+        '1:1' => [1024, 1024], '4:5' => [832, 1024], '9:16' => [576, 1024],
+        '16:9' => [1024, 576], '3:2' => [1024, 672], '2:3' => [672, 1024],
     ];
     [$width, $height] = $dimensions[$ratio];
     $url = 'https://api.cloudflare.com/client/v4/accounts/' . rawurlencode($accountId) . '/ai/run/@cf/black-forest-labs/flux-1-schnell';
