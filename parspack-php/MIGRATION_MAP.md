@@ -65,8 +65,9 @@ unless the hosting plan or inference architecture changes.
    ten-profile cap and server-side loading for generation are drafted; verified-fact
    safeguards, quality checks and parity tests against existing fixtures remain.
 5. **Campaigns and calendar (in progress):** campaign CRUD, content linking,
-   checklist stages, manual metrics, analytics aggregation and scheduled-content
-   range query endpoints are drafted; Jalali calendar UI and ICS export remain.
+   checklist stages, manual metrics, analytics aggregation, a basic campaign dashboard,
+   scheduled-content range API and a simple Persian analytics panel are drafted;
+   full metrics editing, calendar editing and ICS export remain.
 6. **Media (in progress):** Cloudflare image-generation adapter, private local
    storage, MIME/size validation, per-user hourly quota, authenticated delivery and
    delete/list endpoints are drafted; upload support, cleanup jobs and cPanel tests remain.
