@@ -70,8 +70,10 @@ unless the hosting plan or inference architecture changes.
 6. **Media (in progress):** Cloudflare image-generation adapter, private local
    storage, MIME/size validation, per-user hourly quota, authenticated delivery and
    delete/list endpoints are drafted; upload support, cleanup jobs and cPanel tests remain.
-7. **Release hardening:** browser tests, accessibility, rate limiting, backups,
-   restore drill, security review, load test and cutover package.
+7. **Account lifecycle and release hardening (in progress):** JSON account export,
+   password-confirmed deletion and private media cleanup are drafted; end-to-end
+   browser tests, accessibility, backups, restore drill, security review, load test
+   and cutover package remain.
 
 ## Cutover safety
 
