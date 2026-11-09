@@ -163,6 +163,7 @@ if ($path === '/' && $method === 'GET') {
         <section class="module-card">
           <h2>تقویم محتوای ۳۰ روز آینده</h2>
           <p class="muted">محتواهایی که زمان انتشار برای آن‌ها تعیین کرده‌ای.</p>
+          <button id="calendar-export" class="secondary" type="button">خروجی تقویم (ICS)</button>
           <div id="calendar-items" class="history-list"></div>
         </section>
         <section class="module-card">
