@@ -125,7 +125,7 @@ function media_generate(string $userId): never
     $provider = strtolower(trim((string)($GLOBALS['config']['ai']['image_provider'] ?? 'cloudflare')));
     $imageBase64 = '';
     $mime = '';
-    $safePrompt = "Create an original, high-quality marketing visual. Follow the user's scene description while avoiding logos, watermarks, fake text, fabricated certifications, misleading before-and-after claims, or identifiable real people. Do not add written text unless the user explicitly requests it. Prompt: " . $prompt;
+    $safePrompt = "Create an original, high-quality marketing visual. Follow the user's scene description while avoiding logos, watermarks, fake text, fabricated certifications, misleading before-and-after claims. Do not add written text unless the user explicitly requests it. Prompt: " . $prompt;
 
     if ($provider === 'cloudflare') {
         $accountId = trim((string)($GLOBALS['config']['ai']['image_account_id'] ?? ''));
