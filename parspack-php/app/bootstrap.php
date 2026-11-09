@@ -39,3 +39,5 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/http.php';
+require_once __DIR__ . '/security.php';
+require_once __DIR__ . '/auth.php';
