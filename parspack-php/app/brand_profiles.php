@@ -84,26 +84,41 @@ function brand_profile_create(string $userId): never
     $valid = brand_profile_validate($body);
     if ($valid === null) json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_INVALID', 'message' => 'اطلاعات پروفایل برند معتبر نیست.']], 422);
 
-    $count = db()->prepare('SELECT COUNT(*) FROM brand_profiles WHERE user_id = :user_id');
-    $count->execute(['user_id' => $userId]);
-    $profileCount = (int)$count->fetchColumn();
-    if ($profileCount >= 10) {
-        json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_LIMIT', 'message' => 'حداکثر ۱۰ پروفایل برند می‌توانی داشته باشی.']], 409);
-    }
+    try {
+        db()->beginTransaction();
+        $owner = db()->prepare('SELECT id FROM users WHERE id = :user_id LIMIT 1 FOR UPDATE');
+        $owner->execute(['user_id' => $userId]);
+        if (!$owner->fetch()) {
+            db()->rollBack();
+            json_response(['ok' => false, 'error' => ['code' => 'AUTH_REQUIRED', 'message' => 'حساب کاربری معتبر نیست.']], 401);
+        }
 
-    $id = uuid_v4();
-    $default = $profileCount === 0 ? 1 : 0;
-    $insert = db()->prepare(
-        'INSERT INTO brand_profiles (id, user_id, name, business_type, profile_data, is_default, created_at, updated_at)
-         VALUES (:id, :user_id, :name, :business_type, :profile_data, :is_default, UTC_TIMESTAMP(), UTC_TIMESTAMP())'
-    );
-    $insert->execute([
-        'id' => $id, 'user_id' => $userId, 'name' => $valid['name'],
-        'business_type' => $valid['businessType'],
-        'profile_data' => json_encode($valid['profile'], JSON_UNESCAPED_UNICODE),
-        'is_default' => $default,
-    ]);
-    json_response(['ok' => true, 'id' => $id, 'is_default' => (bool)$default], 201);
+        $count = db()->prepare('SELECT COUNT(*) FROM brand_profiles WHERE user_id = :user_id');
+        $count->execute(['user_id' => $userId]);
+        $profileCount = (int)$count->fetchColumn();
+        if ($profileCount >= 10) {
+            db()->rollBack();
+            json_response(['ok' => false, 'error' => ['code' => 'BRAND_PROFILE_LIMIT', 'message' => 'حداکثر ۱۰ پروفایل برند می‌توانی داشته باشی.']], 409);
+        }
+
+        $id = uuid_v4();
+        $default = $profileCount === 0 ? 1 : 0;
+        $insert = db()->prepare(
+            'INSERT INTO brand_profiles (id, user_id, name, business_type, profile_data, is_default, created_at, updated_at)
+             VALUES (:id, :user_id, :name, :business_type, :profile_data, :is_default, UTC_TIMESTAMP(), UTC_TIMESTAMP())'
+        );
+        $insert->execute([
+            'id' => $id, 'user_id' => $userId, 'name' => $valid['name'],
+            'business_type' => $valid['businessType'],
+            'profile_data' => json_encode($valid['profile'], JSON_UNESCAPED_UNICODE),
+            'is_default' => $default,
+        ]);
+        db()->commit();
+        json_response(['ok' => true, 'id' => $id, 'is_default' => (bool)$default], 201);
+    } catch (Throwable $error) {
+        if (db()->inTransaction()) db()->rollBack();
+        throw $error;
+    }
 }
 
 function brand_profile_update(string $userId, string $id): never
