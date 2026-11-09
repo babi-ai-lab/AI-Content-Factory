@@ -108,6 +108,8 @@ test("Persian workspace UI is connected to the local generation and history APIs
   assert.match(page, /id="image-form"/);
   assert.match(script, /\/api\/media\/generate/);
   assert.match(script, /\/api\/media/);
+  assert.match(page, /id="brand-form"/);
+  assert.match(script, /\/api\/brands/);
   assert.match(script, /\/api\/auth\/ai-data-notice\/accept/);
 });
 
@@ -118,4 +120,14 @@ test("generated media is private, owner-scoped and constrained by MIME and size"
   assert.match(media, /WHERE id = :id AND user_id = :user_id/);
   assert.match(media, /generated-media/);
   assert.match(media, /media_generation_allowance/);
+});
+
+test("brand profile API enforces per-user ownership and a ten-profile cap", () => {
+  const profiles = read("../parspack-php/app/brand_profiles.php");
+  const generator = read("../parspack-php/app/content_generation.php");
+  assert.match(profiles, /BRAND_PROFILE_LIMIT/);
+  assert.match(profiles, />= 10/);
+  assert.match(profiles, /WHERE id = :id AND user_id = :user_id/);
+  assert.match(generator, /brandProfileId/);
+  assert.match(generator, /brand_profiles WHERE id = :id AND user_id = :user_id/);
 });
