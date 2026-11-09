@@ -34,7 +34,7 @@ first release because the current product roadmap marks it inactive.
 Run PHP syntax checks from this directory:
 
 ```sh
-find app public -name '*.php' -print0 | xargs -0 -n1 php -l
+find app public bin -name '*.php' -print0 | xargs -0 -n1 php -l
 php -l config.example.php
 ```
 
