@@ -18,6 +18,14 @@ function auth_route(string $path, string $method): bool
         return true;
     }
 
+    if ($path === '/api/auth/ai-data-notice/accept' && $method === 'POST') {
+        require_csrf();
+        $userId = require_user_id();
+        $stmt = db()->prepare('UPDATE users SET ai_data_notice_accepted_at = UTC_TIMESTAMP() WHERE id = :id');
+        $stmt->execute(['id' => $userId]);
+        json_response(['ok' => true, 'acceptedAt' => gmdate('c')]);
+    }
+
     if ($path === '/api/auth/me' && $method === 'GET') {
         $userId = require_user_id();
         $stmt = db()->prepare('SELECT id, email, display_name, email_verified_at, created_at FROM users WHERE id = :id LIMIT 1');
