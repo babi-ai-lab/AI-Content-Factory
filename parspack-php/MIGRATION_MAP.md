@@ -61,8 +61,9 @@ unless the hosting plan or inference architecture changes.
    business prompts, output validation, consent gate and per-user rate limit are drafted.
    User-scoped history CRUD, cursor pagination, search, version snapshots and restore
    endpoints are drafted; review workflow, advanced filters, export and UI integration remain.
-4. **Brand and quality:** profile CRUD, verified facts, FAQ, forbidden claims,
-   quality checks and parity tests against existing fixtures.
+4. **Brand and quality (in progress):** brand profile CRUD, default selection,
+   ten-profile cap and server-side loading for generation are drafted; verified-fact
+   safeguards, quality checks and parity tests against existing fixtures remain.
 5. **Campaigns and calendar (in progress):** campaign CRUD, content linking,
    checklist stages, manual metrics, analytics aggregation and scheduled-content
    range query endpoints are drafted; Jalali calendar UI and ICS export remain.
