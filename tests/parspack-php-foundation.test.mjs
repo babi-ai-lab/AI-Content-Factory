@@ -157,5 +157,6 @@ test("calendar ICS export is authenticated and escapes user content", () => {
   assert.match(calendar, /calendar_export_ics/);
   assert.match(calendar, /Content-Type: text\/calendar/);
   assert.match(calendar, /ics_escape/);
+  assert.match(calendar, /ics_fold_line/);
   assert.match(calendar, /WHERE user_id = :user_id/);
 });
