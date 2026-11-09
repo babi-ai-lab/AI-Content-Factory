@@ -66,8 +66,9 @@ unless the hosting plan or inference architecture changes.
 5. **Campaigns and calendar (in progress):** campaign CRUD, content linking,
    checklist stages, manual metrics, analytics aggregation and scheduled-content
    range query endpoints are drafted; Jalali calendar UI and ICS export remain.
-6. **Media:** private local storage, upload/download/delete, signed or
-   session-authorized delivery, image generation, quota and cleanup.
+6. **Media (in progress):** Cloudflare image-generation adapter, private local
+   storage, MIME/size validation, per-user hourly quota, authenticated delivery and
+   delete/list endpoints are drafted; upload support, cleanup jobs and cPanel tests remain.
 7. **Release hardening:** browser tests, accessibility, rate limiting, backups,
    restore drill, security review, load test and cutover package.
 
