@@ -103,6 +103,7 @@ if ($path === '/' && $method === 'GET') {
           <p class="muted">اطلاعات واقعی کسب‌وکار را وارد کن؛ خروجی پس از تولید در کتابخانه ذخیره می‌شود.</p>
           <form id="generate-form" class="generator-form">
             <div class="form-grid">
+              <div><label for="brand-profile-id">پروفایل برند ذخیره‌شده</label><select id="brand-profile-id" name="brandProfileId"><option value="">بدون پروفایل</option></select></div>
               <div><label for="business-name">نام کسب‌وکار</label><input id="business-name" name="businessName" maxlength="120"></div>
               <div><label for="business-type">حوزه فعالیت</label><select id="business-type" name="businessType"><option value="retail">فروشگاه و خرده‌فروشی</option><option value="services">خدمات</option><option value="restaurant">رستوران و کافه</option><option value="real_estate">املاک</option><option value="construction">ساختمان و بازسازی</option><option value="education">آموزش</option><option value="fitness">ورزش و تناسب اندام</option><option value="personal_brand">برند شخصی</option><option value="other">سایر</option></select></div>
               <div><label for="content-channel">کانال انتشار</label><select id="content-channel" name="channel"><option value="general">عمومی</option><option value="instagram">اینستاگرام</option><option value="telegram">تلگرام</option><option value="bale">بله</option><option value="sms">پیامک</option><option value="website">وب‌سایت</option><option value="email">ایمیل</option><option value="linkedin">لینکدین</option><option value="youtube">یوتیوب</option></select></div>
@@ -132,6 +133,30 @@ if ($path === '/' && $method === 'GET') {
           <div class="section-head"><div><h2>کتابخانه محتوا</h2><p class="muted">محتواهای ذخیره‌شده در حساب کاربری</p></div><input id="history-search" class="search-input" type="search" placeholder="جست‌وجو در تاریخچه"></div>
           <div id="history-items" class="history-list"></div>
           <button id="history-more" class="secondary hidden" type="button">نمایش موارد بیشتر</button>
+        </section>
+        <section class="module-card">
+          <h2>پروفایل‌های برند</h2>
+          <p class="muted">اطلاعات تأییدشده برند را یک‌بار ذخیره کن تا در تولیدهای بعدی استفاده شود. حداکثر ۱۰ پروفایل.</p>
+          <form id="brand-form" class="generator-form">
+            <div class="form-grid">
+              <div><label for="brand-name">نام برند</label><input id="brand-name" name="brandName" maxlength="120" required></div>
+              <div><label for="brand-type">حوزه فعالیت</label><select id="brand-type" name="businessType"><option value="retail">فروشگاه</option><option value="services">خدمات</option><option value="restaurant">رستوران و کافه</option><option value="real_estate">املاک</option><option value="construction">ساختمان و بازسازی</option><option value="education">آموزش</option><option value="fitness">ورزش</option><option value="personal_brand">برند شخصی</option><option value="other">سایر</option></select></div>
+              <div><label for="brand-tagline">شعار برند</label><input id="brand-tagline" name="tagline" maxlength="160"></div>
+              <div><label for="brand-audience">مخاطب اصلی</label><input id="brand-audience" name="audience" maxlength="200"></div>
+              <div><label for="brand-value">ارزش پیشنهادی</label><input id="brand-value" name="valueProposition" maxlength="320"></div>
+              <div><label for="brand-voice">لحن برند</label><input id="brand-voice" name="voice" maxlength="120"></div>
+              <div><label for="brand-terms">واژگان ترجیحی</label><input id="brand-terms" name="preferredTerms" maxlength="300"></div>
+              <div><label for="brand-avoid">واژگان ممنوع</label><input id="brand-avoid" name="avoidTerms" maxlength="300"></div>
+              <div><label for="brand-cta">دعوت به اقدام ترجیحی</label><input id="brand-cta" name="cta" maxlength="180"></div>
+            </div>
+            <label for="brand-facts">واقعیت‌های تأییدشده</label><textarea id="brand-facts" name="verifiedFacts" rows="3" maxlength="2000"></textarea>
+            <label for="brand-proof">شواهد و نمونه‌های قابل استناد</label><textarea id="brand-proof" name="proofPoints" rows="2" maxlength="1200"></textarea>
+            <label for="brand-faq">پرسش و پاسخ‌های معتبر</label><textarea id="brand-faq" name="faq" rows="3" maxlength="2000"></textarea>
+            <label for="brand-prohibited">ادعاهای ممنوع</label><textarea id="brand-prohibited" name="prohibitedClaims" rows="2" maxlength="1200"></textarea>
+            <button class="primary" type="submit">ذخیره پروفایل برند</button>
+          </form>
+          <div id="brand-message" class="message" role="status" aria-live="polite"></div>
+          <div id="brand-items" class="history-list"></div>
         </section>
         <section class="module-card">
           <h2>تولید و کتابخانه تصویر</h2>
