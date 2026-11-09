@@ -51,7 +51,7 @@ test("local authentication requires CSRF, verified email and versioned sessions"
   const auth = read("../parspack-php/app/auth.php");
   const bootstrap = read("../parspack-php/app/bootstrap.php");
   assert.match(security, /hash_equals/);
-  assert.match(security, /password_hash/);
+  assert.match(auth, /password_hash/);
   assert.match(security, /session_version/);
   assert.match(auth, /pending_verification/);
   assert.match(auth, /email_verified_at/);
