@@ -24,13 +24,15 @@ The first migration slices establish:
   campaigns, usage events, rate limits and local media metadata;
 - local account API foundations: CSRF tokens, session hardening, registration,
   explicit email verification, login/logout and password-reset token handling;
+- a PHP text-generation endpoint with bounded input, consent gate, per-user quota,
+  Gemini fallback model and response validation;
 - a CLI hosting diagnostics script that reports capabilities without exposing secrets.
 
 The migration is still incomplete and not production-ready. The authentication
 API does not yet have its final browser UI, email-delivery setup must be verified,
-and all content-generation and media endpoints, history editing/search/export,
-analytics, calendar, campaign workflows, private file delivery, quota enforcement,
-and admin operations still need to be ported and tested. Instagram publishing is intentionally excluded from the
+and the content-generation browser workflow, history editing/search/export, brand-profile
+management, analytics, calendar, campaign workflows, media generation/private file
+delivery, account export/deletion, and admin operations still need to be ported and tested. Instagram publishing is intentionally excluded from the
 first release because the current product roadmap marks it inactive.
 
 ## Local checks
