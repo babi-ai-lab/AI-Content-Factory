@@ -83,7 +83,7 @@ if ($path === '/' && $method === 'GET') {
     </section>
     <section id="workspace" class="auth-card hidden">
       <div class="workspace-head"><div><p class="eyebrow">WORKSPACE</p><h2>حساب کاربری فعال است</h2></div><button id="logout-button" class="secondary" type="button">خروج</button></div>
-      <p id="welcome-message" class="muted"></p>
+      <p id="welcome-message" class="muted"></p><div id="workspace-message" class="message" role="status" aria-live="polite"></div>
       <div id="ai-consent" class="notice hidden"><strong>اطلاعیه پردازش داده هوش مصنوعی</strong><p>اطلاعات کسب‌وکار و درخواست تولید محتوا برای پردازش به ارائه‌دهنده هوش مصنوعی پیکربندی‌شده ارسال می‌شود. اطلاعات ورود و رمز عبور ارسال نمی‌شوند. با انتخاب دکمه زیر، این موضوع را می‌پذیری.</p><button id="accept-ai-notice" class="primary" type="button">مطالعه کردم و می‌پذیرم</button></div>
       <div id="app-modules" class="hidden">
         <section class="module-card">
