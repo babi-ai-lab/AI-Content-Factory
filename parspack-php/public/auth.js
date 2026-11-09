@@ -1,6 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const state = { csrf: window.AICF_CSRF || "", generated: null, historyItems: [], cursor: null, hasMore: false };
+  const state = { csrf: window.AICF_CSRF || "", generated: null, historyItems: [], brands: [], cursor: null, hasMore: false };
   const card = $("auth-card"), workspace = $("workspace"), message = $("message");
   const loginForm = $("login-form"), registerForm = $("register-form"), resetForm = $("reset-form");
   const genMessage = $("generation-message"), workMessage = $("workspace-message");
@@ -107,6 +107,7 @@
     renderMedia(result.items || []);
   }
   function renderBrands(profiles) {
+    state.brands = profiles;
     const host = $("brand-items");
     const select = $("brand-profile-id");
     const selected = select.value;
@@ -118,6 +119,8 @@
       select.append(option);
     }
     select.value = profiles.some((item) => item.id === selected) ? selected : (profiles.find((item) => item.is_default)?.id || "");
+    const selectedProfile = profiles.find((item) => item.id === select.value);
+    if (selectedProfile) $("business-type").value = selectedProfile.business_type;
     host.replaceChildren();
     if (!profiles.length) {
       const emptyState = document.createElement("div"); emptyState.className = "history-empty";
@@ -238,6 +241,10 @@
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
+  });
+  $("brand-profile-id").addEventListener("change", () => {
+    const profile = state.brands.find((item) => item.id === $("brand-profile-id").value);
+    if (profile) $("business-type").value = profile.business_type;
   });
   $("brand-form").addEventListener("submit", async (event) => {
     event.preventDefault();
