@@ -80,6 +80,23 @@ function campaign_list(string $userId): never
     );
     $contentStmt->execute(['user_id' => $userId]);
     $content = $contentStmt->fetchAll();
+    $recentIds = array_column($content, 'id');
+    $missingIds = array_values(array_diff(array_unique(array_column($links, 'content_id')), $recentIds));
+
+    if ($missingIds !== []) {
+        $placeholders = [];
+        $params = ['user_id' => $userId];
+        foreach ($missingIds as $index => $missingId) {
+            $key = 'content_' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $missingId;
+        }
+        $linkedSql = 'SELECT id, product, created_at FROM content_history WHERE user_id = :user_id AND id IN (' . implode(',', $placeholders) . ')';
+        $linkedStmt = db()->prepare($linkedSql);
+        $linkedStmt->execute($params);
+        $content = array_merge($content, $linkedStmt->fetchAll());
+    }
+
     foreach ($content as &$item) $item['product'] = json_decode((string)$item['product'], true) ?? [];
     unset($item);
 
