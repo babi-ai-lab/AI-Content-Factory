@@ -74,6 +74,38 @@
     state.hasMore = Boolean(result.hasMore);
     renderHistory();
   }
+  function renderMedia(items) {
+    const host = $("media-items");
+    host.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "history-empty";
+      empty.textContent = "هنوز تصویری تولید نشده است.";
+      host.append(empty);
+      return;
+    }
+    for (const item of items) {
+      const card = document.createElement("article");
+      card.className = "media-card";
+      const image = document.createElement("img");
+      image.src = "/api/media/" + encodeURIComponent(item.id);
+      image.alt = "تصویر تولیدشده";
+      image.loading = "lazy";
+      const footer = document.createElement("div");
+      footer.className = "media-footer";
+      const meta = document.createElement("span");
+      meta.textContent = item.aspect_ratio + " · " + item.created_at;
+      const remove = document.createElement("button");
+      remove.type = "button"; remove.textContent = "حذف"; remove.dataset.mediaDelete = item.id;
+      footer.append(meta, remove);
+      card.append(image, footer);
+      host.append(card);
+    }
+  }
+  async function loadMedia() {
+    const result = await request("/api/media", null, "GET");
+    renderMedia(result.items || []);
+  }
   async function loadWorkspaceUser() {
     const result = await request("/api/auth/me", null, "GET");
     card.classList.add("hidden"); workspace.classList.remove("hidden");
@@ -82,7 +114,7 @@
     $("ai-consent").classList.toggle("hidden", !needsConsent);
     $("app-modules").classList.toggle("hidden", needsConsent);
     if (!needsConsent) {
-      try { await loadHistory(true); }
+      try { await loadHistory(true); await loadMedia(); }
       catch (error) { notify(workMessage, error.message, true); }
     }
   }
@@ -126,7 +158,7 @@
     try {
       await request("/api/auth/ai-data-notice/accept", {});
       $("ai-consent").classList.add("hidden"); $("app-modules").classList.remove("hidden");
-      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true);
+      notify(workMessage, "تأیید پردازش داده ثبت شد."); await loadHistory(true); await loadMedia();
     } catch (error) { notify(workMessage, error.message, true); }
   });
   $("logout-button").addEventListener("click", async () => {
@@ -147,6 +179,27 @@
       } catch (error) { notify(genMessage, "محتوا تولید شد، اما ذخیره نشد: " + error.message, true); }
     } catch (error) { notify(genMessage, error.message, true); }
     finally { submit.disabled = false; }
+  });
+  $("image-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const prompt = $("image-prompt").value.trim();
+    notify($("media-message"), "در حال تولید تصویر...");
+    const submit = $("image-form").querySelector('button[type="submit"]'); submit.disabled = true;
+    try {
+      await request("/api/media/generate", { prompt, aspect_ratio: $("image-ratio").value });
+      notify($("media-message"), "تصویر تولید و در فضای خصوصی ذخیره شد.");
+      $("image-prompt").value = "";
+      await loadMedia();
+    } catch (error) { notify($("media-message"), error.message, true); }
+    finally { submit.disabled = false; }
+  });
+  $("media-items").addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-media-delete]");
+    if (!button || !confirm("این تصویر حذف شود؟")) return;
+    try {
+      await request("/api/media/" + encodeURIComponent(button.dataset.mediaDelete), {}, "DELETE");
+      await loadMedia();
+    } catch (error) { notify($("media-message"), error.message, true); }
   });
   $("generated-output").addEventListener("click", async (event) => {
     const button = event.target.closest("[data-copy]");
