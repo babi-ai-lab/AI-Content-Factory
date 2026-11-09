@@ -480,6 +480,10 @@
       location.reload();
     } catch (error) { notify($("account-message"), error.message, true); }
   });
+  $("calendar-export").addEventListener("click", () => {
+    const params = new URLSearchParams({ start: new Date().toISOString(), end: new Date(Date.now() + 30 * 86400000).toISOString() });
+    location.href = "/api/calendar/ics?" + params.toString();
+  });
   $("analytics-period").addEventListener("change", () => loadAnalytics().catch((error) => notify(workMessage, error.message, true)));
   $("history-search").addEventListener("change", () => loadHistory(true).catch((error) => notify(workMessage, error.message, true)));
   $("history-more").addEventListener("click", () => loadHistory(false).catch((error) => notify(workMessage, error.message, true)));
