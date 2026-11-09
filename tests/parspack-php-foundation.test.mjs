@@ -134,3 +134,14 @@ test("brand profile API enforces per-user ownership and a ten-profile cap", () =
   assert.match(generator, /brandProfileId/);
   assert.match(generator, /brand_profiles WHERE id = :id AND user_id = :user_id/);
 });
+
+test("account export excludes password hashes and deletion requires password confirmation", () => {
+  const account = read("../parspack-php/app/account.php");
+  const page = read("../parspack-php/public/index.php");
+  assert.match(account, /password_verify/);
+  assert.match(account, /confirmation !== 'DELETE'/);
+  assert.match(account, /Content-Disposition: attachment/);
+  assert.doesNotMatch(account, /SELECT .*password_hash.*export/i);
+  assert.match(page, /id="delete-account-form"/);
+  assert.match(page, /\/api\/account\/export/);
+});
