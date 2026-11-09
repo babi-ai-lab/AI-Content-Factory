@@ -10,3 +10,8 @@ android/*.jks
 android/*.keystore
 android/*.p12
 android/signing.properties
+
+# ParsPack PHP private runtime configuration
+parspack-php/config.php
+parspack-php/storage/*
+!parspack-php/storage/.gitkeep
