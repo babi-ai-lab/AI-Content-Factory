@@ -9,7 +9,7 @@ test("ParsPack PHP migration keeps secrets out of the repository", () => {
   const htaccess = read("../parspack-php/.htaccess");
   assert.match(gitignore, /parspack-php\/config\.php/);
   assert.ok(htaccess.includes(String.raw`RewriteRule ^config(\.example)?\.php$ - [F,L,NC]`));
-  assert.ok(htaccess.includes("RewriteRule ^(app|database)/ - [F,L,NC]"));
+  assert.ok(htaccess.includes("RewriteRule ^(app|database|storage)/ - [F,L,NC]"));
 });
 
 test("PHP entry point exposes only a minimal health endpoint before feature migration", () => {
