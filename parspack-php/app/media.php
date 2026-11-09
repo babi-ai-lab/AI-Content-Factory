@@ -101,6 +101,20 @@ function media_generate(string $userId): never
         json_response(['ok' => false, 'error' => ['code' => 'MEDIA_INPUT_INVALID', 'message' => 'توضیحات تصویر یا نسبت ابعاد معتبر نیست.']], 422);
     }
 
+    $historyId = trim((string)($body['content_history_id'] ?? ''));
+    if ($historyId !== '') {
+        if (!preg_match('/^[a-f0-9-]{36}$/i', $historyId)) {
+            json_response(['ok' => false, 'error' => ['code' => 'HISTORY_ID_INVALID', 'message' => 'شناسه محتوای مرتبط معتبر نیست.']], 422);
+        }
+        $check = db()->prepare('SELECT id FROM content_history WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $check->execute(['id' => $historyId, 'user_id' => $userId]);
+        if (!$check->fetch()) {
+            json_response(['ok' => false, 'error' => ['code' => 'HISTORY_NOT_FOUND', 'message' => 'محتوای مرتبط پیدا نشد.']], 404);
+        }
+    } else {
+        $historyId = null;
+    }
+
     $userStmt = db()->prepare('SELECT ai_data_notice_accepted_at FROM users WHERE id = :id LIMIT 1');
     $userStmt->execute(['id' => $userId]);
     $user = $userStmt->fetch();
@@ -175,18 +189,6 @@ function media_generate(string $userId): never
         json_response(['ok' => false, 'error' => ['code' => 'STORAGE_WRITE_FAILED', 'message' => 'ذخیره تصویر انجام نشد.']], 503);
     }
     @chmod($absolute, 0600);
-
-    $historyId = trim((string)($body['content_history_id'] ?? ''));
-    if ($historyId !== '') {
-        $check = db()->prepare('SELECT id FROM content_history WHERE id = :id AND user_id = :user_id LIMIT 1');
-        $check->execute(['id' => $historyId, 'user_id' => $userId]);
-        if (!$check->fetch()) {
-            @unlink($absolute);
-            json_response(['ok' => false, 'error' => ['code' => 'HISTORY_NOT_FOUND', 'message' => 'محتوای مرتبط پیدا نشد.']], 404);
-        }
-    } else {
-        $historyId = null;
-    }
 
     try {
         $insert = db()->prepare(
