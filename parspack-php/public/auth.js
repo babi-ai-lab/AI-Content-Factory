@@ -312,6 +312,18 @@
       } catch (error) { notify(workMessage, error.message, true); }
     }
   });
+  $("delete-account-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!confirm("حذف حساب و تمام داده‌های وابسته دائمی است. مطمئنی؟")) return;
+    notify($("account-message"), "در حال حذف حساب...");
+    try {
+      await request("/api/account/delete", {
+        password: $("delete-password").value,
+        confirmation: $("delete-confirmation").value
+      });
+      location.reload();
+    } catch (error) { notify($("account-message"), error.message, true); }
+  });
   $("history-search").addEventListener("change", () => loadHistory(true).catch((error) => notify(workMessage, error.message, true)));
   $("history-more").addEventListener("click", () => loadHistory(false).catch((error) => notify(workMessage, error.message, true)));
 
