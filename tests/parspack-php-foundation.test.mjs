@@ -44,6 +44,7 @@ test("initial MySQL schema scopes user-owned records with foreign keys", () => {
   assert.match(schema, /email_verification_tokens/);
   assert.match(schema, /auth_rate_limits/);
   assert.match(schema, /session_version/);
+  assert.match(schema, /ai_data_notice_accepted_at/);
 });
 
 test("local authentication requires CSRF, verified email and versioned sessions", () => {
@@ -59,4 +60,14 @@ test("local authentication requires CSRF, verified email and versioned sessions"
   assert.match(auth, /method === 'POST'/);
   assert.match(auth, /session_regenerate_id/);
   assert.match(bootstrap, /session.use_strict_mode/);
+});
+
+test("text generation requires consent, enforces quotas and validates provider output", () => {
+  const generator = read("../parspack-php/app/content_generation.php");
+  const auth = read("../parspack-php/app/auth.php");
+  assert.match(generator, /AI_DATA_PROCESSING_NOTICE_REQUIRED/);
+  assert.match(generator, /consume_generation_request/);
+  assert.match(generator, /OUTBOUND_HTTPS_UNAVAILABLE/);
+  assert.match(generator, /count\(\$stories\) !== 5/);
+  assert.match(auth, /ai-data-notice\/accept/);
 });
