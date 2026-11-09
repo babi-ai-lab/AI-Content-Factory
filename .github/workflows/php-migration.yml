@@ -31,7 +31,7 @@ jobs:
           coverage: none
       - name: Lint PHP source
         run: |
-          find parspack-php/app parspack-php/public -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          find parspack-php/app parspack-php/public parspack-php/bin -type f -name '*.php' -print0 | xargs -0 -n1 php -l
           php -l parspack-php/config.example.php
       - name: Verify migration artifacts
         run: |
