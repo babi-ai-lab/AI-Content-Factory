@@ -31,6 +31,9 @@ date_default_timezone_set($config['app']['timezone'] ?? 'UTC');
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.use_trans_sid', '0');
 session_name($config['app']['session_name'] ?? 'aicf_session');
 session_set_cookie_params([
     'lifetime' => 0,
