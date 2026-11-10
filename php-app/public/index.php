@@ -106,6 +106,19 @@ try {
             $id = (new ContentRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
+        if (preg_match('#^/api/content/([0-9a-f-]{36})/versions$#i', $path, $versionMatch) && $method === 'GET') {
+            $owner = $db->prepare('SELECT 1 FROM content_items WHERE id = :id AND user_id = :user_id');
+            $owner->execute(['id' => $versionMatch[1], 'user_id' => $userId]);
+            if (!$owner->fetchColumn()) Http::json(['error' => 'not_found'], 404);
+            $versions = $db->prepare(
+                'SELECT version_number, content_json, plain_text, change_note, created_at
+                 FROM content_versions WHERE content_id = :content_id AND user_id = :user_id
+                 ORDER BY version_number DESC LIMIT 100'
+            );
+            $versions->execute(['content_id' => $versionMatch[1], 'user_id' => $userId]);
+            Http::json(['items' => $versions->fetchAll()]);
+        }
+
         if (preg_match('#^/api/content/([0-9a-f-]{36})$#i', $path, $match)) {
             $repository = new ContentRepository($db);
             if ($method === 'GET') {
