@@ -28,6 +28,11 @@ try {
     }
 
     if ($path === '/api/auth/login' && $method === 'POST') {
+        $remoteIp = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
+        $limiter = new \\App\\Core\\RateLimiter($db);
+        if (!$limiter->allow('auth-login', $remoteIp, 8, 15)) {
+            Http::json(['error' => 'too_many_attempts'], 429);
+        }
         Request::requireCsrf();
         $input = Request::json();
         $email = is_string($input['email'] ?? null) ? $input['email'] : '';
