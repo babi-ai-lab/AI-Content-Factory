@@ -88,17 +88,30 @@ final class PasswordAuth
             return null;
         }
 
+        $sessionHash = hash('sha256', session_id());
         $statement = $this->db->prepare(
-            "SELECT id, email, display_name FROM users
-             WHERE id = :id AND status = 'active' LIMIT 1"
+            "SELECT u.id, u.email, u.display_name
+             FROM users u
+             INNER JOIN user_sessions s ON s.user_id = u.id
+             WHERE u.id = :id AND u.status = 'active'
+               AND s.id = :session_id AND s.expires_at > UTC_TIMESTAMP()
+             LIMIT 1"
         );
-        $statement->execute(['id' => $userId]);
+        $statement->execute(['id' => $userId, 'session_id' => $sessionHash]);
         $user = $statement->fetch();
 
         if (!is_array($user)) {
             unset($_SESSION['user_id']);
             return null;
         }
+
+        $touch = $this->db->prepare(
+            'UPDATE user_sessions SET last_activity_at = UTC_TIMESTAMP(),
+             expires_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 DAY)
+             WHERE id = :id AND user_id = :user_id'
+        );
+        $touch->execute(['id' => $sessionHash, 'user_id' => $userId]);
+
         return $user;
     }
 
