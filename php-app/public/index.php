@@ -76,6 +76,20 @@ try {
             }
         }
 
+        if ($path === '/api/campaigns' && $method === 'GET') {
+            Http::json(['items' => (new \\App\\Campaigns\\CampaignRepository($db))->list($userId)]);
+        }
+        if ($path === '/api/campaigns' && $method === 'POST') {
+            Request::requireCsrf();
+            $id = (new \\App\\Campaigns\\CampaignRepository($db))->create($userId, Request::json());
+            Http::json(['id' => $id], 201);
+        }
+        if (preg_match('#^/api/campaigns/([0-9a-f-]{36})$#i', $path, $match) && $method === 'DELETE') {
+            Request::requireCsrf();
+            if (!(new \\App\\Campaigns\\CampaignRepository($db))->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
+            Http::json(['ok' => true]);
+        }
+
         if ($path === '/api/content' && $method === 'GET') {
             $limit = min(100, max(1, (int) ($_GET['limit'] ?? 25)));
             $offset = min(10000, max(0, (int) ($_GET['offset'] ?? 0)));
