@@ -23,6 +23,7 @@ Base URL: همان origin اپلیکیشن، مثلاً `https://app.eltbabak.ir
 - `GET /api/content?limit=25&offset=0&type=...`
 - `POST /api/content` — `content_type` و `content` لازم؛ اختیاری: `title`، `brand_id`، `prompt`، `plain_text`.
 - `GET /api/content/{uuid}`
+- `GET /api/content/{uuid}/versions` — تاریخچه نسخه‌ها، فقط برای مالک محتوا.
 - `PATCH /api/content/{uuid}` — ویرایش محتوا یک نسخه جدید ثبت می‌کند.
 - `DELETE /api/content/{uuid}` — حذف نرم.
 
@@ -32,6 +33,7 @@ Base URL: همان origin اپلیکیشن، مثلاً `https://app.eltbabak.ir
 - `DELETE /api/campaigns/{uuid}`
 
 ## امنیت و محدودیت
+- ورود: حداکثر ۸ تلاش از یک IP در بازه ۱۵ دقیقه‌ای، با شمارنده اتمیک MySQL.
 - تمام مسیرهای داده به نشست فعال و رکورد معتبر در `user_sessions` نیاز دارند.
 - همه عملیات تغییردهنده داده به CSRF نیاز دارند.
 - ورودی JSON تا یک مگابایت محدود شده است.
