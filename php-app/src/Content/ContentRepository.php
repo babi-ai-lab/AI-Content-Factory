@@ -108,7 +108,16 @@ final class ContentRepository
 
         $this->db->beginTransaction();
         try {
-            $lock = $this->db->prepare('SELECT COALESCE(MAX(version_number), 0) FROM content_versions WHERE content_id = :id FOR UPDATE');
+            // Lock the parent row so concurrent edits serialize before version allocation.
+            $parentLock = $this->db->prepare(
+                'SELECT id FROM content_items WHERE id = :id AND user_id = :user_id AND deleted_at IS NULL FOR UPDATE'
+            );
+            $parentLock->execute(['id' => $id, 'user_id' => $userId]);
+            if (!$parentLock->fetchColumn()) {
+                $this->db->rollBack();
+                return false;
+            }
+            $lock = $this->db->prepare('SELECT COALESCE(MAX(version_number), 0) FROM content_versions WHERE content_id = :id');
             $lock->execute(['id' => $id]);
             $next = (int) $lock->fetchColumn() + 1;
             $json = json_encode($content, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
