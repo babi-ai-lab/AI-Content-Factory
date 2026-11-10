@@ -1,0 +1,27 @@
+name: PHP migration checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [parspack-php-migration]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+      - name: Lint PHP source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find php-app -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file"
+          done
+      - name: Verify required extensions
+        run: php -r 'foreach (["PDO","pdo_mysql","mbstring","fileinfo","openssl","curl"] as $ext) { if (!extension_loaded($ext)) { fwrite(STDERR, "Missing extension: $ext\n"); exit(1); } }'
