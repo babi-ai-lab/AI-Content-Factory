@@ -24,6 +24,12 @@ final class CampaignRepository
     {
         $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
         if ($name === '' || mb_strlen($name) > 200) throw new \InvalidArgumentException('campaign_name_invalid');
+        $startsOn = self::dateOrNull($data['starts_on'] ?? null);
+        $endsOn = self::dateOrNull($data['ends_on'] ?? null);
+        if ($startsOn !== null && $endsOn !== null && $endsOn < $startsOn) {
+            throw new \InvalidArgumentException('campaign_end_before_start');
+        }
+
         $id = self::uuid();
         $stmt = $this->db->prepare(
             'INSERT INTO campaigns (id, user_id, name, objective, audience, channels_json, checklist_json, starts_on, ends_on)
@@ -35,8 +41,8 @@ final class CampaignRepository
             'audience' => isset($data['audience']) && is_string($data['audience']) ? mb_substr($data['audience'],0,10000) : null,
             'channels' => self::jsonOrNull($data['channels'] ?? null),
             'checklist' => self::jsonOrNull($data['checklist'] ?? null),
-            'starts_on' => self::dateOrNull($data['starts_on'] ?? null),
-            'ends_on' => self::dateOrNull($data['ends_on'] ?? null),
+            'starts_on' => $startsOn,
+            'ends_on' => $endsOn,
         ]);
         return $id;
     }
