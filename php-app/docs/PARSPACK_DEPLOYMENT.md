@@ -20,8 +20,9 @@
 | `php-app/public/brands.html` | `/home/h369356/public_html/app/brands.html` |
 | `php-app/public/campaigns.html` | `/home/h369356/public_html/app/campaigns.html` |
 | `php-app/public/login.html` | `/home/h369356/public_html/app/login.html` |
+| `php-app/public/index.php` | `/home/h369356/public_html/app/index.php` |
 
-فایل `index.php` فعلی که endpointهای API را اجرا می‌کند، و تمام کدهای خصوصی `src/` و `bootstrap.php` را فقط مطابق مسیر خصوصی موجود نگه دار. فایل `config.local.php` را از GitHub دریافت یا جایگزین نکن؛ حاوی اطلاعات محرمانه دیتابیس و کلید راه‌اندازی است.
+نسخه جدید `index.php` را نیز جایگزین کن؛ این فایل APIهای فعلی را حفظ می‌کند و مسیر ریشه را به ورود یا داشبورد هدایت می‌کند. تمام کدهای خصوصی `src/` و `bootstrap.php` را فقط مطابق مسیر خصوصی موجود نگه دار. فایل `config.local.php` را از GitHub دریافت یا جایگزین نکن؛ حاوی اطلاعات محرمانه دیتابیس و کلید راه‌اندازی است.
 
 ## نقشه قابلیت‌های نسخه فعلی PHP
 
