@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Core;
+namespace App\\Core;
 
 final class Request
 {
@@ -17,7 +17,7 @@ final class Request
         }
         try {
             $data = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
+        } catch (\\JsonException) {
             Http::json(['error' => 'invalid_json'], 400);
         }
         if (!is_array($data) || array_is_list($data)) {
@@ -38,14 +38,28 @@ final class Request
 
     public static function requireCsrf(array $allowedOrigins = []): void
     {
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
-        if (is_string($origin) && $origin !== '' && $allowedOrigins !== []
-            && !in_array($origin, $allowedOrigins, true)) {
-            Http::json(['error' => 'origin_not_allowed'], 403);
+        if ($allowedOrigins !== []) {
+            $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+            if (!is_string($origin) || $origin === '') {
+                $referer = $_SERVER['HTTP_REFERER'] ?? '';
+                $parts = is_string($referer) ? parse_url($referer) : false;
+                if (is_array($parts) && isset($parts['scheme'], $parts['host'])) {
+                    $origin = strtolower($parts['scheme']) . '://' . strtolower($parts['host']);
+                    if (isset($parts['port'])) {
+                        $origin .= ':' . (int) $parts['port'];
+                    }
+                } else {
+                    $origin = '';
+                }
+            }
+
+            if ($origin === '' || !in_array($origin, $allowedOrigins, true)) {
+                Http::json(['error' => 'origin_not_allowed'], 403);
+            }
         }
 
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-        if (!\App\Core\Csrf::verify(is_string($token) ? $token : null)) {
+        if (!\\App\\Core\\Csrf::verify(is_string($token) ? $token : null)) {
             Http::json(['error' => 'csrf_token_invalid'], 419);
         }
     }
