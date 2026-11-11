@@ -18,8 +18,8 @@
  <div class="brand"><div class="logo">AI</div><div><strong>Content Factory</strong><small>SMART CONTENT WORKSPACE</small></div></div>
  <nav class="nav" aria-label="منوی اصلی">
   <a class="active" href="/dashboard.html"><span class="ico">▦</span>داشبورد</a>
-  <a href="#brands"><span class="ico">◈</span>برندها</a>
-  <a href="#campaigns"><span class="ico">◉</span>کمپین‌ها</a>
+  <a href="/brands.html"><span class="ico">◈</span>برندها</a>
+  <a href="/campaigns.html"><span class="ico">◉</span>کمپین‌ها</a>
   <a href="/content.html"><span class="ico">▤</span>مدیریت محتوا</a>
   <button id="logout"><span class="ico">↪</span>خروج از حساب</button>
  </nav>
@@ -107,8 +107,8 @@ async function loadDashboard(){
 }
 function openDialog(id){$(id).showModal();}
 document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>$(btn.dataset.close).close()));
-['newBrand','newBrandTop','quickBrand'].forEach(id=>$(id).addEventListener('click',()=>openDialog('brandDialog')));
-['newCampaign','quickCampaign'].forEach(id=>$(id).addEventListener('click',()=>openDialog('campaignDialog')));
+['newBrand','newBrandTop','quickBrand'].forEach(id=>$(id).addEventListener('click',()=>location.href='/brands.html'));
+['newCampaign','quickCampaign'].forEach(id=>$(id).addEventListener('click',()=>location.href='/campaigns.html'));
 $('openContent').addEventListener('click',()=>location.href='/content.html');
 $('brandForm').addEventListener('submit',async e=>{
  e.preventDefault();$('brandMessage').textContent='';
