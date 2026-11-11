@@ -34,6 +34,8 @@
 | php-app/src/Auth/PasswordAuth.php | /home/h369356/ai-content-factory/src/Auth/PasswordAuth.php |
 | php-app/src/Campaigns/CampaignRepository.php | /home/h369356/ai-content-factory/src/Campaigns/CampaignRepository.php |
 | php-app/src/Core/Request.php | /home/h369356/ai-content-factory/src/Core/Request.php |
+| php-app/src/AI/GeminiClient.php | /home/h369356/ai-content-factory/src/AI/GeminiClient.php |
+| php-app/src/AI/GeminiApiException.php | /home/h369356/ai-content-factory/src/AI/GeminiApiException.php |
 
 فایل config.local.php و اطلاعات اتصال دیتابیس را از GitHub دریافت یا جایگزین نکن. این فایل باید محرمانه و بیرون از Document Root باقی بماند.
 
