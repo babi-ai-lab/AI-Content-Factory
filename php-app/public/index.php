@@ -143,6 +143,52 @@ HTML;
         $user = AuthGuard::user($db);
         $userId = $user['id'];
 
+        if ($path === '/api/ai/generate' && $method === 'POST') {
+            Request::requireCsrf($config['security']['allowed_origins'] ?? []);
+            $aiConfig = is_array($config['ai'] ?? null) ? $config['ai'] : [];
+            $apiKey = $aiConfig['gemini_api_key'] ?? '';
+            if (!is_string($apiKey) || trim($apiKey) === '') {
+                Http::json(['error' => 'ai_not_configured'], 503);
+            }
+            $dailyLimit = max(1, min(10, (int) ($aiConfig['daily_limit'] ?? 10)));
+            if (!(new \App\Core\RateLimiter($db))->allow('ai-generate', (string) $userId, $dailyLimit, 1440)) {
+                Http::json(['error' => 'ai_daily_limit_reached'], 429);
+            }
+
+            $input = Request::json();
+            $prompt = is_string($input['prompt'] ?? null) ? trim($input['prompt']) : '';
+            $title = is_string($input['title'] ?? null) ? trim($input['title']) : '';
+            $contentType = is_string($input['content_type'] ?? null) ? $input['content_type'] : 'social_post';
+            $allowedTypes = ['social_post', 'caption', 'blog', 'ad_copy', 'email', 'other'];
+            if ($prompt === '' || mb_strlen($prompt) > 12000 || mb_strlen($title) > 240 || !in_array($contentType, $allowedTypes, true)) {
+                Http::json(['error' => 'ai_input_invalid'], 422);
+            }
+
+            $brandContext = '';
+            $brandId = is_string($input['brand_id'] ?? null) ? $input['brand_id'] : '';
+            if ($brandId !== '') {
+                $brandStmt = $db->prepare(
+                    'SELECT name, business_type, profile_json, verified_facts_json, forbidden_claims_json
+                     FROM brands WHERE id = :id AND user_id = :user_id LIMIT 1'
+                );
+                $brandStmt->execute(['id' => $brandId, 'user_id' => $userId]);
+                $brand = $brandStmt->fetch();
+                if (!$brand) Http::json(['error' => 'brand_not_found'], 404);
+                $brandContext = "نام برند: " . $brand['name'] . "\nنوع کسب‌وکار: " . ($brand['business_type'] ?? '') .
+                    "\nپروفایل برند: " . mb_substr((string) ($brand['profile_json'] ?? ''), 0, 2500) .
+                    "\nواقعیت‌های تأییدشده: " . mb_substr((string) ($brand['verified_facts_json'] ?? ''), 0, 2500) .
+                    "\nادعاهای ممنوع: " . mb_substr((string) ($brand['forbidden_claims_json'] ?? ''), 0, 1500);
+            }
+
+            try {
+                $client = new \App\AI\GeminiClient($aiConfig);
+                $generated = $client->generate($prompt, $contentType, $title, $brandContext);
+                Http::json(['text' => $generated, 'model' => $client->modelName()]);
+            } catch (\App\AI\GeminiApiException $exception) {
+                Http::json(['error' => $exception->publicCode()], $exception->httpStatus());
+            }
+        }
+
         if ($path === '/api/brands' && $method === 'GET') {
             Http::json(['items' => (new BrandRepository($db))->list($userId)]);
         }
