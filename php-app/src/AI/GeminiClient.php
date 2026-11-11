@@ -13,10 +13,10 @@ final class GeminiClient
     public function __construct(array $config)
     {
         $this->apiKey = is_string($config['gemini_api_key'] ?? null) ? trim($config['gemini_api_key']) : '';
-        $this->model = is_string($config['model'] ?? null) ? trim($config['model']) : 'gemini-3.8-flash';
+        $this->model = is_string($config['model'] ?? null) ? trim($config['model']) : 'gemini-3.1-flash-lite';
         $this->timeout = max(10, min(60, (int) ($config['timeout_seconds'] ?? 45)));
         $this->maxOutputTokens = max(256, min(4096, (int) ($config['max_output_tokens'] ?? 1800)));
-        if (!preg_match('/^[A-Za-z0-9._-]{20,256}$/', $this->apiKey) || $this->model !== 'gemini-3.8-flash') {
+        if (!preg_match('/^[A-Za-z0-9._-]{20,256}$/', $this->apiKey) || !preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{2,99}$/', $this->model)) {
             throw new GeminiApiException(503, 'ai_not_configured');
         }
     }
