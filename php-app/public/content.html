@@ -79,6 +79,7 @@ function openEditor(item=null){
  editingId=item?.id||null;$('editorTitle').textContent=item?'ویرایش محتوا':'ثبت محتوای جدید';
  $('title').value=item?.title||'';$('contentType').value=item?.content_type||'social_post';
  $('brandId').value=item?.brand_id||'';$('bodyText').value=item?textOf(item):'';
+ $('contentType').disabled=!!item;$('brandId').disabled=!!item;
  $('formError').textContent='';$('editor').showModal();
 }
 $('newContent').addEventListener('click',()=>openEditor());
