@@ -19,13 +19,26 @@
  <div class="side-note">مدیریت، ویرایش و نگهداری محتوای کسب‌وکار<br>نسخه آزمایشی PHP</div>
 </aside>
 <main class="main">
- <header class="top"><div><div class="eyebrow">فضای کاری شما / محتوا</div><h1>مدیریت محتوا</h1></div><button class="btn" id="newContent">＋ محتوای جدید</button></header>
+ <header class="top"><div><div class="eyebrow">فضای کاری شما / محتوا</div><h1>مدیریت محتوا</h1></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn secondary" id="aiGenerate">✦ تولید با هوش مصنوعی</button><button class="btn" id="newContent">＋ محتوای جدید</button></div></header>
  <section class="toolbar"><input id="search" type="search" placeholder="جست‌وجو در عنوان و متن..."><select id="typeFilter"><option value="">همه انواع محتوا</option><option value="social_post">پست شبکه اجتماعی</option><option value="caption">کپشن</option><option value="blog">مقاله وبلاگ</option><option value="ad_copy">متن تبلیغاتی</option><option value="email">ایمیل</option><option value="other">سایر</option></select><button class="btn secondary" id="refresh">به‌روزرسانی</button></section>
  <div class="summary"><span id="count">در حال دریافت محتوا...</span><span id="status"></span></div>
  <section class="grid" id="contentList"><div class="loading">در حال بارگذاری آرشیو...</div></section>
- <div class="notice">محتوا در این مرحله به‌صورت دستی ثبت و ویرایش می‌شود. هر بار ذخیره ویرایش، یک نسخه جدید در تاریخچه ثبت می‌کند. تولید خودکار با هوش مصنوعی هنوز فعال نیست.</div>
+ <div class="notice">تولید پیش‌نویس با Gemini انجام می‌شود. خروجی قبل از ذخیره قابل ویرایش است. سهمیه رایگان و محدودیت درخواست گوگل اعمال می‌شود؛ اطلاعات محرمانه مشتریان را وارد نکن.</div>
 </main>
 </div>
+<dialog id="generateDialog">
+ <div class="dialog-head"><h2>تولید محتوا با Gemini</h2><button class="btn secondary small" data-close="generateDialog">✕</button></div>
+ <form class="dialog-body" id="generateForm">
+  <div class="row">
+   <div class="field"><label for="aiTitle">عنوان پیشنهادی</label><input id="aiTitle" maxlength="240" placeholder="مثلاً راهنمای انتخاب خدمات"></div>
+   <div class="field"><label for="aiType">نوع محتوا</label><select id="aiType"><option value="social_post">پست شبکه اجتماعی</option><option value="caption">کپشن</option><option value="blog">مقاله وبلاگ</option><option value="ad_copy">متن تبلیغاتی</option><option value="email">ایمیل</option><option value="other">سایر</option></select></div>
+  </div>
+  <div class="field"><label for="aiBrand">برند مرتبط</label><select id="aiBrand"><option value="">بدون انتخاب برند</option></select></div>
+  <div class="field"><label for="aiPrompt">چه محتوایی تولید شود؟ *</label><textarea id="aiPrompt" required maxlength="12000" placeholder="موضوع، مخاطب هدف، هدف محتوا، لحن، نکات ضروری و دعوت به اقدام را توضیح بده..." style="min-height:150px"></textarea></div>
+  <div class="error" id="aiError"></div>
+  <div class="dialog-actions"><button class="btn" type="submit" id="aiSubmit">تولید محتوا</button><button class="btn secondary" type="button" data-close="generateDialog">انصراف</button></div>
+ </form>
+</dialog>
 <dialog id="editor">
  <div class="dialog-head"><h2 id="editorTitle">ثبت محتوای جدید</h2><button class="btn secondary small" data-close="editor">✕</button></div>
  <form class="dialog-body" id="contentForm">
@@ -71,7 +84,8 @@ async function load(){
   const me=await api('/api/auth/me');csrfToken=me.csrf_token||'';
   const results=await Promise.all([api('/api/content?limit=100&offset=0'),api('/api/brands')]);
   allItems=results[0].items||[];brands=results[1].items||[];
-  $('brandId').innerHTML='<option value="">بدون انتخاب برند</option>'+brands.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('');
+  const brandOptions='<option value="">بدون انتخاب برند</option>'+brands.map(b=>'<option value="'+esc(b.id)+'">'+esc(b.name)+'</option>').join('');
+  $('brandId').innerHTML=brandOptions;$('aiBrand').innerHTML=brandOptions;
   render();$('status').textContent='به‌روز';
  }catch(e){$('status').textContent=e.message;$('contentList').innerHTML='<div class="empty">دریافت اطلاعات ناموفق بود. صفحه را تازه‌سازی کن.</div>';}
 }
@@ -82,6 +96,22 @@ function openEditor(item=null){
  $('contentType').disabled=!!item;$('brandId').disabled=!!item;
  $('formError').textContent='';$('editor').showModal();
 }
+$('aiGenerate').addEventListener('click',()=>{$('aiError').textContent='';$('generateDialog').showModal();});
+$('generateForm').addEventListener('submit',async e=>{
+ e.preventDefault();$('aiError').textContent='';$('aiSubmit').disabled=true;$('aiSubmit').textContent='در حال تولید...';
+ try{
+  const payload={title:$('aiTitle').value.trim(),content_type:$('aiType').value,brand_id:$('aiBrand').value||null,prompt:$('aiPrompt').value.trim()};
+  const result=await api('/api/ai/generate',{method:'POST',body:JSON.stringify(payload)});
+  if(!result.text)throw new Error('پاسخ مدل خالی بود.');
+  $('generateDialog').close();openEditor();
+  $('title').value=payload.title||'محتوای تولیدشده با Gemini';
+  $('contentType').value=payload.content_type;$('brandId').value=payload.brand_id||'';$('bodyText').value=result.text;
+  $('formError').textContent='متن تولید شد؛ پس از بازبینی، آن را ذخیره کن.';
+ }catch(err){
+  const messages={ai_not_configured:'کلید Gemini هنوز در تنظیمات خصوصی سرور ثبت نشده است.',ai_daily_limit_reached:'سهمیه روزانه این حساب تمام شده است.',ai_quota_exceeded:'سهمیه رایگان Gemini فعلاً تمام شده است؛ بعداً دوباره تلاش کن.',ai_key_or_access_invalid:'کلید Gemini معتبر نیست یا دسترسی مدل فعال نشده است.',ai_provider_unavailable:'سرویس Gemini موقتاً در دسترس نیست.',ai_input_invalid:'اطلاعات ورودی معتبر نیست.'};
+  $('aiError').textContent=messages[err.message]||err.message;
+ }finally{$('aiSubmit').disabled=false;$('aiSubmit').textContent='تولید محتوا';}
+});
 $('newContent').addEventListener('click',()=>openEditor());
 $('contentForm').addEventListener('submit',async e=>{
  e.preventDefault();$('formError').textContent='';$('saveButton').disabled=true;
