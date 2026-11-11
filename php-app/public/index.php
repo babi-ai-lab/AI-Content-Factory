@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/bootstrap.php';
+require '/home/h369356/ai-content-factory/bootstrap.php';
 
 use App\Auth\PasswordAuth;
 use App\Brands\BrandRepository;
