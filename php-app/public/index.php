@@ -18,6 +18,12 @@ try {
     $path = Request::path();
     $method = Request::method();
 
+    if ($method === 'GET' && $path === '/') {
+        $signedIn = (new PasswordAuth($db))->currentUser() !== null;
+        header('Location: ' . ($signedIn ? '/dashboard.html' : '/login.html'), true, 302);
+        exit;
+    }
+
     if ($method === 'GET' && $path === '/health') {
         $db->query('SELECT 1');
         Http::json(['ok' => true, 'application' => 'AI Content Factory', 'runtime' => 'php', 'database' => 'connected']);
