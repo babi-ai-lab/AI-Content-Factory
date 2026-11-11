@@ -40,7 +40,7 @@ try {
         $email = is_string($input['email'] ?? null) ? $input['email'] : '';
         $password = is_string($input['password'] ?? null) ? $input['password'] : '';
         $displayName = is_string($input['display_name'] ?? null) ? $input['display_name'] : null;
-        $user = (new \\App\\Auth\\FirstAdminSetup($db))->create($email, $password, $displayName);
+        $user = (new \App\Auth\FirstAdminSetup($db))->create($email, $password, $displayName);
         Http::json(['ok' => true, 'user' => $user], 201);
     }
 
