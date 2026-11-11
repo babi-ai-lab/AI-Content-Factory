@@ -145,6 +145,10 @@ try {
 } catch (InvalidArgumentException $exception) {
     Http::json(['error' => $exception->getMessage()], 422);
 } catch (Throwable $exception) {
-    error_log('[AI Content Factory] Request failed: ' . $exception->getMessage());
+    $previous = $exception->getPrevious();
+    error_log('[AI Content Factory] Request failed (' . get_class($exception) . '): ' . $exception->getMessage());
+    if ($previous instanceof Throwable) {
+        error_log('[AI Content Factory] Previous error (' . get_class($previous) . '): ' . $previous->getMessage());
+    }
     Http::json(['error' => 'internal_server_error'], 500);
 }
