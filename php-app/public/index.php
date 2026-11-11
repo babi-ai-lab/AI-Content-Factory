@@ -172,10 +172,18 @@ HTML;
             $id = (new \App\Campaigns\CampaignRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
-        if (preg_match('#^/api/campaigns/([0-9a-f-]{36})$#i', $path, $match) && $method === 'DELETE') {
-            Request::requireCsrf();
-            if (!(new \App\Campaigns\CampaignRepository($db))->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
-            Http::json(['ok' => true]);
+        if (preg_match('#^/api/campaigns/([0-9a-f-]{36})$#i', $path, $match)) {
+            $repository = new \App\Campaigns\CampaignRepository($db);
+            if ($method === 'PATCH') {
+                Request::requireCsrf();
+                if (!$repository->update($userId, $match[1], Request::json())) Http::json(['error' => 'not_found'], 404);
+                Http::json(['ok' => true]);
+            }
+            if ($method === 'DELETE') {
+                Request::requireCsrf();
+                if (!$repository->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
+                Http::json(['ok' => true]);
+            }
         }
 
         if ($path === '/api/content' && $method === 'GET') {
