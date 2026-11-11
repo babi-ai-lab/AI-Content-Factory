@@ -34,10 +34,10 @@ jobs:
           for (const page of pages) {
             const file = 'php-app/public/' + page;
             const html = fs.readFileSync(file, 'utf8');
-            if (!/<title>[^<]*<\\/title>/i.test(html)) {
+            if (!/<title>[^<]*<\/title>/i.test(html)) {
               throw new Error('Missing or malformed title in ' + page);
             }
-            const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+            const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
             for (let i = 0; i < scripts.length; i++) {
               new vm.Script(scripts[i][1], { filename: page + '#script-' + (i + 1) });
             }
