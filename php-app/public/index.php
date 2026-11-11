@@ -156,6 +156,9 @@ HTML;
             }
 
             $input = Request::json();
+            if (($input['consent_external_processing'] ?? false) !== true) {
+                Http::json(['error' => 'ai_consent_required'], 422);
+            }
             $prompt = is_string($input['prompt'] ?? null) ? trim($input['prompt']) : '';
             $title = is_string($input['title'] ?? null) ? trim($input['title']) : '';
             $contentType = is_string($input['content_type'] ?? null) ? $input['content_type'] : 'social_post';
