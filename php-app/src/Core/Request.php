@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\\Core;
+namespace App\Core;
 
 final class Request
 {
@@ -17,7 +17,7 @@ final class Request
         }
         try {
             $data = json_decode($raw, true, 64, JSON_THROW_ON_ERROR);
-        } catch (\\JsonException) {
+        } catch (\JsonException) {
             Http::json(['error' => 'invalid_json'], 400);
         }
         if (!is_array($data) || array_is_list($data)) {
@@ -59,7 +59,7 @@ final class Request
         }
 
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-        if (!\\App\\Core\\Csrf::verify(is_string($token) ? $token : null)) {
+        if (!\App\Core\Csrf::verify(is_string($token) ? $token : null)) {
             Http::json(['error' => 'csrf_token_invalid'], 419);
         }
     }
