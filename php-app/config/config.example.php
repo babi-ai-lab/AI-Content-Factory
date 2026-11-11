@@ -21,6 +21,15 @@ return [
         'password' => '',
         'charset' => 'utf8mb4',
     ],
+    // Gemini free-tier configuration. Keep the API key only in config.local.php.
+    'ai' => [
+        'provider' => 'gemini',
+        'gemini_api_key' => '',
+        'model' => 'gemini-3.8-flash',
+        'daily_limit' => 10,
+        'max_output_tokens' => 1800,
+        'timeout_seconds' => 45,
+    ],
     'security' => [
         'session_secure' => true,
         'session_samesite' => 'Lax',
