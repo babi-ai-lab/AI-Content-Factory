@@ -120,7 +120,7 @@ $('contentForm').addEventListener('submit',async e=>{
  try{
   if(editingId)await api('/api/content/'+encodeURIComponent(editingId),{method:'PATCH',body:JSON.stringify(payload)});
   else await api('/api/content',{method:'POST',body:JSON.stringify(payload)});
-  $('editor').close();await load();
+  $('editor').close();await load().then(()=>{if(location.hash==='#generate')$('generateDialog').showModal();});
  }catch(err){$('formError').textContent=err.message;}
  finally{$('saveButton').disabled=false;}
 });
