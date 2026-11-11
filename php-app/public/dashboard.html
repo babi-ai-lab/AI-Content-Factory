@@ -20,7 +20,7 @@
   <a class="active" href="/dashboard.html"><span class="ico">▦</span>داشبورد</a>
   <a href="#brands"><span class="ico">◈</span>برندها</a>
   <a href="#campaigns"><span class="ico">◉</span>کمپین‌ها</a>
-  <a href="#content"><span class="ico">▤</span>آرشیو محتوا</a>
+  <a href="/content.html"><span class="ico">▤</span>مدیریت محتوا</a>
   <button id="logout"><span class="ico">↪</span>خروج از حساب</button>
  </nav>
  <div class="side-note">فضای مدیریت و برنامه‌ریزی محتوای کسب‌وکار شما<br>نسخه آزمایشی انتقال به PHP</div>
@@ -52,7 +52,7 @@
    <button id="quickBrand"><b>＋ ساخت پروفایل برند</b><small>تعریف نام و نوع کسب‌وکار</small></button>
    <button id="quickCampaign"><b>＋ برنامه‌ریزی کمپین</b><small>ثبت هدف و مخاطب کمپین</small></button>
    <button disabled style="opacity:.6;cursor:not-allowed"><b>✦ تولید محتوا با هوش مصنوعی</b><small>پس از تکمیل اتصال موتور تولید فعال می‌شود</small></button>
-   <button disabled style="opacity:.6;cursor:not-allowed"><b>▤ مشاهده آرشیو محتوا</b><small>رابط آرشیو در مرحله بعدی توسعه است</small></button>
+   <button type="button" id="openContent"><b>▤ مدیریت محتوا</b><small>ثبت، ویرایش و مشاهده آرشیو محتوا</small></button>
   </div>
  </section>
  <div class="notice">این نسخه، داشبورد اولیه متصل به حساب واقعی است. امکانات تولید هوش مصنوعی، آرشیو پیشرفته، تقویم محتوا و تحلیل عملکرد هنوز فعال نشده‌اند؛ هیچ سرویس پولی هوش مصنوعی در این نسخه فراخوانی نمی‌شود.</div>
@@ -109,6 +109,7 @@ function openDialog(id){$(id).showModal();}
 document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>$(btn.dataset.close).close()));
 ['newBrand','newBrandTop','quickBrand'].forEach(id=>$(id).addEventListener('click',()=>openDialog('brandDialog')));
 ['newCampaign','quickCampaign'].forEach(id=>$(id).addEventListener('click',()=>openDialog('campaignDialog')));
+$('openContent').addEventListener('click',()=>location.href='/content.html');
 $('brandForm').addEventListener('submit',async e=>{
  e.preventDefault();$('brandMessage').textContent='';
  try{await api('/api/brands',{method:'POST',body:JSON.stringify({name:$('brandName').value.trim(),business_type:$('businessType').value,profile:{}})});$('brandForm').reset();$('brandDialog').close();await loadDashboard();}
