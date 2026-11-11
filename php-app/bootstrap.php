@@ -1,17 +1,17 @@
 <?php
 declare(strict_types=1);
 
-use App\Core\Http;
+use App\\Core\\Http;
 
 define('APP_ROOT', __DIR__);
 
 spl_autoload_register(static function (string $class): void {
-    $prefix = 'App\\';
+    $prefix = 'App\\\\';
     if (!str_starts_with($class, $prefix)) {
         return;
     }
     $relative = substr($class, strlen($prefix));
-    $file = APP_ROOT . '/src/' . str_replace('\\', '/', $relative) . '.php';
+    $file = APP_ROOT . '/src/' . str_replace('\\\\', '/', $relative) . '.php';
     if (is_file($file)) {
         require $file;
     }
@@ -28,9 +28,6 @@ if (!is_file($configFile)) {
 $config = require $configFile;
 date_default_timezone_set($config['app']['timezone'] ?? 'UTC');
 
-$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
-
 ini_set('session.use_strict_mode', '1');
 ini_set('session.use_only_cookies', '1');
 ini_set('session.use_trans_sid', '0');
@@ -38,7 +35,7 @@ session_name($config['app']['session_name'] ?? 'aicf_session');
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'secure' => (bool) ($config['security']['session_secure'] ?? true) && $isHttps,
+    'secure' => (bool) ($config['security']['session_secure'] ?? true),
     'httponly' => true,
     'samesite' => $config['security']['session_samesite'] ?? 'Lax',
 ]);
@@ -50,4 +47,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header('X-Frame-Options: DENY');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
+header('Cross-Origin-Opener-Policy: same-origin');
+header('X-Permitted-Cross-Domain-Policies: none');
 header('Cache-Control: no-store, private');
