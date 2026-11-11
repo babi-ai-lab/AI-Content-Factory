@@ -55,7 +55,7 @@ final class CampaignRepository
 
         if (array_key_exists('name', $data)) {
             if (!is_string($data['name']) || trim($data['name']) === '' || mb_strlen(trim($data['name'])) > 200) {
-                throw new \\InvalidArgumentException('campaign_name_invalid');
+                throw new \InvalidArgumentException('campaign_name_invalid');
             }
             $fields[] = 'name = :name';
             $params['name'] = trim($data['name']);
@@ -63,7 +63,7 @@ final class CampaignRepository
         foreach (['objective' => 500, 'audience' => 10000] as $field => $maxLength) {
             if (!array_key_exists($field, $data)) continue;
             if ($data[$field] !== null && !is_string($data[$field])) {
-                throw new \\InvalidArgumentException($field . '_invalid');
+                throw new \InvalidArgumentException($field . '_invalid');
             }
             $fields[] = $field . ' = :' . $field;
             $params[$field] = $data[$field] === null ? null : mb_substr(trim($data[$field]), 0, $maxLength);
@@ -79,7 +79,7 @@ final class CampaignRepository
         $endsOn = array_key_exists('ends_on', $data)
             ? self::dateOrNull($data['ends_on']) : $current['ends_on'];
         if ($startsOn !== null && $endsOn !== null && $endsOn < $startsOn) {
-            throw new \\InvalidArgumentException('campaign_end_before_start');
+            throw new \InvalidArgumentException('campaign_end_before_start');
         }
         if (array_key_exists('starts_on', $data)) {
             $fields[] = 'starts_on = :starts_on';
