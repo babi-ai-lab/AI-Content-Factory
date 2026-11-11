@@ -37,7 +37,7 @@ This is a focused source-code hardening pass for the PHP application deployed un
 
 ## Validation status
 
-- Source changes are covered by the repository PHP 8.5 syntax workflow.
+- The repository contains a PHP 8.5 syntax-check workflow configured for this branch. The visible successful run on the latest code was the existing Node/application CI; a completed run of the dedicated PHP syntax workflow has not yet been independently confirmed.
 - Live functional smoke tests were reported successful by the site owner before this hardening pass.
 - The new cookie, Origin/Referer and response-header behavior still requires a post-deployment browser/network check.
 - This document is not a security certification or a claim that the application is fully production-hardened.
