@@ -108,7 +108,7 @@ $('generateForm').addEventListener('submit',async e=>{
   $('contentType').value=payload.content_type;$('brandId').value=payload.brand_id||'';$('bodyText').value=result.text;
   $('formError').textContent='متن تولید شد؛ پس از بازبینی، آن را ذخیره کن.';
  }catch(err){
-  const messages={ai_not_configured:'کلید Gemini هنوز در تنظیمات خصوصی سرور ثبت نشده است.',ai_daily_limit_reached:'سهمیه روزانه این حساب تمام شده است.',ai_quota_exceeded:'سهمیه رایگان Gemini فعلاً تمام شده است؛ بعداً دوباره تلاش کن.',ai_key_or_access_invalid:'کلید Gemini معتبر نیست یا دسترسی مدل فعال نشده است.',ai_provider_unavailable:'سرویس Gemini موقتاً در دسترس نیست.',ai_input_invalid:'اطلاعات ورودی معتبر نیست.'};
+  const messages={ai_not_configured:'کلید Gemini هنوز در تنظیمات خصوصی سرور ثبت نشده است.',ai_daily_limit_reached:'سهمیه روزانه این حساب تمام شده است.',ai_quota_exceeded:'سهمیه رایگان Gemini فعلاً تمام شده است؛ بعداً دوباره تلاش کن.',ai_key_or_access_invalid:'کلید Gemini معتبر نیست یا دسترسی مدل فعال نشده است.',ai_provider_unavailable:'سرویس Gemini موقتاً در دسترس نیست.',ai_empty_response:'مدل خروجی متنی قابل استفاده برنگرداند؛ درخواست را با توضیح روشن‌تر تکرار کن.',ai_input_invalid:'اطلاعات ورودی معتبر نیست.'};
   $('aiError').textContent=messages[err.message]||err.message;
  }finally{$('aiSubmit').disabled=false;$('aiSubmit').textContent='تولید محتوا';}
 });
