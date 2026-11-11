@@ -1,25 +1,51 @@
-# PHP runtime scaffold (ParsPack)
+# AI Content Factory — PHP runtime for ParsPack
 
-This is the first isolated PHP runtime scaffold. It does not replace the current Next.js production app.
+نسخه PHP مستقل برای زیردامنه `app.eltbabak.ir`. این برنامه از PHP 8.1+، MySQL/MariaDB و رابط HTML/CSS/JavaScript استفاده می‌کند و برای هاست اشتراکی طراحی شده است.
 
-## Requirements
-- PHP 8.1+
-- PDO and pdo_mysql
-- mbstring
-- MySQL 8.0.16+ or MariaDB 10.6+
-- Apache with rewrite support (optional for the health endpoint)
+## مسیرهای میزبانی
 
-## Local setup
-1. Copy `config/config.example.php` to `config/config.local.php`.
-2. Enter the dedicated MySQL database credentials in that local file.
-3. Run `../database/migrations/001_initial_schema.sql` against the empty database.
-4. Set the subdomain document root to this directory's `public/` folder.
-5. Open `/health`; a successful response reports PHP runtime and database connectivity.
+- Document Root: `/home/h369356/public_html/app`
+- کد خصوصی: `/home/h369356/ai-content-factory`
+- تنظیمات خصوصی: `/home/h369356/ai-content-factory/config/config.local.php`
+- پایگاه داده: `h369356_aicf`
 
-## Security notes
-- Never put `config.local.php` inside the public document root.
-- Do not commit real secrets.
-- HTTPS is required for secure session cookies.
-- Authentication, CSRF protection, authorization policies, rate limiting and audit logging must be implemented before user-facing routes are added.
-- The health endpoint exposes only a generic status; detailed exceptions go to the server error log.
-- Do not point Production traffic at this scaffold yet.
+فایل تنظیمات محرمانه باید بیرون از Document Root و خارج از Git باقی بماند. هیچ‌گاه فایل واقعی `config.local.php` را با نسخه نمونه جایگزین نکن.
+
+## قابلیت‌های نسخه فعلی
+
+- ورود مدیر با نشست امن PHP و ذخیره نشست در MySQL
+- محافظت CSRF، محدودسازی تلاش ورود و کنترل مالکیت داده‌ها
+- داشبورد
+- مدیریت پروفایل برند (ایجاد، ویرایش و حذف؛ سقف ۱۰ پروفایل)
+- مدیریت کمپین (ایجاد، فهرست و حذف)
+- مدیریت محتوا (ایجاد، جست‌وجو، فیلتر نوع، ویرایش متن، تاریخچه نسخه و حذف نرم)
+- ثبت خطاهای سرور در فایل خصوصی runtime log
+
+## صفحات
+
+- `/` — انتقال خودکار به داشبورد یا صفحه ورود
+- `/login.html` — ورود
+- `/dashboard.html` — نمای کلی
+- `/brands.html` — مدیریت برندها
+- `/campaigns.html` — مدیریت کمپین‌ها
+- `/content.html` — مدیریت محتوا
+- `/health` — سلامت PHP و اتصال MySQL
+
+## نصب و به‌روزرسانی
+
+مراحل کامل انتشار یک‌باره و نگاشت مسیر فایل‌ها در [راهنمای انتشار ParsPack](docs/PARSPACK_DEPLOYMENT.md) آمده است.
+
+برای نصب اولیه، migration موجود در `database/migrations/001_initial_schema.sql` را روی دیتابیس خالی import کن. برای دیتابیسی که از قبل حساب مدیر یا داده واقعی دارد، migration را دوباره اجرا نکن.
+
+## محدودیت‌های شفاف نسخه
+
+این نسخه هنوز تولید واقعی متن/تصویر با هوش مصنوعی، انتشار شبکه‌های اجتماعی، کتابخانه رسانه، تقویم، تحلیل پیشرفته، بازیابی رمز، تأیید ایمیل، ثبت‌نام عمومی، حذف حساب و واردسازی Supabase را ارائه نمی‌کند. هیچ provider پولی AI به‌صورت پیش‌فرض فراخوانی نمی‌شود.
+
+## امنیت
+
+- PHP source و config در مسیر خصوصی نگهداری می‌شوند.
+- فقط فایل‌های public در Document Root قرار می‌گیرند.
+- رمزها با `password_hash` و `password_verify` مدیریت می‌شوند.
+- عملیات تغییردهنده نیازمند CSRF هستند.
+- خطاهای داخلی در پاسخ API افشا نمی‌شوند.
+- برای عرضه عمومی، تست امنیتی، پشتیبان‌گیری قابل‌بازیابی و تکمیل جریان‌های حساب کاربری ضروری است.
