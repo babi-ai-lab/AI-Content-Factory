@@ -27,6 +27,23 @@ try {
         Http::json(['csrf_token' => Csrf::token()]);
     }
 
+    if ($path === '/api/setup/first-admin' && $method === 'POST') {
+        Request::requireCsrf();
+        $expectedToken = $config['security']['first_admin_setup_token'] ?? '';
+        $input = Request::json();
+        $providedToken = is_string($input['setup_token'] ?? null) ? $input['setup_token'] : '';
+        if (!is_string($expectedToken) || strlen($expectedToken) < 32
+            || !hash_equals($expectedToken, $providedToken)) {
+            Http::json(['error' => 'setup_not_available'], 403);
+        }
+
+        $email = is_string($input['email'] ?? null) ? $input['email'] : '';
+        $password = is_string($input['password'] ?? null) ? $input['password'] : '';
+        $displayName = is_string($input['display_name'] ?? null) ? $input['display_name'] : null;
+        $user = (new \\App\\Auth\\FirstAdminSetup($db))->create($email, $password, $displayName);
+        Http::json(['ok' => true, 'user' => $user], 201);
+    }
+
     if ($path === '/api/auth/login' && $method === 'POST') {
         $remoteIp = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
         $limiter = new \App\Core\RateLimiter($db);
