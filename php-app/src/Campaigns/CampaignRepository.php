@@ -41,6 +41,64 @@ final class CampaignRepository
         return $id;
     }
 
+    public function update(string $userId, string $id, array $data): bool
+    {
+        $existing = $this->db->prepare(
+            'SELECT starts_on, ends_on FROM campaigns WHERE id = :id AND user_id = :user_id'
+        );
+        $existing->execute(['id' => $id, 'user_id' => $userId]);
+        $current = $existing->fetch();
+        if (!is_array($current)) return false;
+
+        $fields = [];
+        $params = ['id' => $id, 'user_id' => $userId];
+
+        if (array_key_exists('name', $data)) {
+            if (!is_string($data['name']) || trim($data['name']) === '' || mb_strlen(trim($data['name'])) > 200) {
+                throw new \\InvalidArgumentException('campaign_name_invalid');
+            }
+            $fields[] = 'name = :name';
+            $params['name'] = trim($data['name']);
+        }
+        foreach (['objective' => 500, 'audience' => 10000] as $field => $maxLength) {
+            if (!array_key_exists($field, $data)) continue;
+            if ($data[$field] !== null && !is_string($data[$field])) {
+                throw new \\InvalidArgumentException($field . '_invalid');
+            }
+            $fields[] = $field . ' = :' . $field;
+            $params[$field] = $data[$field] === null ? null : mb_substr(trim($data[$field]), 0, $maxLength);
+        }
+        foreach (['channels' => 'channels_json', 'checklist' => 'checklist_json'] as $input => $column) {
+            if (!array_key_exists($input, $data)) continue;
+            $fields[] = $column . ' = :' . $input;
+            $params[$input] = self::jsonOrNull($data[$input]);
+        }
+
+        $startsOn = array_key_exists('starts_on', $data)
+            ? self::dateOrNull($data['starts_on']) : $current['starts_on'];
+        $endsOn = array_key_exists('ends_on', $data)
+            ? self::dateOrNull($data['ends_on']) : $current['ends_on'];
+        if ($startsOn !== null && $endsOn !== null && $endsOn < $startsOn) {
+            throw new \\InvalidArgumentException('campaign_end_before_start');
+        }
+        if (array_key_exists('starts_on', $data)) {
+            $fields[] = 'starts_on = :starts_on';
+            $params['starts_on'] = $startsOn;
+        }
+        if (array_key_exists('ends_on', $data)) {
+            $fields[] = 'ends_on = :ends_on';
+            $params['ends_on'] = $endsOn;
+        }
+
+        if (!$fields) return true;
+        $fields[] = 'updated_at = UTC_TIMESTAMP()';
+        $stmt = $this->db->prepare(
+            'UPDATE campaigns SET ' . implode(', ', $fields) . ' WHERE id = :id AND user_id = :user_id'
+        );
+        $stmt->execute($params);
+        return true;
+    }
+
     public function delete(string $userId, string $id): bool
     {
         $stmt = $this->db->prepare('DELETE FROM campaigns WHERE id = :id AND user_id = :user_id');
