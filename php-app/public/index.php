@@ -146,9 +146,12 @@ try {
     Http::json(['error' => $exception->getMessage()], 422);
 } catch (Throwable $exception) {
     $previous = $exception->getPrevious();
-    error_log('[AI Content Factory] Request failed (' . get_class($exception) . '): ' . $exception->getMessage());
+    $diagnostic = '[' . date('c') . '] Request failed (' . get_class($exception) . '): ' . $exception->getMessage();
     if ($previous instanceof Throwable) {
-        error_log('[AI Content Factory] Previous error (' . get_class($previous) . '): ' . $previous->getMessage());
+        $diagnostic .= "\\nPrevious error (" . get_class($previous) . '): ' . $previous->getMessage();
     }
+    $diagnostic .= "\\n";
+    @file_put_contents('/home/h369356/ai-content-factory/runtime-errors.log', $diagnostic, FILE_APPEND | LOCK_EX);
+    error_log('[AI Content Factory] ' . trim($diagnostic));
     Http::json(['error' => 'internal_server_error'], 500);
 }
