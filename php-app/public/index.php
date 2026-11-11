@@ -90,7 +90,7 @@ HTML;
     }
 
     if ($path === '/api/setup/first-admin' && $method === 'POST') {
-        Request::requireCsrf();
+        Request::requireCsrf($config['security']['allowed_origins'] ?? []);
         $expectedToken = $config['security']['first_admin_setup_token'] ?? '';
         $input = Request::json();
         $providedToken = is_string($input['setup_token'] ?? null) ? $input['setup_token'] : '';
@@ -112,7 +112,7 @@ HTML;
         if (!$limiter->allow('auth-login', $remoteIp, 8, 15)) {
             Http::json(['error' => 'too_many_attempts'], 429);
         }
-        Request::requireCsrf();
+        Request::requireCsrf($config['security']['allowed_origins'] ?? []);
         $input = Request::json();
         $email = is_string($input['email'] ?? null) ? $input['email'] : '';
         $password = is_string($input['password'] ?? null) ? $input['password'] : '';
@@ -128,7 +128,7 @@ HTML;
     }
 
     if ($path === '/api/auth/logout' && $method === 'POST') {
-        Request::requireCsrf();
+        Request::requireCsrf($config['security']['allowed_origins'] ?? []);
         AuthGuard::user($db);
         (new PasswordAuth($db))->logout();
         Http::json(['ok' => true]);
@@ -147,12 +147,12 @@ HTML;
             Http::json(['items' => (new BrandRepository($db))->list($userId)]);
         }
         if ($path === '/api/brands' && $method === 'POST') {
-            Request::requireCsrf();
+            Request::requireCsrf($config['security']['allowed_origins'] ?? []);
             $id = (new BrandRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
         if (preg_match('#^/api/brands/([0-9a-f-]{36})$#i', $path, $match)) {
-            Request::requireCsrf();
+            Request::requireCsrf($config['security']['allowed_origins'] ?? []);
             $repository = new BrandRepository($db);
             if ($method === 'PATCH') {
                 if (!$repository->update($userId, $match[1], Request::json())) Http::json(['error' => 'not_found'], 404);
@@ -168,19 +168,19 @@ HTML;
             Http::json(['items' => (new \App\Campaigns\CampaignRepository($db))->list($userId)]);
         }
         if ($path === '/api/campaigns' && $method === 'POST') {
-            Request::requireCsrf();
+            Request::requireCsrf($config['security']['allowed_origins'] ?? []);
             $id = (new \App\Campaigns\CampaignRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
         if (preg_match('#^/api/campaigns/([0-9a-f-]{36})$#i', $path, $match)) {
             $repository = new \App\Campaigns\CampaignRepository($db);
             if ($method === 'PATCH') {
-                Request::requireCsrf();
+                Request::requireCsrf($config['security']['allowed_origins'] ?? []);
                 if (!$repository->update($userId, $match[1], Request::json())) Http::json(['error' => 'not_found'], 404);
                 Http::json(['ok' => true]);
             }
             if ($method === 'DELETE') {
-                Request::requireCsrf();
+                Request::requireCsrf($config['security']['allowed_origins'] ?? []);
                 if (!$repository->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
                 Http::json(['ok' => true]);
             }
@@ -193,7 +193,7 @@ HTML;
             Http::json(['items' => (new ContentRepository($db))->list($userId, $limit, $offset, $type)]);
         }
         if ($path === '/api/content' && $method === 'POST') {
-            Request::requireCsrf();
+            Request::requireCsrf($config['security']['allowed_origins'] ?? []);
             $id = (new ContentRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
@@ -218,12 +218,12 @@ HTML;
                 Http::json(['item' => $item]);
             }
             if ($method === 'PATCH') {
-                Request::requireCsrf();
+                Request::requireCsrf($config['security']['allowed_origins'] ?? []);
                 if (!$repository->update($userId, $match[1], Request::json())) Http::json(['error' => 'not_found'], 404);
                 Http::json(['ok' => true]);
             }
             if ($method === 'DELETE') {
-                Request::requireCsrf();
+                Request::requireCsrf($config['security']['allowed_origins'] ?? []);
                 if (!$repository->softDelete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
                 Http::json(['ok' => true]);
             }
