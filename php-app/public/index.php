@@ -119,7 +119,11 @@ HTML;
         if ($email === '' || $password === '' || strlen($password) > 200) {
             Http::json(['error' => 'invalid_credentials'], 422);
         }
-        $user = (new PasswordAuth($db))->login($email, $password);
+        try {
+            $user = (new PasswordAuth($db))->login($email, $password);
+        } catch (\App\Auth\AuthenticationException $exception) {
+            Http::json(['error' => $exception->getMessage()], 401);
+        }
         Http::json(['user' => $user, 'csrf_token' => Csrf::token()]);
     }
 
