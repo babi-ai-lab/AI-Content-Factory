@@ -33,6 +33,7 @@
 | `php-app/src/Auth/AuthenticationException.php` | `/home/h369356/ai-content-factory/src/Auth/AuthenticationException.php` (فایل جدید) |
 | `php-app/src/Auth/PasswordAuth.php` | `/home/h369356/ai-content-factory/src/Auth/PasswordAuth.php` |
 | `php-app/src/Campaigns/CampaignRepository.php` | `/home/h369356/ai-content-factory/src/Campaigns/CampaignRepository.php` |
+| `php-app/src/Core/Request.php` | `/home/h369356/ai-content-factory/src/Core/Request.php` |
 
 فایل‌های خصوصی را در `public_html/app` قرار نده. فایل `config.local.php` و اطلاعات اتصال دیتابیس را دست‌نخورده نگه دار.
 
