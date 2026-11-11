@@ -25,5 +25,7 @@ return [
         'session_secure' => true,
         'session_samesite' => 'Lax',
         'allowed_origins' => ['https://app.eltbabak.ir'],
+        // Set a random 64+ character value in config.local.php only; never commit it.
+        'first_admin_setup_token' => '',
     ],
 ];
