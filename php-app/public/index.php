@@ -29,7 +29,7 @@ try {
 
     if ($path === '/api/auth/login' && $method === 'POST') {
         $remoteIp = is_string($_SERVER['REMOTE_ADDR'] ?? null) ? $_SERVER['REMOTE_ADDR'] : 'unknown';
-        $limiter = new \App\\Core\\RateLimiter($db);
+        $limiter = new \App\Core\RateLimiter($db);
         if (!$limiter->allow('auth-login', $remoteIp, 8, 15)) {
             Http::json(['error' => 'too_many_attempts'], 429);
         }
@@ -82,16 +82,16 @@ try {
         }
 
         if ($path === '/api/campaigns' && $method === 'GET') {
-            Http::json(['items' => (new \App\\Campaigns\\CampaignRepository($db))->list($userId)]);
+            Http::json(['items' => (new \App\Campaigns\CampaignRepository($db))->list($userId)]);
         }
         if ($path === '/api/campaigns' && $method === 'POST') {
             Request::requireCsrf();
-            $id = (new \App\\Campaigns\\CampaignRepository($db))->create($userId, Request::json());
+            $id = (new \App\Campaigns\CampaignRepository($db))->create($userId, Request::json());
             Http::json(['id' => $id], 201);
         }
         if (preg_match('#^/api/campaigns/([0-9a-f-]{36})$#i', $path, $match) && $method === 'DELETE') {
             Request::requireCsrf();
-            if (!(new \App\\Campaigns\\CampaignRepository($db))->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
+            if (!(new \App\Campaigns\CampaignRepository($db))->delete($userId, $match[1])) Http::json(['error' => 'not_found'], 404);
             Http::json(['ok' => true]);
         }
 
