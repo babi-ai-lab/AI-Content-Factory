@@ -3,6 +3,9 @@
 Base URL: همان origin اپلیکیشن، مثلاً `https://app.eltbabak.ir`.
 تمام پاسخ‌ها JSON هستند. زمان‌ها UTC هستند.
 
+## راه‌اندازی اولیه
+- `POST /api/setup/first-admin` — فقط وقتی جدول users خالی است؛ نیازمند CSRF و `security.first_admin_setup_token` در فایل خصوصی `config.local.php`. بدنه: `setup_token`، `email`، `password` و اختیاری `display_name`. رمز باید حداقل ۱۲ نویسه داشته باشد. حساب نخست با وضعیت `active` و ایمیل تأییدشده ایجاد می‌شود؛ مسیر پس از ایجاد اولین حساب به‌صورت خودکار قفل می‌شود.
+
 ## نشست و احراز هویت
 - `GET /api/csrf` — دریافت توکن CSRF و ایجاد نشست ناشناس.
 - `POST /api/auth/login` — body شامل `email` و `password`؛ هدر `X-CSRF-Token` لازم است.
