@@ -16,7 +16,7 @@ final class GeminiClient
         $this->model = is_string($config['model'] ?? null) ? trim($config['model']) : 'gemini-3.8-flash';
         $this->timeout = max(10, min(60, (int) ($config['timeout_seconds'] ?? 45)));
         $this->maxOutputTokens = max(256, min(4096, (int) ($config['max_output_tokens'] ?? 1800)));
-        if ($this->apiKey === '' || $this->model !== 'gemini-3.8-flash') {
+        if (!preg_match('/^[A-Za-z0-9_-]{20,256}$/', $this->apiKey) || $this->model !== 'gemini-3.8-flash') {
             throw new GeminiApiException(503, 'ai_not_configured');
         }
     }
