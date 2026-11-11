@@ -1,0 +1,46 @@
+name: PHP migration checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [parspack-php-migration]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+      - name: Lint PHP source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find php-app -type f -name '*.php' -print0 | while IFS= read -r -d '' file; do
+            php -l "$file"
+          done
+      - name: Verify required extensions
+        run: php -r 'foreach (["PDO","pdo_mysql","mbstring","fileinfo","openssl","curl"] as $ext) { if (!extension_loaded($ext)) { fwrite(STDERR, "Missing extension: $ext\n"); exit(1); } }'
+      - name: Validate management pages and inline JavaScript
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const vm = require('node:vm');
+          const pages = ['dashboard.html', 'login.html', 'brands.html', 'campaigns.html', 'content.html'];
+          for (const page of pages) {
+            const file = 'php-app/public/' + page;
+            const html = fs.readFileSync(file, 'utf8');
+            if (!/<title>[^<]*<\/title>/i.test(html)) {
+              throw new Error('Missing or malformed title in ' + page);
+            }
+            const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
+            for (let i = 0; i < scripts.length; i++) {
+              new vm.Script(scripts[i][1], { filename: page + '#script-' + (i + 1) });
+            }
+          }
+          console.log('Management HTML titles and inline JavaScript are valid.');
+          NODE
