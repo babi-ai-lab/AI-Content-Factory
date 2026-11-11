@@ -25,7 +25,7 @@ return [
     'ai' => [
         'provider' => 'gemini',
         'gemini_api_key' => '',
-        'model' => 'gemini-3.8-flash',
+        'model' => 'gemini-3.1-flash-lite',
         'daily_limit' => 10,
         'max_output_tokens' => 1800,
         'timeout_seconds' => 45,
