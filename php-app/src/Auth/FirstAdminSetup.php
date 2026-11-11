@@ -17,10 +17,10 @@ final class FirstAdminSetup
     {
         $email = strtolower(trim($email));
         if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254) {
-            throw new \\InvalidArgumentException('ایمیل معتبر نیست.');
+            throw new \InvalidArgumentException('ایمیل معتبر نیست.');
         }
         if (strlen($password) < 12 || strlen($password) > 200) {
-            throw new \\InvalidArgumentException('رمز عبور باید حداقل ۱۲ نویسه داشته باشد.');
+            throw new \InvalidArgumentException('رمز عبور باید حداقل ۱۲ نویسه داشته باشد.');
         }
 
         $name = $displayName !== null ? trim($displayName) : '';
