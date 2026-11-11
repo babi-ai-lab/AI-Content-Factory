@@ -23,6 +23,62 @@ try {
         Http::json(['ok' => true, 'application' => 'AI Content Factory', 'runtime' => 'php', 'database' => 'connected']);
     }
 
+    if ($method === 'GET' && $path === '/setup/first-admin') {
+        $setupToken = $config['security']['first_admin_setup_token'] ?? '';
+        $userCount = (int) $db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+        if (!is_string($setupToken) || strlen($setupToken) < 32 || $userCount > 0) {
+            http_response_code(404);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Setup is unavailable.';
+            exit;
+        }
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store, private');
+        echo <<<'HTML'
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>راه‌اندازی اولیه | AI Content Factory</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#1c2b5e;font-family:Tahoma,Arial,sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}.card{width:min(100%,460px);background:#fff;border:1px solid #e4e8f1;border-radius:18px;padding:28px;box-shadow:0 12px 40px #1c2b5e12}h1{font-size:21px;margin:0 0 10px}p{color:#59657f;line-height:1.9;font-size:13px}label{display:block;font-size:13px;margin:16px 0 7px}input{width:100%;padding:12px;border:1px solid #d7ddeb;border-radius:9px;font:inherit;font-size:14px}button{width:100%;margin-top:22px;padding:13px;border:0;border-radius:9px;background:#1c2b5e;color:white;font:inherit;cursor:pointer}button:disabled{opacity:.55}#result{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:15px;font-size:13px}
+</style>
+</head>
+<body>
+<main class="card">
+<h1>ساخت اولین حساب</h1>
+<p>این فرم فقط برای راه‌اندازی اولیه است و پس از ایجاد اولین حساب، به‌طور خودکار غیرفعال می‌شود.</p>
+<form id="setup">
+<label for="setup_token">کلید راه‌اندازی</label><input id="setup_token" type="password" autocomplete="off" required>
+<label for="display_name">نام نمایشی (اختیاری)</label><input id="display_name" maxlength="120" autocomplete="name">
+<label for="email">ایمیل</label><input id="email" type="email" maxlength="254" autocomplete="email" required>
+<label for="password">رمز عبور (حداقل ۱۲ نویسه)</label><input id="password" type="password" minlength="12" maxlength="200" autocomplete="new-password" required>
+<button id="submit" type="submit">ایجاد حساب</button>
+</form>
+<div id="result" role="status" aria-live="polite"></div>
+</main>
+<script>
+const form=document.getElementById('setup'),result=document.getElementById('result'),button=document.getElementById('submit');
+form.addEventListener('submit',async event=>{
+ event.preventDefault();button.disabled=true;result.textContent='در حال ایجاد حساب...';
+ try{
+  const csrfResponse=await fetch('/api/csrf',{credentials:'same-origin',cache:'no-store'});
+  const csrfData=await csrfResponse.json();
+  if(!csrfResponse.ok||!csrfData.csrf_token)throw new Error('دریافت توکن امنیتی ناموفق بود.');
+  const response=await fetch('/api/setup/first-admin',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrfData.csrf_token},body:JSON.stringify({setup_token:document.getElementById('setup_token').value,email:document.getElementById('email').value,password:document.getElementById('password').value,display_name:document.getElementById('display_name').value})});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'ایجاد حساب انجام نشد.');
+  form.reset();form.hidden=true;result.textContent='حساب با موفقیت ساخته شد. اکنون می‌توانی از مسیر ورود استفاده کنی. شناسه حساب: '+data.user.id;
+ }catch(error){result.textContent=error.message||'خطای نامشخص';button.disabled=false;}
+});
+</script>
+</body>
+</html>
+HTML;
+        exit;
+    }
+
     if ($method === 'GET' && $path === '/api/csrf') {
         Http::json(['csrf_token' => Csrf::token()]);
     }
