@@ -36,8 +36,14 @@ final class Request
         return rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/', '/') ?: '/';
     }
 
-    public static function requireCsrf(): void
+    public static function requireCsrf(array $allowedOrigins = []): void
     {
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
+        if (is_string($origin) && $origin !== '' && $allowedOrigins !== []
+            && !in_array($origin, $allowedOrigins, true)) {
+            Http::json(['error' => 'origin_not_allowed'], 403);
+        }
+
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
         if (!\App\Core\Csrf::verify(is_string($token) ? $token : null)) {
             Http::json(['error' => 'csrf_token_invalid'], 419);
