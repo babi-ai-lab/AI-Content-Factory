@@ -59,10 +59,10 @@ final class PasswordAuth
         // Keep the response identical for unknown users and incorrect passwords.
         if (!is_array($user) || !is_string($user['password_hash'] ?? null)
             || !password_verify($password, $user['password_hash'])) {
-            throw new RuntimeException('ایمیل یا رمز عبور صحیح نیست.');
+            throw new AuthenticationException('ایمیل یا رمز عبور صحیح نیست.');
         }
         if ($user['status'] !== 'active') {
-            throw new RuntimeException('حساب هنوز فعال نشده یا امکان ورود به آن وجود ندارد.');
+            throw new AuthenticationException('ایمیل یا رمز عبور صحیح نیست.');
         }
 
         session_regenerate_id(true);
