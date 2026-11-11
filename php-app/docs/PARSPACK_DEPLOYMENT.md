@@ -24,6 +24,19 @@
 
 نسخه جدید `index.php` را نیز جایگزین کن؛ این فایل APIهای فعلی را حفظ می‌کند و مسیر ریشه را به ورود یا داشبورد هدایت می‌کند. تمام کدهای خصوصی `src/` و `bootstrap.php` را فقط مطابق مسیر خصوصی موجود نگه دار. فایل `config.local.php` را از GitHub دریافت یا جایگزین نکن؛ حاوی اطلاعات محرمانه دیتابیس و کلید راه‌اندازی است.
 
+## فایل‌های خصوصی به‌روزشده در این مرحله
+
+این فایل‌ها را از همان شاخه دریافت کن و فقط در مسیر خصوصی برنامه جایگزین یا اضافه کن:
+
+| فایل GitHub | مقصد cPanel |
+|---|---|
+| `php-app/src/Auth/AuthenticationException.php` | `/home/h369356/ai-content-factory/src/Auth/AuthenticationException.php` (فایل جدید) |
+| `php-app/src/Auth/PasswordAuth.php` | `/home/h369356/ai-content-factory/src/Auth/PasswordAuth.php` |
+| `php-app/src/Campaigns/CampaignRepository.php` | `/home/h369356/ai-content-factory/src/Campaigns/CampaignRepository.php` |
+
+فایل‌های خصوصی را در `public_html/app` قرار نده. فایل `config.local.php` و اطلاعات اتصال دیتابیس را دست‌نخورده نگه دار.
+
+
 ## نقشه قابلیت‌های نسخه فعلی PHP
 
 - ورود مدیر و نشست امن مبتنی بر PHP session و MySQL
