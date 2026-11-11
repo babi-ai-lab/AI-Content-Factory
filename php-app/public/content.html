@@ -35,6 +35,7 @@
   </div>
   <div class="field"><label for="aiBrand">برند مرتبط</label><select id="aiBrand"><option value="">بدون انتخاب برند</option></select></div>
   <div class="field"><label for="aiPrompt">چه محتوایی تولید شود؟ *</label><textarea id="aiPrompt" required maxlength="12000" placeholder="موضوع، مخاطب هدف، هدف محتوا، لحن، نکات ضروری و دعوت به اقدام را توضیح بده..." style="min-height:150px"></textarea></div>
+<div class="field"><label style="display:flex;gap:9px;align-items:flex-start;line-height:1.9"><input id="aiConsent" type="checkbox" required style="width:auto;margin-top:4px;flex:0 0 auto">می‌پذیرم متن درخواست و اطلاعات برند انتخاب‌شده برای تولید محتوا به Google ارسال شود. در سهمیه رایگان، Google ممکن است از داده‌ها برای بهبود محصولات خود استفاده کند؛ اطلاعات محرمانه یا شخصی مشتریان را وارد نمی‌کنم.</label></div>
   <div class="error" id="aiError"></div>
   <div class="dialog-actions"><button class="btn" type="submit" id="aiSubmit">تولید محتوا</button><button class="btn secondary" type="button" data-close="generateDialog">انصراف</button></div>
  </form>
@@ -96,11 +97,11 @@ function openEditor(item=null){
  $('contentType').disabled=!!item;$('brandId').disabled=!!item;
  $('formError').textContent='';$('editor').showModal();
 }
-$('aiGenerate').addEventListener('click',()=>{$('aiError').textContent='';$('generateDialog').showModal();});
+$('aiGenerate').addEventListener('click',()=>{$('aiError').textContent='';$('aiConsent').checked=false;$('generateDialog').showModal();});
 $('generateForm').addEventListener('submit',async e=>{
  e.preventDefault();$('aiError').textContent='';$('aiSubmit').disabled=true;$('aiSubmit').textContent='در حال تولید...';
  try{
-  const payload={title:$('aiTitle').value.trim(),content_type:$('aiType').value,brand_id:$('aiBrand').value||null,prompt:$('aiPrompt').value.trim()};
+  const payload={title:$('aiTitle').value.trim(),content_type:$('aiType').value,brand_id:$('aiBrand').value||null,prompt:$('aiPrompt').value.trim(),consent_external_processing:$('aiConsent').checked};
   const result=await api('/api/ai/generate',{method:'POST',body:JSON.stringify(payload)});
   if(!result.text)throw new Error('پاسخ مدل خالی بود.');
   $('generateDialog').close();openEditor();
@@ -108,7 +109,7 @@ $('generateForm').addEventListener('submit',async e=>{
   $('contentType').value=payload.content_type;$('brandId').value=payload.brand_id||'';$('bodyText').value=result.text;
   $('formError').textContent='متن تولید شد؛ پس از بازبینی، آن را ذخیره کن.';
  }catch(err){
-  const messages={ai_not_configured:'کلید Gemini هنوز در تنظیمات خصوصی سرور ثبت نشده است.',ai_daily_limit_reached:'سهمیه روزانه این حساب تمام شده است.',ai_quota_exceeded:'سهمیه رایگان Gemini فعلاً تمام شده است؛ بعداً دوباره تلاش کن.',ai_key_or_access_invalid:'کلید Gemini معتبر نیست یا دسترسی مدل فعال نشده است.',ai_provider_unavailable:'سرویس Gemini موقتاً در دسترس نیست.',ai_empty_response:'مدل خروجی متنی قابل استفاده برنگرداند؛ درخواست را با توضیح روشن‌تر تکرار کن.',ai_input_invalid:'اطلاعات ورودی معتبر نیست.'};
+  const messages={ai_not_configured:'کلید Gemini هنوز در تنظیمات خصوصی سرور ثبت نشده است.',ai_daily_limit_reached:'سهمیه روزانه این حساب تمام شده است.',ai_quota_exceeded:'سهمیه رایگان Gemini فعلاً تمام شده است؛ بعداً دوباره تلاش کن.',ai_key_or_access_invalid:'کلید Gemini معتبر نیست یا دسترسی مدل فعال نشده است.',ai_provider_unavailable:'سرویس Gemini موقتاً در دسترس نیست.',ai_empty_response:'مدل خروجی متنی قابل استفاده برنگرداند؛ درخواست را با توضیح روشن‌تر تکرار کن.',ai_input_invalid:'اطلاعات ورودی معتبر نیست.',ai_consent_required:'برای ارسال محتوا به Google، ابتدا رضایت خود را تأیید کن.'};
   $('aiError').textContent=messages[err.message]||err.message;
  }finally{$('aiSubmit').disabled=false;$('aiSubmit').textContent='تولید محتوا';}
 });
