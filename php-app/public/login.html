@@ -35,7 +35,7 @@ form.addEventListener('submit',async event=>{
   const meResponse=await fetch('/api/auth/me',{credentials:'same-origin',cache:'no-store'});
   const meData=await meResponse.json();
   if(!meResponse.ok||!meData.user)throw new Error('ورود انجام شد اما تأیید نشست ناموفق بود.');
-  result.textContent='ورود و تأیید نشست با موفقیت انجام شد.\nحساب: '+(meData.user.email||'')+'\nوضعیت: احراز هویت فعال\n\nصفحه ورود آماده است؛ رابط اصلی برنامه هنوز در حال انتقال است.';
+  result.textContent='ورود و تأیید نشست موفق بود. در حال انتقال به داشبورد...';\n  window.location.replace('/dashboard.html');
  }catch(error){result.className='error';result.textContent=error.message||'خطای نامشخص';button.disabled=false;}
 });
 </script>
