@@ -1,51 +1,65 @@
 # راهنمای بسته انتقال PHP روی ParsPack
 
-این بسته، رابط مدیریت PHP را روی زیر دامنه `app.eltbabak.ir` تکمیل می‌کند. فایل‌های این مسیر فقط برای نسخه PHP هستند و نباید روی ریشه سایت اصلی `eltbabak.ir` کپی شوند.
+این بسته، رابط مدیریت PHP را روی زیردامنه app.eltbabak.ir تکمیل می‌کند. فایل‌های این مسیر فقط برای نسخه PHP هستند و نباید روی ریشه سایت اصلی eltbabak.ir کپی شوند.
 
 ## پیش‌نیازهای تأییدشده
 - PHP 8.5 و افزونه‌های PDO و PDO MySQL
 - دیتابیس MySQL با migration اولیه واردشده
-- Document Root زیردامنه: `/home/h369356/public_html/app`
-- کد خصوصی: `/home/h369356/ai-content-factory`
-- فایل تنظیمات محرمانه: `/home/h369356/ai-content-factory/config/config.local.php`
+- Document Root زیردامنه: /home/h369356/public_html/app
+- کد خصوصی: /home/h369356/ai-content-factory
+- فایل تنظیمات محرمانه: /home/h369356/ai-content-factory/config/config.local.php
 
-## فایل‌های رابط کاربری برای انتشار یک‌باره
+## فایل‌های عمومی برنامه
 
-همه فایل‌های زیر را از شاخه `parspack-php-migration` در GitHub دریافت و در پوشه عمومی برنامه قرار بده. فایل‌های هم‌نام را جایگزین کن:
-
-| فایل GitHub | مقصد cPanel |
-|---|---|
-| `php-app/public/dashboard.html` | `/home/h369356/public_html/app/dashboard.html` |
-| `php-app/public/content.html` | `/home/h369356/public_html/app/content.html` |
-| `php-app/public/brands.html` | `/home/h369356/public_html/app/brands.html` |
-| `php-app/public/campaigns.html` | `/home/h369356/public_html/app/campaigns.html` |
-| `php-app/public/login.html` | `/home/h369356/public_html/app/login.html` |
-| `php-app/public/index.php` | `/home/h369356/public_html/app/index.php` |
-
-نسخه جدید `index.php` را نیز جایگزین کن؛ این فایل APIهای فعلی را حفظ می‌کند و مسیر ریشه را به ورود یا داشبورد هدایت می‌کند. تمام کدهای خصوصی `src/` و `bootstrap.php` را فقط مطابق مسیر خصوصی موجود نگه دار. فایل `config.local.php` را از GitHub دریافت یا جایگزین نکن؛ حاوی اطلاعات محرمانه دیتابیس و کلید راه‌اندازی است.
-
-## فایل‌های خصوصی به‌روزشده در این مرحله
-
-این فایل‌ها را از همان شاخه دریافت کن و فقط در مسیر خصوصی برنامه جایگزین یا اضافه کن:
+فایل‌های رابط کاربری و تنظیمات وب را در پوشه عمومی برنامه قرار بده. فایل‌های هم‌نام را فقط پس از تهیه بکاپ جایگزین کن:
 
 | فایل GitHub | مقصد cPanel |
 |---|---|
-| `php-app/src/Auth/AuthenticationException.php` | `/home/h369356/ai-content-factory/src/Auth/AuthenticationException.php` (فایل جدید) |
-| `php-app/src/Auth/PasswordAuth.php` | `/home/h369356/ai-content-factory/src/Auth/PasswordAuth.php` |
-| `php-app/src/Campaigns/CampaignRepository.php` | `/home/h369356/ai-content-factory/src/Campaigns/CampaignRepository.php` |
-| `php-app/src/Core/Request.php` | `/home/h369356/ai-content-factory/src/Core/Request.php` |
+| php-app/public/dashboard.html | /home/h369356/public_html/app/dashboard.html |
+| php-app/public/content.html | /home/h369356/public_html/app/content.html |
+| php-app/public/brands.html | /home/h369356/public_html/app/brands.html |
+| php-app/public/campaigns.html | /home/h369356/public_html/app/campaigns.html |
+| php-app/public/login.html | /home/h369356/public_html/app/login.html |
+| php-app/public/index.php | /home/h369356/public_html/app/index.php |
+| php-app/public/.htaccess | /home/h369356/public_html/app/.htaccess |
 
-فایل‌های خصوصی را در `public_html/app` قرار نده. فایل `config.local.php` و اطلاعات اتصال دیتابیس را دست‌نخورده نگه دار.
+## فایل‌های خصوصی
 
+فایل‌های خصوصی را فقط بیرون از public_html نگه دار:
+
+| فایل GitHub | مقصد cPanel |
+|---|---|
+| php-app/bootstrap.php | /home/h369356/ai-content-factory/bootstrap.php |
+| php-app/src/Auth/AuthenticationException.php | /home/h369356/ai-content-factory/src/Auth/AuthenticationException.php |
+| php-app/src/Auth/PasswordAuth.php | /home/h369356/ai-content-factory/src/Auth/PasswordAuth.php |
+| php-app/src/Campaigns/CampaignRepository.php | /home/h369356/ai-content-factory/src/Campaigns/CampaignRepository.php |
+| php-app/src/Core/Request.php | /home/h369356/ai-content-factory/src/Core/Request.php |
+
+فایل config.local.php و اطلاعات اتصال دیتابیس را از GitHub دریافت یا جایگزین نکن. این فایل باید محرمانه و بیرون از Document Root باقی بماند.
+
+## سخت‌سازی امنیتی موجود در شاخه
+
+- نشست PHP با session.use_strict_mode، کوکی HttpOnly، SameSite=Lax و گزینه Secure که از تنظیم خصوصی برنامه خوانده می‌شود.
+- هدرهای HSTS، X-Content-Type-Options، Referrer-Policy، X-Frame-Options، Permissions-Policy و Cross-Origin-Opener-Policy برای پاسخ‌های وب.
+- درخواست‌های تغییردهنده علاوه بر توکن CSRF باید از Origin مجاز باشند؛ در نبود Origin، Referer هم‌مبدأ بررسی می‌شود و در نبود هر دو درخواست رد می‌شود.
+- احراز هویت، نشست‌های ذخیره‌شده در MySQL، محدودیت تلاش ورود و کنترل مالکیت داده‌ها در API.
+- اطلاعات خطای داخلی در پاسخ API افشا نمی‌شود و در لاگ خصوصی ثبت می‌شود.
+
+## محدودیت‌ها و کارهای امنیتی باقی‌مانده
+
+- محدودیت ورود فعلی ۸ تلاش در ۱۵ دقیقه برای هر IP است؛ محدودیت مستقل بر اساس حساب کاربری یا محافظت پیشرفته در برابر حملات توزیع‌شده هنوز وجود ندارد.
+- جدول محدودیت درخواست‌ها دارای زمان انقضاست، اما پاک‌سازی دوره‌ای رکوردهای منقضی‌شده هنوز خودکار نشده است.
+- سیاست Content Security Policy هنوز فعال نشده؛ صفحات فعلی از JavaScript و CSS درون‌صفحه‌ای استفاده می‌کنند و ابتدا باید وابستگی‌های ظاهری و اسکریپت‌ها بررسی شوند تا سیاست CSP باعث ازکارافتادن رابط نشود.
+- این تغییرات بازبینی کد و سخت‌سازی پایه هستند؛ جایگزین تست نفوذ مستقل، بررسی تنظیمات کل سرور یا ممیزی امنیتی حرفه‌ای نیستند.
 
 ## نقشه قابلیت‌های نسخه فعلی PHP
 
-- ورود مدیر و نشست امن مبتنی بر PHP session و MySQL
+- ورود مدیر و نشست مبتنی بر PHP session و MySQL
 - داشبورد خلاصه تعداد برندها، کمپین‌ها و محتواها
-- مدیریت پروفایل برند: ایجاد، ویرایش، حذف؛ حداکثر ۱۰ برند برای هر حساب
+- مدیریت پروفایل برند: ایجاد، ویرایش و حذف؛ حداکثر ۱۰ برند برای هر حساب
 - مدیریت کمپین: ایجاد، فهرست، ویرایش و حذف
 - مدیریت محتوا: ایجاد، فهرست، جست‌وجو، فیلتر نوع، ویرایش متن، تاریخچه نسخه‌ها و حذف نرم
-- محافظت CSRF برای عملیات تغییردهنده و احراز مالکیت داده‌ها در API
+- محافظت CSRF، اعتبارسنجی Origin و احراز مالکیت داده‌ها در API
 
 ## مواردی که عمداً در این نسخه فعال نیستند
 
@@ -56,21 +70,25 @@
 - بازیابی رمز، تأیید ایمیل، ثبت‌نام عمومی، حذف حساب و واردسازی داده‌های Supabase
 - اشتراک، پرداخت و محدودیت‌های مالی
 
-هیچ درخواست پولی به سرویس هوش مصنوعی در این نسخه اجرا نمی‌شود. برای فعال‌کردن provider باید ابتدا هزینه، سیاست حریم خصوصی، کلیدهای امن و محدودیت مصرف جداگانه بررسی و با تأیید مالک حساب تنظیم شوند.
+هیچ درخواست پولی به سرویس هوش مصنوعی در این نسخه اجرا نمی‌شود. فعال‌سازی provider به تأیید جداگانه هزینه، سیاست حریم خصوصی، کلیدهای امن و محدودیت مصرف نیاز دارد.
 
-## بررسی نهایی پس از آپلود
+## چک‌لیست انتشار روی هاست
 
-1. `https://app.eltbabak.ir/health` باید وضعیت PHP و اتصال دیتابیس را سالم نشان دهد.
-2. `https://app.eltbabak.ir/login.html` باید صفحه ورود را نمایش دهد.
-3. پس از ورود، `dashboard.html` باید تعداد رکوردها را نشان دهد.
-4. در `brands.html` یک برند آزمایشی ایجاد، ویرایش و حذف کن.
-5. در `campaigns.html` یک کمپین آزمایشی ایجاد، ویرایش و حذف کن.
-6. در `content.html` یک متن آزمایشی بساز، ویرایش کن و تاریخچه نسخه‌ها را ببین.
-7. در پنجره ناشناس، مسیرهای `/api/brands`، `/api/campaigns` و `/api/content` باید بدون نشست، `unauthenticated` برگردانند.
-8. ورود با رمز اشتباه باید پاسخ `401` بدهد؛ خطای اعتبارنامه نباید به‌صورت خطای داخلی `500` نمایش داده شود.
+1. از دیتابیس و هر دو پوشه عمومی و خصوصی بکاپ بگیر.
+2. فایل‌های عمومی و خصوصی جدول‌های بالا را جایگزین کن؛ config.local.php، migrationها و فایل‌های داده را دست‌نخورده نگه دار.
+3. مطمئن شو زیردامنه فقط از HTTPS استفاده می‌کند و گواهی TLS معتبر است.
+4. در تنظیمات خصوصی، session_secure باید true باشد.
+5. پس از اطمینان از ساخته‌شدن حساب مدیر، مقدار first_admin_setup_token را در فایل خصوصی config.local.php خالی کن؛ مقدار محرمانه را در GitHub یا چت قرار نده.
+6. /health باید اتصال دیتابیس را سالم نشان دهد.
+7. وارد شو و داشبورد، برندها، کمپین‌ها و محتوا را بررسی کن.
+8. یک درخواست تغییردهنده عادی از رابط برنامه انجام بده تا CSRF و بررسی Origin در محیط واقعی تأیید شوند.
+9. در ابزار توسعه مرورگر، کوکی نشست را بررسی کن: باید Secure و HttpOnly داشته باشد و SameSite=Lax باشد.
+10. در پاسخ صفحه ورود و API، هدرهای امنیتی از جمله HSTS را بررسی کن.
+11. یک ورود ناموفق کنترل‌شده انجام بده و مطمئن شو پاسخ اعتبارنامه اشتباه 401 است؛ تکرار بیش از حد باید 429 بدهد.
+12. در پنجره ناشناس، مسیرهای /api/brands، /api/campaigns و /api/content باید بدون نشست، 401 unauthenticated برگردانند.
 
-اگر در هر مرحله خطا دیدی، فقط متن خطای قابل مشاهده و غیرمحرمانه را نگه دار. هیچ رمز، توکن CSRF، کلید راه‌اندازی یا اطلاعات اتصال دیتابیس را ارسال نکن.
+اگر خطایی دیدی، فقط متن خطای غیرمحرمانه را ثبت کن. هیچ رمز، کوکی، توکن CSRF، کلید راه‌اندازی یا اطلاعات اتصال دیتابیس را ارسال نکن.
 
 ## پاک‌سازی پس از تأیید
 
-پس از اطمینان از سلامت برنامه، فایل عمومی موقت `diag-write.php` و فایل‌های خصوصی `write-test.php` و `write-test.txt` را حذف کن. لاگ خطا را قبل از حذف بررسی و سپس مطابق سیاست نگهداری امن پاک‌سازی کن.
+پس از اطمینان از سلامت برنامه، فایل عمومی موقت diag-write.php و فایل‌های خصوصی write-test.php و write-test.txt را حذف کن. لاگ خطا را ابتدا بررسی کن؛ سپس مطابق سیاست نگهداری امن، آن را پاک‌سازی کن. فایل‌های ناشناخته یا بکاپ‌ها را بدون بررسی حذف نکن.
